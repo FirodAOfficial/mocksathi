@@ -1,0 +1,49 @@
+.field {
+  grid-template-columns: 88px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  display: grid;
+}
+
+.input {
+  border: 1px solid var(--control-border);
+  height: 24px;
+  font: inherit;
+  border-radius: 2px;
+  min-width: 220px;
+  padding: 0 6px;
+}
+
+.checkbox {
+  align-items: center;
+  gap: 6px;
+  display: flex;
+}
+
+.status {
+  min-height: 16px;
+  color: var(--text-muted);
+  margin: 10px 0 0;
+}
+
+.button {
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  background: linear-gradient(#fff, #e4ecf6);
+  border-radius: 2px;
+  min-width: 84px;
+  height: 24px;
+  padding: 0 10px;
+}
+
+.button:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.primary {
+  font-weight: 600;
+}
+
+/*# sourceMappingURL=src_components_dialogs_FindReplaceDialog_module_css_1igg3k2._.single.css.map*/

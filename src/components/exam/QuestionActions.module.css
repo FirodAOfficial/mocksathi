@@ -1,0 +1,81 @@
+.actions {
+  background: #f7fafd;
+  border-top: 1px solid #e2ebf3;
+  flex-direction: column;
+  flex: none;
+  gap: 8px;
+  padding: 10px 12px;
+  display: flex;
+}
+
+.state {
+  color: #4a6076;
+  margin: 0;
+  font-size: 11px;
+}
+
+.state strong {
+  color: #17365d;
+}
+
+.grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  display: grid;
+}
+
+.action, .nav {
+  color: #17365d;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #a9c6de;
+  border-radius: 2px;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.action:hover:not(:disabled), .nav:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.action:disabled, .nav:disabled, .submit:disabled {
+  color: var(--control-disabled-text);
+  cursor: default;
+  background: #eef2f6;
+  border-color: #d3dde6;
+}
+
+.actionOn {
+  background: linear-gradient(#d7ecda, #b9dcbe);
+  border-color: #6da975;
+  font-weight: 600;
+}
+
+.actionMarked {
+  background: linear-gradient(#e6dcf2, #cfbde6);
+  border-color: #8f6cb5;
+  font-weight: 600;
+}
+
+.nav {
+  background: #cfe0ef;
+}
+
+.submit {
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(#5aa85f, #3f9c4a);
+  border: 1px solid #2f7a38;
+  border-radius: 2px;
+  height: 34px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.submit:hover:not(:disabled) {
+  background: linear-gradient(#66b96c, #45a851);
+}
+
+/*# sourceMappingURL=src_components_exam_QuestionActions_module_css_1igg3k2._.single.css.map*/

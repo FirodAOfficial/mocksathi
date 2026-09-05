@@ -1,0 +1,63 @@
+.largeMenuButton {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 58px;
+  min-height: 60px;
+  padding: 4px 2px;
+  display: flex;
+}
+
+.largeMenuButton:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.largeMenuButtonOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.symbolGlyph {
+  font-family: Cambria, serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.largeCaption {
+  font-size: 11px;
+}
+
+.symbolGrid {
+  grid-template-columns: repeat(10, 24px);
+  gap: 1px;
+  padding: 4px;
+  display: grid;
+}
+
+.symbolCell {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.symbolCell:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.fieldLabel {
+  min-width: 42px;
+  color: var(--text-muted);
+}
+
+/*# sourceMappingURL=src_components_ribbon_SecondaryTabs_module_css_1igg3k2._.single.css.map*/

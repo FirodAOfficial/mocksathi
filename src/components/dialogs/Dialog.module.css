@@ -1,0 +1,61 @@
+.dialog {
+  border: 1px solid var(--frame-border);
+  font-family: var(--ui-font);
+  color: var(--text);
+  background: linear-gradient(#fff, #f3f7fc);
+  border-radius: 3px;
+  min-width: 340px;
+  padding: 0;
+  font-size: 12px;
+  box-shadow: 0 10px 32px #0f233c59;
+}
+
+.dialog::backdrop {
+  background: #14284147;
+}
+
+.titleBar {
+  background: linear-gradient(180deg, var(--frame-top), var(--frame-bottom));
+  border-bottom: 1px solid var(--frame-border);
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 6px 12px;
+  display: flex;
+}
+
+.title {
+  color: #14395f;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.close {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 20px;
+  height: 18px;
+  line-height: 1;
+}
+
+.close:hover {
+  color: #fff;
+  background: #e81123;
+  border-color: #c50f1f;
+}
+
+.body {
+  padding: 14px 16px;
+}
+
+.footer {
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 10px 16px 14px;
+  display: flex;
+}
+
+/*# sourceMappingURL=src_components_dialogs_Dialog_module_css_1igg3k2._.single.css.map*/

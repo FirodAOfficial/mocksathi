@@ -1,0 +1,258 @@
+.card {
+  position: relative;
+  border-radius: 14px;
+  padding: 20px 24px 24px;
+  border: 1px solid transparent;
+}
+
+/* The two outcomes differ only in their wash and accent. */
+.pass {
+  background: linear-gradient(135deg, #eefbf1, #f4fbf6 55%, #ffffff);
+  border-color: #cdeed8;
+}
+
+.fail {
+  background: linear-gradient(135deg, #fdeef0, #fdf5f6 55%, #ffffff);
+  border-color: #f7d6da;
+}
+
+.heading {
+  margin-bottom: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: #6b7c8d;
+}
+
+.badge {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 24px 0 14px;
+  border-radius: 26px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.pass .badge {
+  background: #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.fail .badge {
+  background: #e8384f;
+  box-shadow: 0 4px 12px rgba(232, 56, 79, 0.3);
+}
+
+.badgeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pass .badgeIcon {
+  color: #28a745;
+}
+
+.fail .badgeIcon {
+  color: #e8384f;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 28px;
+  margin-top: 8px;
+}
+
+/* Donut ---------------------------------------------------------------- */
+
+.donut {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex: none;
+}
+
+.donutSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.donutLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.donutScore {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scorePass {
+  color: #1f7a35;
+}
+
+.scoreFail {
+  color: #d92b45;
+}
+
+.donutOutOf {
+  font-size: 16px;
+  color: #5b6b7b;
+}
+
+.donutCaption {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #7b8b9a;
+}
+
+/* Message -------------------------------------------------------------- */
+
+.message {
+  min-width: 0;
+  border-left: 1px solid #dbe6dd;
+  padding-left: 28px;
+}
+
+.cheer {
+  margin: 0 0 6px;
+  font-size: 30px;
+  font-weight: 800;
+  color: #17365d;
+}
+
+.verdict {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.45;
+  color: #35485c;
+}
+
+.verdict strong {
+  color: #17365d;
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+
+.pass .note {
+  background: #e6f7ec;
+  border: 1px solid #c3e9d1;
+}
+
+.fail .note {
+  background: #fde8eb;
+  border: 1px solid #f6ccd3;
+}
+
+.noteIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.pass .noteIcon {
+  background: #28a745;
+  color: #ffffff;
+}
+
+.noteTitle {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.pass .noteTitle {
+  color: #1f7a35;
+}
+
+.fail .noteTitle {
+  color: #c02640;
+}
+
+.noteBody {
+  display: block;
+  line-height: 1.5;
+  color: #4a5c6e;
+}
+
+/* Artwork -------------------------------------------------------------- */
+
+.artwork {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 210px;
+  flex: none;
+}
+
+.artNote {
+  position: absolute;
+  right: -6px;
+  bottom: 6px;
+}
+
+@media (max-width: 1080px) {
+  .body {
+    grid-template-columns: auto 1fr;
+  }
+
+  .artwork {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .body {
+    grid-template-columns: 1fr;
+  }
+
+  .message {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .badge {
+    position: static;
+    margin-top: 12px;
+  }
+}

@@ -1,0 +1,78 @@
+.timer {
+  background: #fff;
+  border-bottom: 1px solid #d7e3ee;
+  padding: 10px 14px 8px;
+}
+
+.header {
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #5f7387;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.value {
+  color: #17365d;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  font-family: Segoe UI, Tahoma, sans-serif;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.track {
+  background: #e3ecf4;
+  border-radius: 3px;
+  height: 5px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.fill {
+  background: #4f81bd;
+  height: 100%;
+  transition: width .25s linear;
+}
+
+.note {
+  color: #5f7387;
+  min-height: 14px;
+  margin: 4px 0 0;
+  font-size: 11px;
+}
+
+.warning .value {
+  color: #c62828;
+}
+
+.warning .fill {
+  background: #e53935;
+}
+
+.warning .note {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.expired .value {
+  color: #9aa5b1;
+}
+
+.expired .fill {
+  background: #9aa5b1;
+}
+
+.expired .note {
+  color: #c62828;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill {
+    transition: none;
+  }
+}
+
+/*# sourceMappingURL=src_components_exam_ExamTimer_module_css_1igg3k2._.single.css.map*/

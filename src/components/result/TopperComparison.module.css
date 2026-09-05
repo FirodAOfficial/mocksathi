@@ -1,0 +1,106 @@
+.section {
+  padding: 16px 20px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e2e8ee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* `caption` is the accessible name of each table as well as its visible head. */
+.caption {
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: left;
+  color: #ffffff;
+}
+
+.topper .caption {
+  background: #f0982b;
+}
+
+.you .caption {
+  background: #22a45d;
+}
+
+.average .caption {
+  background: #9aa5b1;
+}
+
+.table th,
+.table td {
+  padding: 9px 14px;
+  border-top: 1px solid #eef2f6;
+  font-weight: 400;
+}
+
+.table th {
+  text-align: left;
+  color: #4a5c6e;
+}
+
+.table td {
+  text-align: right;
+  color: #35485c;
+}
+
+.emphasis {
+  font-weight: 700;
+}
+
+.topper .emphasis {
+  color: #d9821a;
+}
+
+.you .emphasis {
+  color: #1f7a35;
+}
+
+.average .emphasis {
+  color: #52616f;
+}
+
+.wrong {
+  color: #d92b45;
+  font-weight: 600;
+}
+
+.note {
+  align-self: center;
+  width: 96px;
+}
+
+@media (max-width: 1080px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .note {
+    display: none;
+  }
+}

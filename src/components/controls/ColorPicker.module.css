@@ -1,0 +1,86 @@
+.split {
+  border: 1px solid #0000;
+  border-radius: 2px;
+  align-items: stretch;
+  display: inline-flex;
+}
+
+.split:hover {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.main, .arrow {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  display: inline-flex;
+}
+
+.main {
+  flex-direction: column;
+  gap: 1px;
+  width: 24px;
+  height: 24px;
+}
+
+.arrow {
+  width: 14px;
+}
+
+.arrowOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+}
+
+.bar {
+  border: 1px solid #00000047;
+  width: 16px;
+  height: 4px;
+  display: block;
+}
+
+.palette {
+  padding: 6px;
+}
+
+.row {
+  gap: 2px;
+  margin-bottom: 2px;
+  display: flex;
+}
+
+.swatch {
+  cursor: pointer;
+  border: 1px solid #a0a0a0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.swatch:hover, .swatchSelected {
+  outline: 2px solid var(--control-hover-border);
+  outline-offset: 0;
+}
+
+.clear {
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+  background: #fff;
+  border-radius: 2px;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  display: block;
+}
+
+.clear:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/*# sourceMappingURL=src_components_controls_ColorPicker_module_css_1igg3k2._.single.css.map*/

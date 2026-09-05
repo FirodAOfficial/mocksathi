@@ -1,0 +1,262 @@
+/*
+ * The result page scrolls itself rather than the document.
+ *
+ * `globals.css` pins `body` to the viewport with `overflow: hidden`, because
+ * the editor is a fixed application frame. This page is taller than the
+ * viewport, so it owns its own scroll container instead of fighting that.
+ */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+  background: linear-gradient(180deg, #f4f8fd, #eef3fa);
+  font-family: var(--ui-font);
+  font-size: 13px;
+  color: #35485c;
+}
+
+/* Top bar -------------------------------------------------------------- */
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.testName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  border-radius: 12px;
+  background: #eaf1fb;
+  border: 1px solid #d4e2f5;
+}
+
+.testIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #5b3fbf;
+}
+
+.testTitle {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.testTagline {
+  display: block;
+  font-size: 11px;
+  color: #6b7c8d;
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ghostButton,
+.primaryButton,
+.outlineButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ghostButton {
+  background: #ffffff;
+  border: 1px solid #cfdcea;
+  color: #2f6ea5;
+}
+
+.ghostButton:hover {
+  background: #f2f7fd;
+}
+
+.primaryButton {
+  background: #1f7ae0;
+  border: 1px solid #1f7ae0;
+  color: #ffffff;
+}
+
+.outlineButton {
+  background: #ffffff;
+  border: 1px solid #1f7ae0;
+  color: #1f7ae0;
+}
+
+.primaryButton:disabled,
+.outlineButton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+/* Meta strip ----------------------------------------------------------- */
+
+.metaRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.metaCard {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.metaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.toneViolet {
+  background: #f0ecfd;
+  color: #6b4fd0;
+}
+
+.toneBlue {
+  background: #e8f1fd;
+  color: #2f7fe0;
+}
+
+.toneAmber {
+  background: #fdf2e2;
+  color: #e08a1e;
+}
+
+.toneGreen {
+  background: #e8f7ed;
+  color: #22a45d;
+}
+
+.metaValue {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.metaLabel {
+  display: block;
+  font-size: 11px;
+  color: #6b7c8d;
+}
+
+.metaNote {
+  width: 92px;
+}
+
+/* Solutions bar -------------------------------------------------------- */
+
+.solutions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.solutionsIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f0ecfd;
+  color: #6b4fd0;
+}
+
+.solutionsText {
+  flex: 1;
+  min-width: 0;
+}
+
+.solutionsTitle {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.solutionsBody {
+  display: block;
+  color: #6b7c8d;
+}
+
+/* Footer --------------------------------------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-top: 1px solid #dde6f0;
+}
+
+.footerPoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #4a5c6e;
+  font-weight: 600;
+}
+
+.footerPoints li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footerNote {
+  width: 110px;
+}
+
+@media (max-width: 1080px) {
+  .metaRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metaNote {
+    display: none;
+  }
+}

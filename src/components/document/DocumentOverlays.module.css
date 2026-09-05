@@ -1,0 +1,136 @@
+.overlay {
+  z-index: 20;
+  background: #5a5a5aeb;
+  place-items: center;
+  display: grid;
+  position: absolute;
+  inset: 0;
+}
+
+.panel {
+  border: 1px solid var(--frame-border);
+  text-align: center;
+  background: #fff;
+  border-radius: 3px;
+  width: min(440px, 100% - 48px);
+  padding: 26px 28px;
+  box-shadow: 0 8px 28px #00000059;
+}
+
+.spinner {
+  border: 3px solid #d6e3f2;
+  border-top-color: #2b6cb0;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 14px;
+  animation: .9s linear infinite DocumentOverlays-module__2TQSpq__spin;
+}
+
+@keyframes DocumentOverlays-module__2TQSpq__spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 3s;
+  }
+}
+
+.errorIcon {
+  color: #c00000;
+  margin-bottom: 8px;
+}
+
+.heading {
+  color: #17365d;
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.message {
+  color: var(--text);
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.detail {
+  color: var(--text-muted);
+  word-break: break-all;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.actions {
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+  display: flex;
+}
+
+.primary, .secondary {
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  height: 26px;
+  color: var(--text);
+  background: linear-gradient(#fff, #e4ecf6);
+  border-radius: 2px;
+  align-items: center;
+  padding: 0 14px;
+  text-decoration: none;
+  display: inline-flex;
+}
+
+.primary:hover, .secondary:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.notice {
+  color: #5b4708;
+  background: #fdf6d8;
+  border-bottom: 1px solid #e0cf86;
+  flex: none;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  display: flex;
+}
+
+.noticeIcon {
+  color: #a67c00;
+  flex: none;
+  margin-top: 1px;
+}
+
+.noticeBody {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.noticeList {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+
+.noticeClose {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+}
+
+.noticeClose:hover {
+  background: #f0e3ae;
+  border-color: #d8c47c;
+}
+
+/*# sourceMappingURL=src_components_document_DocumentOverlays_module_css_1igg3k2._.single.css.map*/

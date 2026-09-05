@@ -1,0 +1,59 @@
+.grid {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px 12px;
+  padding: 14px;
+  display: grid;
+}
+
+.cell {
+  color: #17365d;
+  cursor: pointer;
+  background: #fff;
+  border: 1.5px solid #6d7b88;
+  border-radius: 3px;
+  height: 34px;
+  font-size: 14px;
+  font-weight: 600;
+  position: relative;
+}
+
+.cell:hover {
+  filter: brightness(1.06);
+}
+
+.attempted {
+  color: #fff;
+  background: #3f9c4a;
+  border-color: #0000;
+  border-radius: 16px 16px 4px 4px;
+}
+
+.unattempted {
+  color: #17365d;
+  background: #fff;
+}
+
+.current {
+  outline-offset: 2px;
+  outline: 2px solid #17365d;
+}
+
+.bookmarked:after {
+  content: "";
+  background: #7b4fa8;
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  bottom: -4px;
+  right: -3px;
+}
+
+.empty {
+  color: var(--text-muted);
+  margin: 0;
+  padding: 18px 14px;
+}
+
+/*# sourceMappingURL=src_components_exam_QuestionPalette_module_css_1igg3k2._.single.css.map*/

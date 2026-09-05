@@ -1,0 +1,60 @@
+.bar {
+  background: linear-gradient(180deg, var(--frame-top), var(--frame-bottom));
+  border-bottom: 1px solid var(--frame-border);
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  padding: 0 6px;
+  display: flex;
+}
+
+.quickAccess {
+  flex: none;
+  align-items: center;
+  gap: 1px;
+  display: flex;
+}
+
+.title {
+  text-align: center;
+  color: #14395f;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  overflow: hidden;
+}
+
+.badge {
+  color: #8a5a00;
+  margin-left: 6px;
+}
+
+.windowButtons {
+  flex: none;
+  gap: 2px;
+  display: flex;
+}
+
+.windowButton {
+  color: #2a4a6b;
+  background: linear-gradient(#f4f9ff, #d8e6f5);
+  border: 1px solid #a8c0d8;
+  border-radius: 2px;
+  justify-content: center;
+  align-items: center;
+  width: 26px;
+  height: 18px;
+  font-size: 10px;
+  display: inline-flex;
+}
+
+.closeButton {
+  background: linear-gradient(#f7b9b9, #e08585);
+  border-color: #c96b6b;
+}
+
+/*# sourceMappingURL=src_components_TitleBar_module_css_1igg3k2._.single.css.map*/

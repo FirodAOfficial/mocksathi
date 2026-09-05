@@ -1,0 +1,249 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr)) minmax(280px, 1.9fr);
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.tileMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 8px;
+  border-radius: 9px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.tileValue {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #17365d;
+}
+
+.tileLabel {
+  font-size: 13px;
+  color: #4a5c6e;
+}
+
+.tileShare {
+  font-size: 12px;
+  color: #7b8b9a;
+}
+
+.correct {
+  background: #eefaf1;
+  border-color: #cbead5;
+}
+
+.correct .tileMark {
+  background: #d6f2de;
+  color: #1f7a35;
+}
+
+.incorrect {
+  background: #fdeef0;
+  border-color: #f7d3d8;
+}
+
+.incorrect .tileMark {
+  background: #fbdade;
+  color: #c02640;
+}
+
+.unattempted {
+  background: #f4f6f8;
+  border-color: #dfe5ea;
+}
+
+.unattempted .tileMark {
+  background: #e6eaee;
+  color: #64748b;
+}
+
+.accuracy {
+  background: #eef4fd;
+  border-color: #cfe0f5;
+}
+
+.accuracy .tileMark {
+  background: #d9e8fa;
+  color: #2f6ea5;
+}
+
+/* Encouragement card --------------------------------------------------- */
+
+.cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3f0fd, #eef4fd);
+  border: 1px solid #ddd7f4;
+}
+
+.ctaBody {
+  display: flex;
+  gap: 10px;
+}
+
+.ctaIcon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ctaTitle {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #5b3fbf;
+}
+
+.ctaText {
+  margin: 0;
+  line-height: 1.45;
+  color: #4a5c6e;
+}
+
+.ctaButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #5b3fbf, #7c4fe0);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ctaButton:hover {
+  background: linear-gradient(90deg, #4e35a6, #6d43c9);
+}
+
+/* Question strip ------------------------------------------------------- */
+
+.summary {
+  padding: 16px 20px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.summaryHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.summaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.summaryIcon {
+  font-size: 16px;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4a5c6e;
+}
+
+.legendDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.legendDot.correct {
+  background: #28a745;
+}
+
+.legendDot.incorrect {
+  background: #e8384f;
+}
+
+.legendDot.unattempted {
+  background: #9aa5b1;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chip.correct {
+  background: #dff5e5;
+  color: #1f7a35;
+  border: 1px solid #c2e9cf;
+}
+
+.chip.incorrect {
+  background: #fcdfe3;
+  color: #c02640;
+  border: 1px solid #f6c4cb;
+}
+
+.chip.unattempted {
+  background: #eceff2;
+  color: #64748b;
+  border: 1px solid #dde3e8;
+}
+
+@media (max-width: 1080px) {
+  .tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cta {
+    grid-column: span 2;
+  }
+}

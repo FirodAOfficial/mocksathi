@@ -1,0 +1,71 @@
+.bar {
+  background: linear-gradient(180deg, var(--status-top), var(--status-bottom));
+  border-top: 1px solid var(--frame-border);
+  height: 24px;
+  color: var(--status-text);
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  display: flex;
+}
+
+.left {
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+
+.separator {
+  background: #9fb6cd;
+  width: 1px;
+  height: 12px;
+}
+
+.readOnly {
+  color: #8a5a00;
+  font-weight: 600;
+}
+
+.notice {
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  overflow: hidden;
+}
+
+.zoom {
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  display: flex;
+}
+
+.zoomButton {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+}
+
+.zoomButton:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.slider {
+  accent-color: #2b6cb0;
+  width: 110px;
+}
+
+.percent {
+  text-align: right;
+  min-width: 38px;
+}
+
+/*# sourceMappingURL=src_components_StatusBar_module_css_1igg3k2._.single.css.map*/

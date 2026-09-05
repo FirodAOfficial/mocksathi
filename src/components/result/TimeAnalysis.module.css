@@ -1,0 +1,148 @@
+.section {
+  padding: 16px 20px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.titleIcon {
+  font-size: 15px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #4a5c6e;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* The chart keeps its aspect ratio and scrolls rather than squashing. */
+.chartScroll {
+  overflow-x: auto;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  min-width: 640px;
+  height: auto;
+}
+
+.axisText {
+  font-size: 11px;
+  fill: #7b8b9a;
+}
+
+.axisTitle {
+  font-size: 11px;
+  fill: #5b6b7b;
+}
+
+/* Totals --------------------------------------------------------------- */
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(240px, 1.5fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.total {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f7f9fc;
+  border: 1px solid #e4eaf0;
+}
+
+.totalIcon {
+  font-size: 20px;
+}
+
+.totalValue {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  color: #17365d;
+  font-variant-numeric: tabular-nums;
+}
+
+.totalLabel {
+  display: block;
+  font-size: 12px;
+  color: #6b7c8d;
+}
+
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eef6fd;
+  border: 1px solid #cfe3f5;
+}
+
+.tipIcon {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.tipTitle {
+  display: block;
+  color: #2f6ea5;
+  margin-bottom: 1px;
+}
+
+.tipBody {
+  display: block;
+  line-height: 1.45;
+  color: #4a5c6e;
+}
+
+@media (max-width: 1080px) {
+  .totals {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .tip {
+    grid-column: span 3;
+  }
+}

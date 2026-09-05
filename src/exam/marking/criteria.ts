@@ -1,0 +1,82 @@
+import type { NormalizedStyleId, ParagraphFormatting } from '@/services/document/types';
+import type { MarkName } from './flatten';
+
+/**
+ * How a criterion names the text it is about.
+ *
+ * `range` is preferred for pure-formatting questions: offsets into the block's
+ * text are unambiguous even when the same phrase appears twice, and the text
+ * does not move because the question never asks the candidate to change it.
+ * `text` is for questions that rewrite the passage, where offsets would shift.
+ */
+export type Target =
+  | { by: 'range'; block: number; from: number; to: number }
+  | { by: 'text'; text: string; occurrence?: number }
+  | { by: 'block'; block: number }
+  /** Everything in one table cell, addressed by its coordinates. */
+  | { by: 'cell'; table?: number; row: number; column: number }
+  | { by: 'document' };
+
+/** Which blocks a paragraph-level criterion applies to. */
+export type BlockSelector = number | 'all';
+
+export interface TextExpectation {
+  equals?: string;
+  contains?: string;
+  notContains?: string;
+  occurrences?: { of: string; count: number };
+  /**
+   * Equals the starting text put through this transformation.
+   *
+   * Lets a question like "change the paragraph to uppercase" be marked without
+   * naming the expected text, so one rubric serves every language the passage
+   * is offered in.
+   */
+  matchesStart?: 'upper' | 'lower' | 'capitalise' | 'toggle' | 'same';
+}
+
+/**
+ * One checkable statement about a submitted document.
+ *
+ * `label` is written for the candidate and is shown verbatim in feedback, so it
+ * should read as the thing they were asked to do — "Bold applied to *quick
+ * brown*" — not as an internal assertion name.
+ */
+export type Criterion = { label: string } & (
+  /** `value` may list alternatives, e.g. either of Word's two reds. */
+  | { kind: 'marked'; target: Target; mark: MarkName; value?: string | number | (string | number)[] }
+  /** Carries no formatting at all — what "remove formatting" must achieve. */
+  | { kind: 'plain'; target: Target }
+  /** One column repeats another, row for row. */
+  | { kind: 'columnsMatch'; table?: number; from: number; to: number; skipHeader?: boolean }
+  | { kind: 'notMarked'; target: Target; mark: MarkName }
+  | { kind: 'blockAttr'; block: BlockSelector; attr: keyof ParagraphFormatting; value: unknown }
+  | { kind: 'blockStyle'; block: BlockSelector; styleId: NormalizedStyleId }
+  | { kind: 'listKind'; block: BlockSelector; listKind: 'bullet' | 'ordered' | null }
+  | { kind: 'text'; block?: number; expect: TextExpectation }
+  /** The text of one table cell. */
+  | { kind: 'cellText'; table?: number; row: number; column: number; expect: TextExpectation }
+  /** Every cell in a column carries an ordered list, i.e. Word's auto number. */
+  | { kind: 'columnAutoNumbered'; table?: number; column: number; skipHeader?: boolean }
+  /**
+   * Nothing changed outside the named targets.
+   *
+   * This is what makes "bold X" also mean "and do not bold anything else": it
+   * compares the submitted projection against the starting one and fails on any
+   * formatting or text difference outside `except`.
+   */
+  | { kind: 'unchanged'; except: Target[] }
+);
+
+/** The answer key for one question. Never sent to the browser. */
+export interface QuestionRubric {
+  number: number;
+  criteria: Criterion[];
+}
+
+export interface CriterionResult {
+  label: string;
+  passed: boolean;
+  /** Why it failed, for feedback. Absent when it passed. */
+  detail?: string;
+}

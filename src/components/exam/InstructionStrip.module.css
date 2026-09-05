@@ -1,0 +1,38 @@
+/*
+ * The task, shown above the page and outside the editor.
+ *
+ * Keeping it out of the document is what gives the marker an unambiguous region
+ * under test — everything in the document belongs to the candidate's answer.
+ */
+.strip {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex: none;
+  padding: 9px 16px;
+  background: #eef4fd;
+  border-bottom: 1px solid #cfe0f5;
+  color: #1f3a55;
+}
+
+.number {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #2f6ea5;
+}
+
+.instruction {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.marks {
+  flex: none;
+  font-size: 11px;
+  color: #5f7387;
+}

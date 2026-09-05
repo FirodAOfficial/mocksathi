@@ -1,0 +1,61 @@
+.button {
+  color: var(--text);
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  display: inline-flex;
+}
+
+.small {
+  width: 24px;
+  height: 24px;
+}
+
+.large {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 3px;
+  width: 54px;
+  min-height: 60px;
+  padding: 4px 2px 3px;
+}
+
+.caption {
+  text-align: center;
+  word-break: break-word;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+.glyph {
+  font-family: Times New Roman, serif;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.button:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.button:active:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.active {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.button:disabled {
+  color: var(--control-disabled-text);
+  cursor: default;
+}
+
+/*# sourceMappingURL=src_components_controls_ToolbarButton_module_css_1igg3k2._.single.css.map*/

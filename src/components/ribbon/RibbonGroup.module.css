@@ -1,0 +1,63 @@
+.group {
+  border-right: 1px solid var(--group-separator);
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 88px;
+  padding: 3px 6px 0;
+  display: flex;
+}
+
+.body {
+  flex: 1;
+  align-items: flex-start;
+  gap: 3px;
+  padding-bottom: 2px;
+  display: flex;
+}
+
+.row {
+  align-items: center;
+  gap: 2px;
+  display: flex;
+}
+
+.column {
+  flex-direction: column;
+  gap: 2px;
+  display: flex;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+  color: var(--group-label);
+  white-space: nowrap;
+  padding: 1px 0 3px;
+  font-size: 11px;
+}
+
+/*# sourceMappingURL=src_components_ribbon_RibbonGroup_module_css_1igg3k2._.single.css.map*/
+
+/* Word's dialog launcher, in the corner of a group's caption. */
+.launcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--group-label);
+  cursor: pointer;
+}
+
+.launcher:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+  color: var(--text);
+}

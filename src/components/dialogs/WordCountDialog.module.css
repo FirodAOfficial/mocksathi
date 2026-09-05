@@ -1,0 +1,41 @@
+.list {
+  min-width: 260px;
+  margin: 0;
+}
+
+.row {
+  border-bottom: 1px solid #e6edf5;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 5px 0;
+  display: flex;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row dt {
+  color: var(--text-muted);
+}
+
+.row dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.button {
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  background: linear-gradient(#fff, #e4ecf6);
+  border-radius: 2px;
+  min-width: 84px;
+  height: 24px;
+}
+
+.button:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/*# sourceMappingURL=src_components_dialogs_WordCountDialog_module_css_1igg3k2._.single.css.map*/

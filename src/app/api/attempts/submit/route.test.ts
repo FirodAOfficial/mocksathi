@@ -1,0 +1,98 @@
+import { Editor } from '@tiptap/core';
+import { NextRequest } from 'next/server';
+import { afterEach, describe, expect, it } from 'vitest';
+import { buildEditorExtensions } from '@/editor/extensions';
+import { findQuestion } from '@/exam/types';
+import { SEED_ATTEMPT } from '@/exam/seedAttempt';
+import type { ExamResult } from '@/exam/result';
+import { POST } from './route';
+
+const editors: Editor[] = [];
+
+afterEach(() => {
+  while (editors.length) editors.pop()?.destroy();
+});
+
+/** Answers question 1 correctly, through the same commands the ribbon uses. */
+function correctAnswerToQuestionOne() {
+  const question = findQuestion(SEED_ATTEMPT, 1)!;
+  const element = document.createElement('div');
+  document.body.appendChild(element);
+  const editor = new Editor({ element, extensions: buildEditorExtensions(), content: question.passage.en });
+  editors.push(editor);
+
+  editor.commands.selectAll();
+  editor.chain().focus().toggleBold().toggleUnderline().run();
+  return editor.getJSON();
+}
+
+function post(body: unknown): Promise<Response> {
+  return POST(
+    new NextRequest('http://localhost/api/attempts/submit', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    }),
+  );
+}
+
+describe('POST /api/attempts/submit', () => {
+  it('marks a correct answer and returns the score', async () => {
+    const response = await post({
+      answers: { 1: correctAnswerToQuestionOne() },
+      timePerQuestion: { 1: 30 },
+      totalTimeSeconds: 45,
+      language: 'en',
+    });
+
+    expect(response.status).toBe(200);
+    const result = (await response.json()) as ExamResult;
+    expect(result.you).toMatchObject({ score: 3, correct: 1, unattempted: 14, timeSeconds: 45 });
+    expect(result.maximumMarks).toBe(50);
+  });
+
+  it('scores an empty paper as zero', async () => {
+    const response = await post({ answers: {}, totalTimeSeconds: 10 });
+    const result = (await response.json()) as ExamResult;
+
+    expect(result.you.score).toBe(0);
+    expect(result.you.unattempted).toBe(15);
+  });
+
+  it('never returns the answer key', async () => {
+    const response = await post({ answers: { 1: correctAnswerToQuestionOne() }, totalTimeSeconds: 5 });
+    const body = await response.text();
+
+    // The criteria and their labels stay on the server.
+    expect(body).not.toContain('criteria');
+    expect(body).not.toContain('is bold');
+    expect(body).not.toContain('unchanged');
+  });
+
+  it('rejects a body that is not JSON', async () => {
+    const response = await post('not json at all');
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('INVALID_SUBMISSION');
+  });
+
+  it('rejects a body with no answers', async () => {
+    const response = await post({ totalTimeSeconds: 5 });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('does not trust marks or passages sent by the client', async () => {
+    const response = await post({
+      answers: { 1: correctAnswerToQuestionOne() },
+      totalTimeSeconds: 5,
+      // All ignored: the paper is loaded server-side.
+      maximumMarks: 5000,
+      you: { score: 50 },
+    });
+
+    const result = (await response.json()) as ExamResult;
+    expect(result.maximumMarks).toBe(50);
+    expect(result.you.score).toBe(3);
+  });
+});

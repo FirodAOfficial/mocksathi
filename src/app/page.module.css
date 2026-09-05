@@ -1,0 +1,139 @@
+.screen {
+  background: linear-gradient(#eef4fb, #cfdff1);
+  place-items: center;
+  height: 100%;
+  padding: 24px;
+  display: grid;
+}
+
+.card {
+  border: 1px solid var(--frame-border);
+  background: #fff;
+  border-radius: 3px;
+  width: min(560px, 100%);
+  padding: 28px 32px 32px;
+  box-shadow: 0 6px 24px #142e4c2e;
+}
+
+.title {
+  color: #17365d;
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  display: block;
+}
+
+.row {
+  gap: 8px;
+  display: flex;
+}
+
+.input {
+  border: 1px solid var(--control-border);
+  min-width: 0;
+  height: 30px;
+  font: inherit;
+  border-radius: 2px;
+  flex: 1;
+  padding: 0 8px;
+}
+
+.input:focus-visible {
+  border-color: var(--focus-ring);
+}
+
+.primary {
+  border: 1px solid var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  cursor: pointer;
+  border-radius: 2px;
+  height: 30px;
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.primary:hover {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 24px 0 16px;
+}
+
+.blank {
+  color: var(--focus-ring);
+}
+
+.hint {
+  color: var(--text-muted);
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/*# sourceMappingURL=src_app_page_module_0cxh65o.css.map*/
+
+.section {
+  margin-bottom: 4px;
+}
+
+.sectionTitle {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.sectionBody {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.select {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  font: inherit;
+  background: #fff;
+}
+
+.secondary {
+  height: 30px;
+  padding: 0 18px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ffffff, #e4ecf6);
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/* Visible to screen readers only: the field is labelled by its section. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

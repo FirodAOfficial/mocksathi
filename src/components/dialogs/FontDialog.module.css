@@ -1,0 +1,103 @@
+.group {
+  margin: 0 0 14px;
+  padding: 8px 12px 12px;
+  border: 1px solid #d7e0e9;
+  border-radius: 3px;
+  min-width: 360px;
+}
+
+.legend {
+  padding: 0 4px;
+  font-weight: 600;
+  color: #17365d;
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 18px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.field label {
+  min-width: 62px;
+}
+
+.input {
+  height: 24px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  font: inherit;
+  padding: 0 4px;
+}
+
+.by {
+  min-width: 0 !important;
+  margin-left: 10px;
+}
+
+.number {
+  width: 68px;
+  height: 24px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  font: inherit;
+  padding: 0 6px;
+}
+
+.number:disabled {
+  background: #f1f4f7;
+  color: var(--control-disabled-text);
+}
+
+.unit {
+  color: var(--text-muted);
+}
+
+/* Mirrors the rendered effects so the dialog previews what OK will do. */
+.preview {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d7e0e9;
+  border-radius: 3px;
+  background: #fbfcfe;
+  text-align: center;
+  font-size: 17px;
+  color: #1b1b1b;
+}
+
+.preview[data-effect='emboss'] {
+  color: #b8b8b8;
+  text-shadow: -1px -1px 0 rgba(255, 255, 255, 0.95), 1px 1px 1px rgba(0, 0, 0, 0.45);
+}
+
+.preview[data-effect='engrave'] {
+  color: #b8b8b8;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.95), -1px -1px 1px rgba(0, 0, 0, 0.45);
+}
+
+.button {
+  min-width: 84px;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  background: linear-gradient(180deg, #ffffff, #e4ecf6);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.primary {
+  font-weight: 600;
+}

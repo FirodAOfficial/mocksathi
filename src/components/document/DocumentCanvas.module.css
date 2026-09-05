@@ -1,0 +1,84 @@
+.canvas {
+  background: var(--canvas-bg);
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.scroll {
+  contain: paint;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-bottom: 32px;
+  overflow: auto;
+}
+
+.scroll::-webkit-scrollbar {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: #6f6f6f;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: #cfcfcf;
+  border: 3px solid #6f6f6f;
+  border-radius: 7px;
+}
+
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: #e8e8e8;
+}
+
+.scroll::-webkit-scrollbar-corner {
+  background: #6f6f6f;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll {
+    scrollbar-width: auto;
+    scrollbar-color: #cfcfcf #6f6f6f;
+  }
+}
+
+.content {
+  margin: 0 auto;
+}
+
+.sizer {
+  flex: none;
+}
+
+.page {
+  background: var(--page-bg);
+  border: 1px solid var(--page-border);
+  transform-origin: 0 0;
+  cursor: text;
+  box-shadow: 0 2px 8px #00000052;
+}
+
+@media print {
+  .canvas {
+    background: #fff;
+  }
+
+  .scroll {
+    contain: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .page {
+    box-shadow: none;
+    border: 0;
+    transform: none !important;
+  }
+}
+
+/*# sourceMappingURL=src_components_document_DocumentCanvas_module_css_1igg3k2._.single.css.map*/

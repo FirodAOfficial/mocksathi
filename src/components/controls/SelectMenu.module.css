@@ -1,0 +1,65 @@
+.trigger {
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 2px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 3px 0 5px;
+  display: inline-flex;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, #fff, var(--control-hover-top));
+}
+
+.triggerOpen {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.trigger:disabled {
+  color: var(--control-disabled-text);
+  cursor: default;
+  background: #f4f6f8;
+}
+
+.value {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.list {
+  flex-direction: column;
+  min-width: 150px;
+  display: flex;
+}
+
+.option {
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 100%;
+  padding: 4px 10px;
+  display: block;
+}
+
+.option:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.optionSelected {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/*# sourceMappingURL=src_components_controls_SelectMenu_module_css_1igg3k2._.single.css.map*/
