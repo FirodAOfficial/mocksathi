@@ -1,0 +1,61 @@
+.largeMenuButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 58px;
+  min-height: 60px;
+  padding: 4px 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.largeMenuButton:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.largeMenuButtonOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.symbolGlyph {
+  font-size: 22px;
+  line-height: 1;
+  font-family: 'Cambria', serif;
+}
+
+.largeCaption {
+  font-size: 11px;
+}
+
+.symbolGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 24px);
+  gap: 1px;
+  padding: 4px;
+}
+
+.symbolCell {
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.symbolCell:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.fieldLabel {
+  min-width: 42px;
+  color: var(--text-muted);
+}

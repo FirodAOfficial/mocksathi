@@ -1,0 +1,52 @@
+.ribbon {
+  flex: none;
+  background: linear-gradient(180deg, var(--ribbon-top), var(--ribbon-bottom));
+  border-bottom: 1px solid var(--ribbon-border);
+}
+
+.tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 24px;
+  padding: 0 6px;
+  background: var(--tabstrip-bg);
+  border-bottom: 1px solid var(--ribbon-border);
+}
+
+.tab {
+  height: 22px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  color: var(--tab-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab:hover:not([aria-selected='true']) {
+  background: var(--tab-hover-bg);
+  border-color: #b9cee6;
+}
+
+.tabActive {
+  background: linear-gradient(180deg, var(--tab-active-bg), var(--ribbon-top));
+  border-color: var(--ribbon-border);
+  /* Covers the strip's bottom rule so the tab merges into the panel. */
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+  font-weight: 600;
+}
+
+.panel {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 92px;
+  padding: 2px 4px;
+  /* Never a scroll container: an absolutely-positioned menu would be clipped
+     by it, and the ribbon itself is fixed chrome that should not scroll. */
+  overflow: visible;
+}

@@ -1,0 +1,59 @@
+/*
+ * Sits inside the document scroll container and matches the page width, so it
+ * scrolls horizontally with the sheet and stays put vertically.
+ */
+.wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 6px 0 4px;
+  background: var(--canvas-bg);
+  flex: none;
+}
+
+.ruler {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  background: #ffffff;
+  border: 1px solid #9fb4c9;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.margin,
+.marginRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #c9d8e8;
+}
+
+.margin {
+  left: 0;
+}
+
+.marginRight {
+  right: 0;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px solid #7d94ab;
+}
+
+.label {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  margin-left: -8px;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 9px;
+  line-height: 1;
+  color: #3d5a76;
+  background: #ffffff;
+}

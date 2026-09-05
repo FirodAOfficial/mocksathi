@@ -1,0 +1,103 @@
+.canvas {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--canvas-bg);
+}
+
+/*
+ * The one scroll container for the document area.
+ *
+ * `justify-content: center` was wrong here: when the page is wider than the
+ * column, centring pushes the overflow out of *both* sides, and it escapes to
+ * sit on top of the side panels. Centring the child with `margin: 0 auto`
+ * instead keeps its left edge pinned to the container when it is too wide, so
+ * the overflow is all on the scrollable side and stays reachable.
+ */
+.scroll {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 32px;
+  /* Nothing may paint outside this box, whatever the zoom. */
+  contain: paint;
+}
+
+/*
+ * Always-visible scrollbars, so a zoomed page is obviously scrollable.
+ *
+ * macOS defaults to overlay scrollbars that occupy no width and fade when idle.
+ * Styling `::-webkit-scrollbar` with an explicit size opts this container into
+ * the classic bars. The standard `scrollbar-*` properties are deliberately not
+ * set alongside these — Chrome honours those in preference to the
+ * pseudo-elements, which puts the overlay behaviour back.
+ */
+.scroll::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: #6f6f6f;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: #cfcfcf;
+  border: 3px solid #6f6f6f;
+  border-radius: 7px;
+}
+
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: #e8e8e8;
+}
+
+.scroll::-webkit-scrollbar-corner {
+  background: #6f6f6f;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll {
+    scrollbar-width: auto;
+    scrollbar-color: #cfcfcf #6f6f6f;
+  }
+}
+
+.content {
+  /* Centres while it fits, and pins to the left edge once it does not. */
+  margin: 0 auto;
+}
+
+.sizer {
+  flex: none;
+}
+
+.page {
+  background: var(--page-bg);
+  border: 1px solid var(--page-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
+  transform-origin: top left;
+  cursor: text;
+}
+
+@media print {
+  .canvas {
+    background: #ffffff;
+  }
+
+  .scroll {
+    overflow: visible;
+    padding: 0;
+    contain: none;
+  }
+
+  .page {
+    border: 0;
+    box-shadow: none;
+    transform: none !important;
+  }
+}

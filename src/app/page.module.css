@@ -1,0 +1,85 @@
+.screen {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #eef4fb, #cfdff1);
+  padding: 24px;
+}
+
+.card {
+  width: min(560px, 100%);
+  background: #ffffff;
+  border: 1px solid var(--frame-border);
+  border-radius: 3px;
+  box-shadow: 0 6px 24px rgba(20, 46, 76, 0.18);
+  padding: 28px 32px 32px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #17365d;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  font: inherit;
+}
+
+.input:focus-visible {
+  border-color: var(--focus-ring);
+}
+
+.primary {
+  height: 30px;
+  padding: 0 18px;
+  border: 1px solid var(--control-hover-border);
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary:hover {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+}
+
+.divider {
+  margin: 24px 0 16px;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.blank {
+  color: var(--focus-ring);
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}

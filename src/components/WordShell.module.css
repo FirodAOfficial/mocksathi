@@ -1,0 +1,60 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--canvas-bg);
+}
+
+.ribbonPlaceholder {
+  flex: none;
+  height: 117px;
+  background: linear-gradient(180deg, var(--ribbon-top), var(--ribbon-bottom));
+  border-bottom: 1px solid var(--ribbon-border);
+}
+
+/* Shown when the countdown ends or the paper is submitted. */
+.lockedBanner {
+  flex: none;
+  padding: 7px 14px;
+  background: #fdecea;
+  border-bottom: 1px solid #e0a8a2;
+  color: #8c1d13;
+  font-weight: 600;
+}
+
+/* The three-column body: question list, document, candidate summary. */
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.main {
+  position: relative;
+  flex: 1;
+  /* Both axes need a zero minimum, or the page pushes the side panels off
+     screen instead of the document area taking the remaining width. */
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media print {
+  .shell {
+    height: auto;
+    overflow: visible;
+  }
+
+  .workspace {
+    display: block;
+  }
+
+  /* Only the document is printed; the application chrome is not. */
+  .ribbonPlaceholder {
+    display: none;
+  }
+}

@@ -1,0 +1,184 @@
+/*
+ * Word 2010 visual language, as design tokens.
+ *
+ * Office 2010 is a very specific look: cool blue gradients, hairline borders in
+ * a mid slate, and amber hover states inherited from Office 2007. Centralising
+ * the palette keeps every control consistent and makes the whole theme
+ * adjustable from one place.
+ */
+
+:root {
+  /* Window frame and ribbon */
+  --frame-top: #e8f1fb;
+  --frame-bottom: #c9dcf0;
+  --frame-border: #7d9bbd;
+
+  --tabstrip-bg: #d3e2f4;
+  --tab-text: #23425e;
+  --tab-active-bg: #fbfdff;
+  --tab-hover-bg: #e9f2fc;
+
+  --ribbon-top: #fcfdff;
+  --ribbon-bottom: #e8f0f9;
+  --ribbon-border: #a5bcd4;
+  --group-separator: #cfdcec;
+  --group-label: #4c6b8a;
+
+  /* Controls */
+  --control-border: #a3b9d0;
+  --control-bg: #ffffff;
+  --control-hover-top: #fff6d6;
+  --control-hover-bottom: #ffdf94;
+  --control-hover-border: #e0b64f;
+  --control-active-top: #ffdf94;
+  --control-active-bottom: #ffc866;
+  --control-checked-top: #ffe7ad;
+  --control-checked-bottom: #ffd171;
+  --control-disabled-text: #9aa5b1;
+
+  /* Document surface */
+  --canvas-bg: #8c8c8c;
+  --page-bg: #ffffff;
+  --page-border: #6f6f6f;
+
+  /* Status bar */
+  --status-top: #dce9f7;
+  --status-bottom: #bed4ec;
+  --status-text: #1f3a55;
+
+  --text: #1b1b1b;
+  --text-muted: #5a6b7d;
+  --focus-ring: #2b6cb0;
+
+  --ui-font: 'Segoe UI', 'Segoe UI Web', Tahoma, Geneva, Verdana, sans-serif;
+  --doc-font: 'Calibri', 'Carlito', 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--canvas-bg);
+  /* The chrome is a fixed application frame; only the document area scrolls. */
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -1px;
+}
+
+/*
+ * Document content styles.
+ *
+ * These live in the global sheet rather than a module because they target
+ * markup ProseMirror generates inside the editor, which CSS Modules cannot
+ * add hashed class names to.
+ */
+.ProseMirror {
+  outline: none;
+  font-family: var(--doc-font);
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #000000;
+}
+
+.ProseMirror > * + * {
+  margin-top: 0;
+}
+
+.ProseMirror p {
+  margin: 0 0 10px;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  font-family: 'Cambria', 'Georgia', serif;
+  color: #365f91;
+  font-weight: 400;
+  margin: 0 0 4px;
+}
+
+.ProseMirror h1 {
+  font-size: 14pt;
+  margin-top: 24px;
+}
+
+.ProseMirror h2 {
+  font-size: 13pt;
+  color: #4f81bd;
+  margin-top: 20px;
+}
+
+.ProseMirror h3 {
+  font-size: 12pt;
+  color: #4f81bd;
+  margin-top: 16px;
+}
+
+.ProseMirror blockquote {
+  margin: 0 0 10px;
+  padding-left: 12px;
+  border-left: 3px solid #c6d9f0;
+  color: #4f6228;
+  font-style: italic;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0 0 10px;
+  padding-left: 32px;
+}
+
+.ProseMirror li > p {
+  margin: 0;
+}
+
+/* Gallery styles that are paragraphs distinguished only by appearance. */
+.ProseMirror .doc-style-Title {
+  font-family: 'Cambria', 'Georgia', serif;
+  font-size: 26pt;
+  color: #17365d;
+  border-bottom: 1px solid #4f81bd;
+  padding-bottom: 4px;
+  margin-bottom: 12px;
+}
+
+.ProseMirror .doc-style-Subtitle {
+  font-size: 12pt;
+  color: #4f81bd;
+  letter-spacing: 0.03em;
+  margin-bottom: 12px;
+}
+
+.ProseMirror .doc-style-NoSpacing {
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+/* Placeholder shown only in a genuinely empty document. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #9aa5b1;
+  pointer-events: none;
+}

@@ -1,0 +1,61 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px 12px;
+  padding: 14px;
+}
+
+.cell {
+  position: relative;
+  height: 34px;
+  border: 1.5px solid #6d7b88;
+  background: #ffffff;
+  color: #17365d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  /* Squared corners: the "not attempted" shape. */
+  border-radius: 3px;
+}
+
+.cell:hover {
+  filter: brightness(1.06);
+}
+
+/* Answered questions are domes, so status reads by shape as well as colour. */
+.attempted {
+  border-radius: 16px 16px 4px 4px;
+  border-color: transparent;
+  background: #3f9c4a;
+  color: #ffffff;
+}
+
+.unattempted {
+  background: #ffffff;
+  color: #17365d;
+}
+
+.current {
+  outline: 2px solid #17365d;
+  outline-offset: 2px;
+}
+
+/* Marked for review: a purple flag in the lower corner, kept distinct from the
+   blue used for "attempted" so the two are not confused. */
+.bookmarked::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  bottom: -4px;
+  width: 10px;
+  height: 10px;
+  background: #7b4fa8;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+}
+
+.empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--text-muted);
+}

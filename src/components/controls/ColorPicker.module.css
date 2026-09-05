@@ -1,0 +1,86 @@
+.split {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.split:hover {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.main,
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.main {
+  flex-direction: column;
+  gap: 1px;
+  width: 24px;
+  height: 24px;
+}
+
+.arrow {
+  width: 14px;
+}
+
+.arrowOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+}
+
+.bar {
+  display: block;
+  width: 16px;
+  height: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+}
+
+.palette {
+  padding: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #a0a0a0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch:hover,
+.swatchSelected {
+  outline: 2px solid var(--control-hover-border);
+  outline-offset: 0;
+}
+
+.clear {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  background: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.clear:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}

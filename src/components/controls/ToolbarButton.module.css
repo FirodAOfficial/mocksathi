@@ -1,0 +1,59 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.small {
+  width: 24px;
+  height: 24px;
+}
+
+.large {
+  flex-direction: column;
+  width: 54px;
+  min-height: 60px;
+  padding: 4px 2px 3px;
+  justify-content: flex-start;
+  gap: 3px;
+}
+
+.caption {
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  word-break: break-word;
+}
+
+.glyph {
+  font-size: 14px;
+  line-height: 1;
+  font-family: 'Times New Roman', serif;
+}
+
+.button:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.button:active:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.active {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.button:disabled {
+  color: var(--control-disabled-text);
+  cursor: default;
+}

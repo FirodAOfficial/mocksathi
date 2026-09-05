@@ -1,0 +1,155 @@
+.divider {
+  display: inline-block;
+  width: 1px;
+  align-self: stretch;
+  margin: 1px 3px;
+  background: var(--group-separator);
+}
+
+.wideGlyph {
+  width: 30px;
+}
+
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 24px;
+  padding: 0 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menuButton:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.menuButtonOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 5px 12px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.menuItemSelected {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/* Styles gallery ------------------------------------------------------- */
+
+/*
+ * Two rows rather than one long scrolling strip, so all eight styles are
+ * reachable without a scrollbar inside the ribbon.
+ */
+.gallery {
+  display: grid;
+  /* Row flow, so the gallery reads left-to-right like Word's does. */
+  grid-template-columns: repeat(4, auto);
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.galleryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 58px;
+  height: 40px;
+  padding: 1px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.galleryItem:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.galleryItemActive {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+  box-shadow: inset 0 0 0 1px #ffffff;
+}
+
+.preview {
+  font-size: 13px;
+  line-height: 1.15;
+  color: #1b1b1b;
+}
+
+.galleryLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.previewNormal {
+  font-family: 'Calibri', sans-serif;
+}
+
+.previewHeading1 {
+  font-family: 'Cambria', serif;
+  color: #365f91;
+  font-size: 14px;
+}
+
+.previewHeading2 {
+  font-family: 'Cambria', serif;
+  color: #4f81bd;
+  font-size: 13px;
+}
+
+.previewHeading3 {
+  font-family: 'Cambria', serif;
+  color: #4f81bd;
+  font-size: 12px;
+}
+
+.previewTitle {
+  font-family: 'Cambria', serif;
+  color: #17365d;
+  font-size: 15px;
+  border-bottom: 1px solid #4f81bd;
+}
+
+.previewSubtitle {
+  color: #4f81bd;
+  letter-spacing: 0.04em;
+}
+
+.previewQuote {
+  font-style: italic;
+  color: #4f6228;
+}

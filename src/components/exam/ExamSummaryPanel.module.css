@@ -1,0 +1,176 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: clamp(250px, 24vw, 360px);
+  min-height: 0;
+  background: #ffffff;
+  border-left: 1px solid #a9ccd6;
+}
+
+/* Header --------------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2ebf3;
+  flex: none;
+}
+
+.avatar {
+  display: inline-flex;
+  flex: none;
+}
+
+.name {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 400;
+  color: #17365d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filterButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  color: #2f6ea5;
+  cursor: pointer;
+}
+
+.filterButton:hover,
+.filterButtonOpen {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+  color: #17365d;
+}
+
+.filterMenu {
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+}
+
+.filterOption {
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filterOption:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.filterOptionActive {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+/* Legend --------------------------------------------------------------- */
+
+.legend {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: 5px 16px;
+  margin: 0;
+  padding: 10px 12px;
+  list-style: none;
+  border-bottom: 1px solid #e2ebf3;
+  flex: none;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #33475b;
+}
+
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.swatchAttempted {
+  background: #3f9c4a;
+}
+
+.swatchMarked {
+  background: #7b4fa8;
+}
+
+.swatchUnattempted {
+  background: #ffffff;
+  border-color: #6d7b88;
+  color: #17365d;
+}
+
+/* Sections ------------------------------------------------------------- */
+
+.sections {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sectionName {
+  margin: 0;
+  padding: 7px 14px;
+  background: #cfe0ef;
+  font-size: 13px;
+  font-weight: 400;
+  color: #17365d;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sectionLabel {
+  font-weight: 700;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The panels are review chrome, not part of the document being printed. */
+@media print {
+  .panel {
+    display: none;
+  }
+}

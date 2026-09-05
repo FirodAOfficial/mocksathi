@@ -1,0 +1,85 @@
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e2ebf3;
+  background: #f7fafd;
+  flex: none;
+}
+
+/* A statement of the derived state, since there is no button that sets it. */
+.state {
+  margin: 0;
+  font-size: 11px;
+  color: #4a6076;
+}
+
+.state strong {
+  color: #17365d;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.action,
+.nav {
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid #a9c6de;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #17365d;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.action:hover:not(:disabled),
+.nav:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.action:disabled,
+.nav:disabled,
+.submit:disabled {
+  color: var(--control-disabled-text);
+  background: #eef2f6;
+  border-color: #d3dde6;
+  cursor: default;
+}
+
+/* The state a question is currently in reads as a pressed button. */
+.actionOn {
+  background: linear-gradient(180deg, #d7ecda, #b9dcbe);
+  border-color: #6da975;
+  font-weight: 600;
+}
+
+.actionMarked {
+  background: linear-gradient(180deg, #e6dcf2, #cfbde6);
+  border-color: #8f6cb5;
+  font-weight: 600;
+}
+
+.nav {
+  background: #cfe0ef;
+}
+
+.submit {
+  height: 34px;
+  border: 1px solid #2f7a38;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #5aa85f, #3f9c4a);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: linear-gradient(180deg, #66b96c, #45a851);
+}

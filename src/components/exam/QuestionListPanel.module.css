@@ -1,0 +1,180 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: clamp(210px, 19vw, 300px);
+  min-height: 0;
+  padding: 14px 0 10px 14px;
+  background: #c8e3ea;
+  border-right: 1px solid #a9ccd6;
+}
+
+.heading {
+  margin: 0 14px 14px 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: #101820;
+}
+
+/*
+ * The scroll container. `min-height: 0` is what actually lets it scroll — a
+ * flex child defaults to its content height and would push the panel instead.
+ */
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Reserves the bar's width so the cards do not shift when the list becomes
+     scrollable. */
+  scrollbar-gutter: stable;
+}
+
+/*
+ * An always-visible scrollbar, because it is the cue that there are more
+ * questions below.
+ *
+ * macOS defaults to overlay scrollbars, which occupy no width and fade out when
+ * idle. Styling `::-webkit-scrollbar` with an explicit width opts this
+ * container into the classic, permanently visible bar instead.
+ *
+ * The standard `scrollbar-width`/`scrollbar-color` properties are deliberately
+ * *not* set alongside these: Chrome honours the standard properties in
+ * preference to the pseudo-elements, and setting them puts the overlay
+ * behaviour back. They are applied below only where the pseudo-elements are
+ * unsupported.
+ */
+.list::-webkit-scrollbar {
+  width: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.list::-webkit-scrollbar-track {
+  background: #aed4de;
+  border-radius: 6px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: #4f8496;
+  border: 2px solid #aed4de;
+  border-radius: 6px;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+  background: #3d6c7c;
+}
+
+/* Firefox: no webkit pseudo-elements, but its scrollbars are already
+   permanently visible, so only the colours are needed. */
+@supports not selector(::-webkit-scrollbar) {
+  .list {
+    scrollbar-width: thin;
+    scrollbar-color: #4f8496 #aed4de;
+  }
+}
+
+.list:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.item {
+  flex: none;
+  min-height: 56px;
+  border-radius: 3px;
+  background: #daeef4;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: #e8f6fa;
+}
+
+.itemInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  min-height: 56px;
+  padding: 8px 14px;
+}
+
+.number {
+  flex: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #101820;
+  min-width: 20px;
+}
+
+.badges {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: none;
+  margin-left: auto;
+}
+
+/* A question whose text has been changed from its starting document. */
+.editedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2f8fd0;
+}
+
+.markedDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7b4fa8;
+}
+
+.prompt {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #3c5568;
+  /* Two lines, then ellipsis: the list is a map of the paper, not the paper. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/*
+ * The selected question is drawn as a right-pointing arrow, matching the
+ * design. Two stacked clip paths give the outline: the outer element is the
+ * black edge, the inner one the white face inset by the border width.
+ */
+.itemSelected {
+  background: #101820;
+  padding: 2px;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%);
+}
+
+.itemSelected:hover {
+  background: #101820;
+}
+
+.itemSelected .itemInner {
+  background: #ffffff;
+  clip-path: polygon(0 0, calc(100% - 21px) 0, 100% 50%, calc(100% - 21px) 100%, 0 100%);
+  padding-right: 30px;
+}
+
+.itemSelected .number {
+  font-size: 24px;
+}
+
+/* The panels are review chrome, not part of the document being printed. */
+@media print {
+  .panel {
+    display: none;
+  }
+}

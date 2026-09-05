@@ -1,0 +1,58 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  padding: 0 6px;
+  background: linear-gradient(180deg, var(--frame-top), var(--frame-bottom));
+  border-bottom: 1px solid var(--frame-border);
+  flex: none;
+}
+
+.quickAccess {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex: none;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 400;
+  color: #14395f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  margin-left: 6px;
+  color: #8a5a00;
+}
+
+.windowButtons {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.windowButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 18px;
+  font-size: 10px;
+  color: #2a4a6b;
+  border: 1px solid #a8c0d8;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #f4f9ff, #d8e6f5);
+}
+
+.closeButton {
+  background: linear-gradient(180deg, #f7b9b9, #e08585);
+  border-color: #c96b6b;
+}
