@@ -41,11 +41,20 @@ export function buildEditorExtensions(): AnyExtension[] {
     // Shift-Enter is text entry, so it is the one binding kept anywhere.
     ribbonOnly(HardBreak, ['Shift-Enter']),
 
-    // Lists. ListKeymap is omitted entirely: Tab/Shift-Tab nesting is a
-    // keyboard action, and nesting is driven from the ribbon's list controls.
+    /*
+     * Lists keep Enter, which starts the next bullet.
+     *
+     * That is text entry — how you get to the next line — in the same category
+     * as Shift-Enter and the table's Tab, not a formatting command. Without it
+     * Enter falls through to the base keymap, which adds a paragraph inside the
+     * current bullet, so the next bullet only appeared on a second press.
+     *
+     * Tab and Shift-Tab stay stripped: nesting a list item is formatting, and
+     * formatting comes from the ribbon.
+     */
     ribbonOnly(BulletList),
     ribbonOnly(OrderedList),
-    ribbonOnly(ListItem),
+    ribbonOnly(ListItem, ['Enter']),
 
     /*
      * Tables keep Tab and Shift-Tab.

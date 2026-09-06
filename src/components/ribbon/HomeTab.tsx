@@ -4,7 +4,6 @@ import type { Editor } from '@tiptap/react';
 import {
   FONT_FAMILIES,
   FONT_SIZES,
-  LETTER_CASES,
   LINE_SPACING_OPTIONS,
   changeCase,
   changeIndent,
@@ -21,6 +20,7 @@ import {
   toggleBulletList,
   toggleOrderedList,
 } from '@/editor/ribbonActions';
+import { LETTER_CASES } from '@/utils/letterCase';
 import type { ClipboardActions } from '@/editor/useClipboard';
 import type { FormatState } from '@/editor/useFormatState';
 import type { NormalizedStyleId, ParagraphBorders } from '@/services/document/types';

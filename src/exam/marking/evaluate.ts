@@ -1,6 +1,6 @@
 import type { ParagraphFormatting } from '@/services/document/types';
 import type { BlockSelector, Criterion, CriterionResult, Target, TextExpectation } from './criteria';
-import { applyCase } from '@/editor/ribbonActions';
+import { applyCase } from '@/utils/letterCase';
 import { hasMark, isPlain, marksEqual, normaliseText, type FlatDocument } from './flatten';
 
 /**

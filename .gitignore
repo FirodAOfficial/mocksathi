@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Ai tooling
 graphify-out
+
+# IDE
+.superbrain
