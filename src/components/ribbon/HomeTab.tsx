@@ -5,8 +5,11 @@ import {
   FONT_FAMILIES,
   FONT_SIZES,
   LINE_SPACING_OPTIONS,
+  MAX_FONT_SIZE_PT,
+  MIN_FONT_SIZE_PT,
   changeCase,
   changeIndent,
+  changeListLevel,
   clearFormatting,
   setAlignment,
   setBorders,
@@ -15,6 +18,7 @@ import {
   setHighlightColor,
   setLineSpacing,
   setParagraphStyle,
+  sortParagraphs,
   setTextColor,
   stepFontSize,
   toggleBulletList,
@@ -24,7 +28,9 @@ import { LETTER_CASES } from '@/utils/letterCase';
 import type { ClipboardActions } from '@/editor/useClipboard';
 import type { FormatState } from '@/editor/useFormatState';
 import type { NormalizedStyleId, ParagraphBorders } from '@/services/document/types';
+import { useUiStore } from '@/state/uiStore';
 import { ColorPicker, HIGHLIGHT_PALETTE } from '../controls/ColorPicker';
+import { NumberCombo } from '../controls/NumberCombo';
 import { SelectMenu } from '../controls/SelectMenu';
 import { ToolbarButton } from '../controls/ToolbarButton';
 import { Popover } from '../controls/Popover';
@@ -72,6 +78,9 @@ const BORDER_OPTIONS: { label: string; value: ParagraphBorders | null }[] = [
  * the command behaviour is testable without mounting the ribbon.
  */
 export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFontDialog }: HomeTabProps) {
+  const showFormattingMarks = useUiStore((state) => state.showFormattingMarks);
+  const toggleFormattingMarks = useUiStore((state) => state.toggleFormattingMarks);
+
   return (
     <>
       <RibbonGroup label="Clipboard">
@@ -103,11 +112,13 @@ export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFo
               }))}
               onChange={(family) => setFontFamily(editor, family)}
             />
-            <SelectMenu
+            <NumberCombo
               label="Font Size"
               width={52}
               value={format.fontSize}
-              options={FONT_SIZES.map((size) => ({ value: size, label: String(size) }))}
+              options={FONT_SIZES}
+              min={MIN_FONT_SIZE_PT}
+              max={MAX_FONT_SIZE_PT}
               onChange={(size) => setFontSize(editor, size)}
             />
             <ToolbarButton label="Grow Font" icon="grow-font" onClick={() => stepFontSize(editor, 1)} />
@@ -218,7 +229,7 @@ export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFo
               icon="text-color"
               currentColor={format.color}
               defaultColor="#c00000"
-              clearLabel="Automatic"
+              clearLabel="Clear"
               onSelect={(color) => setTextColor(editor, color)}
             />
           </RibbonRow>
@@ -230,9 +241,41 @@ export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFo
           <RibbonRow>
             <ToolbarButton label="Bullets" icon="bullet-list" active={format.bulletList} onClick={() => toggleBulletList(editor)} />
             <ToolbarButton label="Numbering" icon="ordered-list" active={format.orderedList} onClick={() => toggleOrderedList(editor)} />
+            {/*
+              Word's Multilevel List, split into the two commands it exists to
+              perform. Tab and Shift-Tab are stripped from the list extension
+              because nesting is formatting, and formatting comes from the
+              ribbon — these are where it comes from.
+            */}
+            <ToolbarButton
+              label="Decrease List Level"
+              icon="indent-decrease"
+              disabled={!format.bulletList && !format.orderedList}
+              disabledReason="the cursor is not in a list"
+              onClick={() => changeListLevel(editor, -1)}
+            />
+            <ToolbarButton
+              label="Increase List Level"
+              icon="indent-increase"
+              disabled={!format.bulletList && !format.orderedList}
+              disabledReason="the cursor is not in a list"
+              onClick={() => changeListLevel(editor, 1)}
+            />
             <span className={styles.divider} />
             <ToolbarButton label="Decrease Indent" icon="indent-decrease" onClick={() => changeIndent(editor, -1)} />
             <ToolbarButton label="Increase Indent" icon="indent-increase" onClick={() => changeIndent(editor, 1)} />
+            <span className={styles.divider} />
+            <ToolbarButton
+              label="Sort"
+              glyph={<span>A↓</span>}
+              onClick={() => sortParagraphs(editor, 1)}
+            />
+            <ToolbarButton
+              label="Show/Hide Formatting Marks"
+              glyph={<span>¶</span>}
+              active={showFormattingMarks}
+              onClick={toggleFormattingMarks}
+            />
           </RibbonRow>
 
           <RibbonRow>

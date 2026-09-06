@@ -10,6 +10,11 @@ import styles from './ResultScreen.module.css';
 export interface ResultScreenProps {
   result: ExamResult;
   /**
+   * Opens the worked solutions. Omitted where there is no paper behind the
+   * result to draw them from, and the button then says so rather than lying.
+   */
+  onViewSolutions?: () => void;
+  /**
    * Where "Back to Tests" goes. The result screen has no opinion about what
    * came before it, so the destination is supplied by whoever renders it.
    */
@@ -23,7 +28,7 @@ export interface ResultScreenProps {
  * is what lets the preview route render the approved design figures and the
  * live app render a real submission through the same components.
  */
-export function ResultScreen({ result, backHref = '/' }: ResultScreenProps) {
+export function ResultScreen({ result, onViewSolutions, backHref = '/' }: ResultScreenProps) {
   const qualified = outcomeOf(result) === 'qualified';
 
   const meta: { icon: MetaIcon; tone: string; value: string; label: string }[] = [
@@ -52,7 +57,7 @@ export function ResultScreen({ result, backHref = '/' }: ResultScreenProps) {
           <Link href={backHref} className={styles.ghostButton}>
             <span aria-hidden="true">←</span> Back to Tests
           </Link>
-          <ViewSolutionsButton />
+          <ViewSolutionsButton onClick={onViewSolutions} />
         </div>
       </header>
 
@@ -86,7 +91,7 @@ export function ResultScreen({ result, backHref = '/' }: ResultScreenProps) {
             Review detailed solutions, answer explanations and topic-wise analysis.
           </span>
         </span>
-        <ViewSolutionsButton variant="outline" />
+        <ViewSolutionsButton variant="outline" onClick={onViewSolutions} />
       </section>
 
       <footer className={styles.footer}>
@@ -110,17 +115,21 @@ export function ResultScreen({ result, backHref = '/' }: ResultScreenProps) {
   );
 }
 
-/**
- * Solutions are not part of this build — there is no answer key and no
- * explanation content — so the control says so rather than pretending.
- */
-function ViewSolutionsButton({ variant = 'solid' }: { variant?: 'solid' | 'outline' }) {
+/** Disabled without a handler, rather than pretending to lead somewhere. */
+function ViewSolutionsButton({
+  variant = 'solid',
+  onClick,
+}: {
+  variant?: 'solid' | 'outline';
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
       className={variant === 'solid' ? styles.primaryButton : styles.outlineButton}
-      disabled
-      title="View Solutions — solutions are not available in this build"
+      disabled={!onClick}
+      onClick={onClick}
+      title={onClick ? 'View Solutions' : 'View Solutions — not available for this result'}
     >
       <MetaIconMark name="paper" />
       View Solutions

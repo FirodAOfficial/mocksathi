@@ -45,7 +45,17 @@ interface ExamState {
   questionOpenedAt: number | null;
 
   setAttempt: (attempt: ExamAttempt) => void;
-  setLanguage: (language: Language) => void;
+  /**
+   * Begins a fresh sitting in the given language.
+   *
+   * This store outlives any one paper: it is a module singleton, so a candidate
+   * who finishes a paper and walks back to the instructions without a full page
+   * load still holds the previous attempt's answers, timings, review flags and —
+   * worst of all — its `submittedBy`, which would drop them straight back onto
+   * the result screen. Starting a paper therefore clears the last one rather
+   * than assuming a reload did it.
+   */
+  startAttempt: (language: Language) => void;
   selectQuestion: (number: number) => void;
   stepQuestion: (direction: 1 | -1) => void;
 
@@ -55,7 +65,6 @@ interface ExamState {
 
   toggleMarkedForReview: (number: number) => void;
 
-  startClock: () => void;
   /** Banks time on the open question without moving away from it. */
   bankTime: () => void;
   submit: (reason: SubmissionReason) => void;
@@ -101,13 +110,27 @@ export const useExamStore = create<ExamState>((set, get) => ({
       questionOpenedAt: Date.now(),
     }),
 
-  /*
-   * Switching language swaps every passage, so any answers written against the
-   * old ones are discarded rather than left to be marked against text the
-   * candidate never saw. In practice this only runs before the paper starts.
-   */
-  setLanguage: (language) =>
-    set((state) => (state.language === language ? state : { language, answers: {} })),
+  startAttempt: (language) =>
+    set((state) => ({
+      language,
+      answers: {},
+      submittedBy: null,
+      selectedNumber: allQuestions(state.attempt)[0]?.number ?? 1,
+      timePerQuestion: {},
+      startedAt: Date.now(),
+      questionOpenedAt: Date.now(),
+      // Review flags live on the questions themselves, so they have to be
+      // cleared here too or the new paper opens with the last one's marks.
+      attempt: {
+        ...state.attempt,
+        sections: state.attempt.sections.map((section) => ({
+          ...section,
+          questions: section.questions.map((question) =>
+            question.bookmarked ? { ...question, bookmarked: false } : question,
+          ),
+        })),
+      },
+    })),
 
   selectQuestion: (selectedNumber) =>
     set((state) => (state.selectedNumber === selectedNumber ? state : { ...bankOpenQuestion(state), selectedNumber })),
@@ -145,17 +168,10 @@ export const useExamStore = create<ExamState>((set, get) => ({
       },
     })),
 
-  // Submitting is one-way, and the first reason wins: a candidate pressing
-  // Submit as the clock runs out should not have it recorded as a timeout.
-  // Idempotent: the clock starts on the first mount and is not restarted by
-  // re-renders or by a component remounting.
-  startClock: () =>
-    set((state) =>
-      state.startedAt === null ? { startedAt: Date.now(), questionOpenedAt: Date.now() } : state,
-    ),
-
   bankTime: () => set((state) => bankOpenQuestion(state)),
 
+  // Submitting is one-way, and the first reason wins: a candidate pressing
+  // Submit as the clock runs out should not have it recorded as a timeout.
   submit: (reason) =>
     set((state) => (state.submittedBy ? state : { ...bankOpenQuestion(state), submittedBy: reason })),
 }));

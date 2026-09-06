@@ -1,5 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NOT_QUALIFIED_RESULT, QUALIFIED_RESULT } from '@/exam/result';
 import { ResultScreen } from './ResultScreen';
 
@@ -71,14 +72,31 @@ describe('ResultScreen — qualified', () => {
     expect(within(analysis).getByText('00:04:35')).toBeInTheDocument();
   });
 
-  it('offers a way back and a way on, and does not pretend to have solutions', () => {
+  it('offers a way back and a way on', () => {
     expect(screen.getByRole('link', { name: /Back to Tests/ })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: /Attempt Another Test/ })).toHaveAttribute('href', '/');
+  });
 
+  it('disables View Solutions when no handler was supplied', () => {
+    // Rendered without `onViewSolutions`, so there is nothing behind the
+    // button — it says so rather than leading nowhere.
     for (const button of screen.getAllByRole('button', { name: /View Solutions/ })) {
       expect(button).toBeDisabled();
-      expect(button).toHaveAttribute('title', expect.stringContaining('not available in this build'));
+      expect(button).toHaveAttribute('title', expect.stringContaining('not available'));
     }
+  });
+
+  it('enables View Solutions once there is somewhere to go', async () => {
+    cleanup();
+    const onViewSolutions = vi.fn();
+    render(<ResultScreen result={QUALIFIED_RESULT} onViewSolutions={onViewSolutions} />);
+
+    const buttons = screen.getAllByRole('button', { name: /View Solutions/ });
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) expect(button).toBeEnabled();
+
+    await userEvent.click(buttons[0]!);
+    expect(onViewSolutions).toHaveBeenCalledTimes(1);
   });
 });
 

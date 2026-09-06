@@ -22,7 +22,7 @@ import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
 import { QuestionListPanel } from './exam/QuestionListPanel';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
-import { ResultScreen } from './result/ResultScreen';
+import { ResultView } from './result/ResultView';
 import { Ribbon } from './ribbon/Ribbon';
 import styles from './WordShell.module.css';
 
@@ -56,14 +56,15 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
   const clipboard = useClipboard(editor);
 
   const readOnly = useUiStore((state) => state.readOnly);
+  const focusMode = useUiStore((state) => state.focusMode);
   const locked = useExamStore(selectIsLocked);
   const submittedBy = useExamStore((state) => state.submittedBy);
   const answers = useExamStore((state) => state.answers);
+  const attempt = useExamStore((state) => state.attempt);
   const startedAt = useExamStore((state) => state.startedAt);
-  const startClock = useExamStore((state) => state.startClock);
+  const startAttempt = useExamStore((state) => state.startAttempt);
   const timePerQuestion = useExamStore((state) => state.timePerQuestion);
   const language = useExamStore((state) => state.language);
-  const setLanguage = useExamStore((state) => state.setLanguage);
 
   /** The marked result, once the server has returned it. */
   const [result, setResult] = useState<ExamResult | null>(null);
@@ -104,15 +105,19 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
 
   const handlePageCount = useCallback((value: number) => setPages(value), []);
 
-  // The paper's language is fixed before it starts; this carries the choice
-  // made on the home page into the store.
-  useEffect(() => setLanguage(examLanguage), [setLanguage, examLanguage]);
-
-  // The clock starts on the client, so the result can report how long the paper
-  // took. `startClock` ignores everything after the first call.
+  /*
+   * Opening the exam shell starts a sitting: the clock runs from here, and the
+   * language chosen on the instructions page is carried in.
+   *
+   * It also clears whatever the last paper left behind. The exam store is a
+   * module singleton, so walking from a result screen back to the instructions
+   * and starting again is a client-side navigation that never resets it — and
+   * a stale `submittedBy` would put the candidate back on the result screen
+   * instead of a blank paper.
+   */
   useEffect(() => {
-    if (exam) startClock();
-  }, [exam, startClock]);
+    if (exam) startAttempt(examLanguage);
+  }, [exam, startAttempt, examLanguage]);
 
   /*
    * Marking happens on the server, so closing the paper starts a request rather
@@ -156,7 +161,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
    * part to play.
    */
   if (exam && submittedBy) {
-    if (result) return <ResultScreen result={result} backHref="/" />;
+    if (result) return <ResultView result={result} attempt={attempt} answers={answers} language={language} backHref="/" />;
 
     return (
       <div className={styles.marking} role="status" aria-live="polite">
@@ -185,7 +190,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         readOnly={readOnly}
       />
 
-      {editor ? (
+      {editor && !focusMode ? (
         <Ribbon
           editor={editor}
           format={format}
@@ -195,6 +200,10 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
         />
+      ) : focusMode ? (
+        // Focus hides the ribbon outright rather than reserving its height —
+        // the point of the mode is to give the space back to the document.
+        <FocusExit />
       ) : (
         // Reserves the ribbon's height so the chrome does not jump once the
         // editor finishes mounting.
@@ -211,7 +220,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         panels can be removed without the editor knowing they existed.
       */}
       <div className={styles.workspace}>
-        {exam ? <QuestionListPanel /> : null}
+        {exam && !focusMode ? <QuestionListPanel /> : null}
 
         <main className={styles.main}>
           {exam ? <InstructionStrip /> : null}
@@ -222,7 +231,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
           {status === 'error' && error ? <DocumentErrorOverlay error={error} onRetry={retry} /> : null}
         </main>
 
-        {exam ? (
+        {exam && !focusMode ? (
           <ExamSummaryPanel
             onClearAnswer={questionAnswers.clearCurrent}
             onSaveAnswer={questionAnswers.saveCurrent}
@@ -246,6 +255,25 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
           onClose={() => setDialog(null)}
         />
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * The way back out of Focus.
+ *
+ * Focus removes the ribbon, so the button that turns it off has to survive it —
+ * otherwise the mode is a trap for anyone who cannot use the View tab to leave
+ * because the View tab is gone.
+ */
+function FocusExit() {
+  const toggleFocusMode = useUiStore((state) => state.toggleFocusMode);
+
+  return (
+    <div className={styles.focusBar}>
+      <button type="button" className={styles.focusExit} onClick={toggleFocusMode}>
+        Exit Focus
+      </button>
     </div>
   );
 }

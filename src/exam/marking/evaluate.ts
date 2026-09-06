@@ -1,7 +1,21 @@
-import type { ParagraphFormatting } from '@/services/document/types';
-import type { BlockSelector, Criterion, CriterionResult, Target, TextExpectation } from './criteria';
+import type { ParagraphFormatting, RunFormatting } from '@/services/document/types';
+import type {
+  BlockSelector,
+  Criterion,
+  CriterionResult,
+  Exemption,
+  Target,
+  TextExpectation,
+} from './criteria';
 import { applyCase } from '@/utils/letterCase';
-import { hasMark, isPlain, marksEqual, normaliseText, type FlatDocument } from './flatten';
+import {
+  hasMark,
+  isPlain,
+  markProperty,
+  marksEqualExcept,
+  normaliseText,
+  type FlatDocument,
+} from './flatten';
 
 /**
  * Evaluates one criterion against a submitted document.
@@ -287,47 +301,87 @@ function checkText(
 }
 
 /**
- * Nothing changed outside the named targets.
+ * Nothing changed that the question did not ask for.
  *
- * Compares character text and formatting only — block-level properties are left
- * alone, because a question that legitimately changes alignment or spacing
- * asserts that with `blockAttr` instead. Since this is used on formatting
- * questions, where the wording is not meant to change at all, any text
- * difference fails outright.
+ * Every difference between the starting document and the submitted one is a
+ * change the candidate made. The exemptions say which of those were asked for;
+ * anything else — a second mark alongside the right one, an alignment nobody
+ * requested, a heading style — is a change too many, and fails.
+ *
+ * The wording is compared outright: these are formatting questions, so the text
+ * is never meant to move.
  */
 function checkUnchanged(
-  except: Target[],
+  except: Exemption[],
   submitted: FlatDocument,
   start: FlatDocument,
   fail: (detail: string) => CriterionResult,
   pass: () => CriterionResult,
 ): CriterionResult {
-  if (submitted.chars.length !== start.chars.length) {
+  if (submitted.chars.length !== start.chars.length || submitted.blocks.length !== start.blocks.length) {
     return fail('The wording of the passage was changed.');
   }
 
-  const exempt = new Set<number>();
-  for (const target of except) {
-    for (const index of resolveTarget(target, submitted) ?? []) exempt.add(index);
-  }
+  /** Character index -> the formatting properties it was allowed to gain. */
+  const allowedMarks = new Map<number, Set<keyof RunFormatting>>();
+  /** Block index -> the paragraph properties it was allowed to gain. */
+  const allowedParagraph = new Map<number, Set<keyof ParagraphFormatting>>();
 
-  // Word selects the trailing space with a double-click, so a space touching an
-  // exempt span is forgiven. Formatting one extra space is not a wrong answer.
-  for (const index of [...exempt]) {
-    for (const neighbour of [index - 1, index + 1]) {
-      const char = submitted.chars[neighbour];
-      if (char && /\s/.test(char.char)) exempt.add(neighbour);
+  const allowAt = (index: number, marks: (keyof RunFormatting)[]): void => {
+    const existing = allowedMarks.get(index) ?? new Set<keyof RunFormatting>();
+    for (const mark of marks) existing.add(mark);
+    allowedMarks.set(index, existing);
+  };
+
+  for (const exemption of except) {
+    const indices = resolveTarget(exemption.target, submitted) ?? [];
+    const marks = (exemption.marks ?? []).map(markProperty);
+
+    for (const index of indices) {
+      allowAt(index, marks);
+      // Word selects the trailing space with a double-click, so a space next to
+      // an exempt span is forgiven — formatting one extra space is not a wrong
+      // answer, and it gets exactly the same allowance, not a blanket pass.
+      for (const neighbour of [index - 1, index + 1]) {
+        const char = submitted.chars[neighbour];
+        if (char && /\s/.test(char.char)) allowAt(neighbour, marks);
+      }
+    }
+
+    for (const block of new Set(indices.map((index) => submitted.chars[index]!.block))) {
+      const existing = allowedParagraph.get(block) ?? new Set<keyof ParagraphFormatting>();
+      for (const attr of exemption.paragraph ?? []) existing.add(attr);
+      allowedParagraph.set(block, existing);
     }
   }
 
+  const none = new Set<never>();
+
   for (let index = 0; index < submitted.chars.length; index += 1) {
-    if (exempt.has(index)) continue;
     const after = submitted.chars[index]!;
     const before = start.chars[index]!;
 
     if (after.char !== before.char) return fail('The wording of the passage was changed.');
-    if (!marksEqual(after.marks, before.marks)) {
-      return fail('Formatting was applied to text that should have been left alone.');
+    if (!marksEqualExcept(after.marks, before.marks, allowedMarks.get(index) ?? none)) {
+      return fail('Formatting was applied that the question did not ask for.');
+    }
+  }
+
+  for (let index = 0; index < submitted.blocks.length; index += 1) {
+    const after = submitted.blocks[index]!;
+    const before = start.blocks[index]!;
+    const allowed = allowedParagraph.get(index) ?? none;
+
+    if (after.styleId !== before.styleId) return fail('A paragraph style was applied that was not asked for.');
+    if ((after.list?.kind ?? null) !== (before.list?.kind ?? null)) {
+      return fail('A list was applied that was not asked for.');
+    }
+
+    for (const attr of Object.keys(after.paragraph) as (keyof ParagraphFormatting)[]) {
+      if (allowed.has(attr)) continue;
+      if (!valuesEqual(after.paragraph[attr], before.paragraph[attr])) {
+        return fail('Paragraph formatting was applied that the question did not ask for.');
+      }
     }
   }
 

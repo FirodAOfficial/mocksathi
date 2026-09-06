@@ -36,9 +36,36 @@ export function localised<T>(value: Localised<T>, language: Language): T {
  */
 export type QuestionStatus = 'attempted' | 'unattempted';
 
+/**
+ * How the passage looks once the question has been answered correctly.
+ *
+ * Held as editor formatting rather than a second copy of the passage, so the
+ * model answer cannot drift out of step with the text the candidate was given.
+ * It is public: the instruction already says what to apply. What counts as
+ * correct is still decided server-side, against the answer key.
+ */
+export interface ModelAnswer {
+  /**
+   * Which characters of the first paragraph are formatted.
+   *
+   * `'all'` for the usual "format the paragraph"; a character range for the
+   * questions that name one line.
+   */
+  scope: 'all' | { from: number; to: number };
+  /** Marks applied to that text, in editor JSON form. */
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
+  /** Paragraph attributes set on the block. */
+  attrs?: Record<string, unknown>;
+}
+
+export type Difficulty = 'Easy' | 'Medium' | 'Hard';
+
 export interface ExamQuestion {
   /** 1-based, as shown to the candidate. */
   number: number;
+  /** What the question exercises, shown on the review screen. */
+  topic: string;
+  difficulty: Difficulty;
   /**
    * What the candidate is asked to do — "Make the words *quick brown* bold".
    *
@@ -55,6 +82,17 @@ export interface ExamQuestion {
    * the passage itself, which keeps one answer key correct for both.
    */
   passage: Localised<JSONContent>;
+  /**
+   * How the operation is performed, step by step.
+   *
+   * Shown on the solutions screen after the paper closes. This is teaching
+   * material, not the answer key: it describes the ribbon route, which the
+   * instruction already implies, so it is safe to ship to the browser. What
+   * counts as correct lives server-side in the question bank.
+   */
+  solution: Localised<string[]>;
+  /** The passage as it looks when the question has been answered correctly. */
+  modelAnswer: ModelAnswer;
   /** Marks awarded for getting the whole question right. */
   marks: number;
   /** Flagged by the candidate to come back to. */

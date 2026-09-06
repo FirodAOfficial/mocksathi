@@ -47,7 +47,7 @@ describe('POST /api/attempts/submit', () => {
 
     expect(response.status).toBe(200);
     const result = (await response.json()) as ExamResult;
-    expect(result.you).toMatchObject({ score: 3, correct: 1, unattempted: 14, timeSeconds: 45 });
+    expect(result.you).toMatchObject({ score: 4, correct: 1, unattempted: 14, timeSeconds: 45 });
     expect(result.maximumMarks).toBe(50);
   });
 
@@ -59,14 +59,19 @@ describe('POST /api/attempts/submit', () => {
     expect(result.you.unattempted).toBe(15);
   });
 
-  it('never returns the answer key', async () => {
+  it('returns what was checked, but never the answer key itself', async () => {
     const response = await post({ answers: { 1: correctAnswerToQuestionOne() }, totalTimeSeconds: 5 });
     const body = await response.text();
 
-    // The criteria and their labels stay on the server.
-    expect(body).not.toContain('criteria');
-    expect(body).not.toContain('is bold');
-    expect(body).not.toContain('unchanged');
+    // The review screen needs the criterion labels to say why a question was
+    // wrong, so they ship with a marked result.
+    expect(body).toContain('The paragraph is bold');
+
+    // The rubric itself does not: no criterion kinds, no targets, and no values
+    // to compare against. Marking stays something only the server can do.
+    for (const leak of ['"kind"', '"target"', '"criteria"', 'notMarked', 'blockAttr', '#ff0000']) {
+      expect(body).not.toContain(leak);
+    }
   });
 
   it('rejects a body that is not JSON', async () => {
@@ -93,6 +98,6 @@ describe('POST /api/attempts/submit', () => {
 
     const result = (await response.json()) as ExamResult;
     expect(result.maximumMarks).toBe(50);
-    expect(result.you.score).toBe(3);
+    expect(result.you.score).toBe(4);
   });
 });

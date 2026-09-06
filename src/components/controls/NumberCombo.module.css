@@ -1,42 +1,53 @@
-.trigger {
+.combo {
   background: var(--control-bg);
   border: 1px solid var(--control-border);
-  cursor: pointer;
-  text-align: left;
   border-radius: 2px;
-  justify-content: space-between;
   align-items: center;
-  gap: 4px;
   height: 22px;
-  padding: 0 3px 0 5px;
   display: inline-flex;
-}
-
-.trigger:hover:not(:disabled) {
-  border-color: var(--control-hover-border);
-  background: linear-gradient(180deg, #fff, var(--control-hover-top));
-}
-
-.triggerOpen {
-  border-color: var(--control-hover-border);
-  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
-}
-
-.trigger:disabled {
-  color: var(--control-disabled-text);
-  cursor: default;
-  background: #f4f6f8;
-}
-
-.value {
-  text-overflow: ellipsis;
-  white-space: nowrap;
   overflow: hidden;
+}
+
+.combo:hover {
+  border-color: var(--control-hover-border);
+}
+
+.combo:focus-within,
+.comboOpen {
+  border-color: var(--control-hover-border);
+}
+
+.input {
+  color: inherit;
+  background: none;
+  border: 0;
+  outline: 0;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0 0 5px;
+  font: inherit;
+}
+
+.arrow {
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  flex: none;
+  place-items: center;
+  height: 100%;
+  padding: 0 3px;
+  display: grid;
+}
+
+.arrow:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
 }
 
 .list {
   flex-direction: column;
-  min-width: 150px;
+  min-width: 60px;
   display: flex;
 }
 
@@ -61,4 +72,3 @@
   background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
   border-color: var(--control-hover-border);
 }
-

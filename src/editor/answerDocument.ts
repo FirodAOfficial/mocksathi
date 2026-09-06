@@ -24,11 +24,6 @@ export function defaultAnswerDocument(question: ExamQuestion, language: Language
   return structuredClone(question.passage[language]) as AnswerDocument;
 }
 
-/** True when a document contains a table, which changes how it is selected. */
-export function hasTable(document: AnswerDocument): boolean {
-  return (document.content ?? []).some((node) => node.type === 'table');
-}
-
 /**
  * Structural comparison of two documents.
  *

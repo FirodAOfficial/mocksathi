@@ -1,14 +1,13 @@
 import Link from 'next/link';
-import { LANGUAGES } from '@/exam/types';
 import styles from './page.module.css';
 
 /**
  * Entry point.
  *
  * Three ways in: sit the sample exam, open a .docx from a URL, or start with a
- * blank document. The exam needs a language before it begins, because the paper
- * is sat in one language — the passages and instructions both follow it, and
- * switching part-way would invalidate anything already written.
+ * blank document. The exam goes by way of its instructions page, which is where
+ * the language is chosen — the paper is sat in one language, and switching
+ * part-way would invalidate anything already written.
  */
 export default function HomePage() {
   return (
@@ -22,25 +21,15 @@ export default function HomePage() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Sample exam</h2>
           <p className={styles.sectionBody}>
-            Fifteen word-processing tasks, ten minutes. Choose the language you want to sit it in.
+            Fifteen word-processing tasks, ten minutes. The instructions page covers the rules and
+            is where the language is chosen.
           </p>
 
-          <form action="/editor" method="get" className={styles.row}>
-            <input type="hidden" name="mode" value="exam" />
-            <label className={styles.srOnly} htmlFor="lang">
-              Exam language
-            </label>
-            <select id="lang" name="lang" className={styles.select} defaultValue="en">
-              {LANGUAGES.map((language) => (
-                <option key={language.value} value={language.value}>
-                  {language.label}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className={styles.primary}>
-              Start sample exam
-            </button>
-          </form>
+          <div className={styles.row}>
+            <Link href="/exam" className={styles.primary}>
+              Read the instructions
+            </Link>
+          </div>
         </section>
 
         <hr className={styles.divider} />

@@ -20,7 +20,7 @@
   flex-direction: column;
   justify-content: flex-start;
   gap: 3px;
-  width: 54px;
+  width: 64px;
   min-height: 60px;
   padding: 4px 2px 3px;
 }
@@ -58,4 +58,18 @@
   cursor: default;
 }
 
-/*# sourceMappingURL=src_components_controls_ToolbarButton_module_css_1igg3k2._.single.css.map*/
+
+/* Word's stacked groups: icon on the left, label beside it. */
+.wide {
+  justify-content: flex-start;
+  gap: 6px;
+  height: 22px;
+  padding: 0 6px 0 4px;
+}
+
+.wide .caption {
+  text-align: left;
+  white-space: nowrap;
+  word-break: normal;
+  font-size: 12px;
+}

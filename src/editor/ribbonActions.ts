@@ -1,7 +1,7 @@
 'use client';
 
 import type { Editor } from '@tiptap/react';
-import type { Mark } from '@tiptap/pm/model';
+import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { TextEffect } from './extensions/CharacterFormat';
 import { applyCase, type LetterCase } from '@/utils/letterCase';
 import type { NormalizedStyleId, ParagraphBorders, TextAlignment } from '@/services/document/types';
@@ -19,6 +19,15 @@ import type { NormalizedStyleId, ParagraphBorders, TextAlignment } from '@/servi
 export const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72] as const;
 
 export const DEFAULT_FONT_SIZE_PT = 11;
+
+/**
+ * The range the size box accepts, matching Word.
+ *
+ * `FONT_SIZES` is only the drop-down's shortlist — it skips 13 and 15, so a
+ * question asking for either is answered by typing into the box.
+ */
+export const MIN_FONT_SIZE_PT = 1;
+export const MAX_FONT_SIZE_PT = 1638;
 
 export const FONT_FAMILIES = [
   'Calibri',
@@ -271,4 +280,73 @@ export function toggleBulletList(editor: Editor): void {
 
 export function toggleOrderedList(editor: Editor): void {
   editor.chain().focus().toggleOrderedList().run();
+}
+
+/**
+ * Word's Increase/Decrease List Level.
+ *
+ * Nesting a list item is formatting, so it comes from the ribbon rather than
+ * from Tab — which is why `ribbonOnly` strips the list extension's Tab binding.
+ * These are the buttons that put the operation back.
+ */
+export function changeListLevel(editor: Editor, direction: 1 | -1): void {
+  const chain = editor.chain().focus();
+  if (direction === 1) chain.sinkListItem('listItem').run();
+  else chain.liftListItem('listItem').run();
+}
+
+/**
+ * Word's Sort, ascending by the paragraph's own text.
+ *
+ * It reorders whole top-level blocks that the selection touches and moves each
+ * node as it stands, so every paragraph keeps the formatting it arrived with.
+ */
+export function sortParagraphs(editor: Editor, direction: 1 | -1 = 1): void {
+  const { state } = editor;
+  const { from, to } = state.selection;
+
+  const picked: { node: ProseMirrorNode; start: number; end: number }[] = [];
+  state.doc.forEach((node, offset) => {
+    const end = offset + node.nodeSize;
+    if (end > from && offset < to && node.isTextblock) picked.push({ node, start: offset, end });
+  });
+
+  if (picked.length < 2) return;
+
+  const sorted = [...picked].sort(
+    (a, b) => direction * a.node.textContent.localeCompare(b.node.textContent),
+  );
+
+  const first = picked[0]!.start;
+  const last = picked[picked.length - 1]!.end;
+
+  editor
+    .chain()
+    .focus()
+    .command(({ tr }) => {
+      tr.replaceWith(
+        first,
+        last,
+        sorted.map((entry) => entry.node),
+      );
+      return true;
+    })
+    .run();
+}
+
+/**
+ * Applies a font to the whole document, as Design's Fonts gallery does.
+ *
+ * Word's themes change the document's default font rather than marking every
+ * run. This editor has no theme layer, so the equivalent honest action is to
+ * apply the font across the document and say so.
+ */
+export function setDocumentFont(editor: Editor, family: string): void {
+  const { from, to } = editor.state.selection;
+  editor.chain().focus().selectAll().setFontFamily(family).setTextSelection({ from, to }).run();
+}
+
+/** Sets the left and right indents directly, as Layout's Indent boxes do. */
+export function setIndents(editor: Editor, indents: { left?: number | null; right?: number | null }): void {
+  editor.chain().focus().setParagraphIndents(indents).run();
 }

@@ -170,12 +170,48 @@ export function isPlain(marks: RunFormatting): boolean {
 }
 
 export function marksEqual(a: RunFormatting, b: RunFormatting): boolean {
+  return marksEqualExcept(a, b, new Set());
+}
+
+/**
+ * The `RunFormatting` property a mark name is stored in.
+ *
+ * Several names share one property — Emboss and Engrave are two values of
+ * `effect` — so allowing one of them allows the other to be checked as the
+ * same slot, which is what a question asking for Emboss means.
+ */
+export function markProperty(name: MarkName): keyof RunFormatting {
+  switch (name) {
+    case 'superscript':
+    case 'subscript':
+      return 'vertAlign';
+    case 'emboss':
+    case 'engrave':
+      return 'effect';
+    default:
+      return name;
+  }
+}
+
+/**
+ * `marksEqual`, with the named properties left out of the comparison.
+ *
+ * This is how "and nothing else" is enforced: the properties the question asked
+ * for are ignored, and every other difference is a change the candidate was not
+ * asked to make.
+ */
+export function marksEqualExcept(
+  a: RunFormatting,
+  b: RunFormatting,
+  ignore: ReadonlySet<keyof RunFormatting>,
+): boolean {
   const left = canonicalMarks(a);
   const right = canonicalMarks(b);
-  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]) as Set<keyof RunFormatting>;
 
   for (const key of keys) {
-    if (left[key as keyof RunFormatting] !== right[key as keyof RunFormatting]) return false;
+    if (ignore.has(key)) continue;
+    if (left[key] !== right[key]) return false;
   }
   return true;
 }

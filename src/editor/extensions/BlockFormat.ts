@@ -1,5 +1,6 @@
 import { Extension } from '@tiptap/core';
 import type { ParagraphBorders } from '@/services/document/types';
+import { INDENT_STEP_PX, MAX_INDENT_PX } from '@/utils/indent';
 
 /**
  * Paragraph-level formatting that Word owns but ProseMirror does not model:
@@ -11,8 +12,7 @@ import type { ParagraphBorders } from '@/services/document/types';
  */
 
 /** One press of Increase Indent, matching Word's default 0.5" tab. */
-export const INDENT_STEP_PX = 48;
-export const MAX_INDENT_PX = INDENT_STEP_PX * 10;
+export { INDENT_STEP_PX, MAX_INDENT_PX } from '@/utils/indent';
 
 export interface BlockFormatAttributes {
   lineHeight: number | null;
@@ -31,6 +31,7 @@ declare module '@tiptap/core' {
     blockFormat: {
       setLineHeight: (lineHeight: number | null) => ReturnType;
       setParagraphSpacing: (spacing: { before?: number | null; after?: number | null }) => ReturnType;
+      setParagraphIndents: (indents: { left?: number | null; right?: number | null }) => ReturnType;
       setParagraphBorders: (borders: ParagraphBorders | null) => ReturnType;
       changeIndent: (direction: 1 | -1) => ReturnType;
       clearBlockFormat: () => ReturnType;
@@ -180,6 +181,15 @@ export const BlockFormat = Extension.create({
           const attributes: Record<string, unknown> = {};
           if ('before' in spacing) attributes.spaceBefore = spacing.before;
           if ('after' in spacing) attributes.spaceAfter = spacing.after;
+          return applyToBlocks(attributes)({ commands: commands as never });
+        },
+
+      setParagraphIndents:
+        (indents) =>
+        ({ commands }) => {
+          const attributes: Record<string, unknown> = {};
+          if ('left' in indents) attributes.indentLeft = indents.left;
+          if ('right' in indents) attributes.indentRight = indents.right;
           return applyToBlocks(attributes)({ commands: commands as never });
         },
 

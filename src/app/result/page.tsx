@@ -1,5 +1,6 @@
 import { fixtureFor, type ResultOutcome } from '@/exam/result';
-import { ResultScreen } from '@/components/result/ResultScreen';
+import { SEED_ATTEMPT } from '@/exam/seedAttempt';
+import { ResultView } from '@/components/result/ResultView';
 
 /**
  * Design preview for the two result screens.
@@ -18,5 +19,5 @@ export default async function ResultPreviewPage({
   const raw = Array.isArray(params.outcome) ? params.outcome[0] : params.outcome;
   const outcome: ResultOutcome = raw === 'not-qualified' ? 'not-qualified' : 'qualified';
 
-  return <ResultScreen result={fixtureFor(outcome)} backHref="/" />;
+  return <ResultView result={fixtureFor(outcome)} attempt={SEED_ATTEMPT} language="en" backHref="/" />;
 }

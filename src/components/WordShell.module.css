@@ -53,7 +53,6 @@
   }
 }
 
-/*# sourceMappingURL=src_components_WordShell_module_css_1igg3k2._.single.css.map*/
 
 /* Shown between closing the paper and the server returning a mark. */
 .marking {
@@ -103,4 +102,23 @@
   max-width: 420px;
   line-height: 1.5;
   color: #8c1d13;
+}
+
+.focusBar {
+  background: var(--chrome-bg, #f2f6fb);
+  border-bottom: 1px solid var(--chrome-border, #dfe9f6);
+  justify-content: flex-end;
+  padding: 4px 10px;
+  display: flex;
+}
+
+.focusExit {
+  color: #1f5fd0;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #bcd4f5;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font: inherit;
+  font-weight: 600;
 }

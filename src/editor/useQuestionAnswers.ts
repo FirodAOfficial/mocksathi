@@ -5,7 +5,7 @@ import type { Editor } from '@tiptap/react';
 import { EditorState } from '@tiptap/pm/state';
 import { findQuestion } from '@/exam/types';
 import { useExamStore } from '@/state/examStore';
-import { defaultAnswerDocument, documentsEqual, hasTable, type AnswerDocument } from './answerDocument';
+import { defaultAnswerDocument, documentsEqual, type AnswerDocument } from './answerDocument';
 
 export interface QuestionAnswers {
   /** Restores the open question to its starting document. */
@@ -61,18 +61,16 @@ export function useQuestionAnswers(
     );
 
     /*
-     * The passage is selected on arrival, because almost every question asks
-     * for an operation on the whole paragraph — so the candidate can go
-     * straight to the ribbon without selecting first.
+     * The caret goes to the start of the passage and nothing is selected.
      *
-     * Not for a table: there the answer is typed into cells, and arriving with
-     * everything selected would mean the first keystroke replaced the table.
+     * Selecting the paragraph on arrival would do part of the candidate's work:
+     * choosing what to format is half of every question here, and a paper that
+     * pre-selects it stops testing that. It is also dangerous — with everything
+     * selected, one stray keystroke replaces the passage.
      */
     // Focus first: a selection set on an unfocused editor is held in
-    // ProseMirror's state but never rendered, so the candidate would see
-    // nothing selected.
-    if (hasTable(document)) instance.chain().focus('start').run();
-    else instance.chain().focus().selectAll().run();
+    // ProseMirror's state but never rendered, so the caret would be invisible.
+    instance.chain().focus('start').run();
   }, []);
 
   const persist = useCallback(

@@ -176,10 +176,10 @@ describe('unchanged — collateral damage', () => {
   const criterion: Criterion = {
     kind: 'unchanged',
     label: 'Rest untouched',
-    except: [{ by: 'text', text: 'quick brown' }],
+    except: [{ target: { by: 'text', text: 'quick brown' }, marks: ['bold'] }],
   };
 
-  it('passes when only the target was formatted', () => {
+  it('passes when only the target was formatted, and only as asked', () => {
     expect(run(criterion, withMarked('quick brown', [{ type: 'bold' }])).passed).toBe(true);
   });
 
@@ -187,7 +187,15 @@ describe('unchanged — collateral damage', () => {
     const result = run(criterion, withMarked('lazy dog.', [{ type: 'bold' }]));
 
     expect(result.passed).toBe(false);
-    expect(result.detail).toContain('left alone');
+    expect(result.detail).toContain('did not ask for');
+  });
+
+  it('fails when the right target gained a format that was not asked for', () => {
+    // The whole point of the strict reading: italic as well as bold is two
+    // operations where the question asked for one.
+    const extra = withMarked('quick brown', [{ type: 'bold' }, { type: 'italic' }]);
+
+    expect(run(criterion, extra).passed).toBe(false);
   });
 
   it('fails when the wording was changed', () => {
@@ -199,5 +207,11 @@ describe('unchanged — collateral damage', () => {
     // Double-clicking a word in Word takes the trailing space with it; doing
     // that is not a wrong answer.
     expect(run(criterion, withMarked('quick brown ', [{ type: 'bold' }])).passed).toBe(true);
+  });
+
+  it('fails on paragraph formatting the question did not ask for', () => {
+    const centred = project(doc(para([text(SENTENCE)], { textAlign: 'center' })));
+
+    expect(run(criterion, centred).passed).toBe(false);
   });
 });

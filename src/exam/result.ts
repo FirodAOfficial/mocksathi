@@ -23,9 +23,25 @@ export interface ScoreLine {
   timeSeconds: number;
 }
 
+/**
+ * One line of "why", for the review screen.
+ *
+ * These are the marking criteria's own labels, so the candidate is told exactly
+ * what was checked. They are sent only with a marked result — the criteria
+ * themselves, and the targets and values they check against, stay server-side.
+ */
+export interface CriterionFeedback {
+  label: string;
+  passed: boolean;
+  /** What went wrong. Absent when the criterion passed. */
+  detail?: string;
+}
+
 export interface QuestionResult {
   number: number;
   outcome: QuestionOutcome;
+  /** Per-criterion verdicts. Absent on the design fixtures, which are not marked. */
+  feedback?: CriterionFeedback[];
   yourTimeSeconds: number;
   averageTimeSeconds: number;
   topperTimeSeconds: number;

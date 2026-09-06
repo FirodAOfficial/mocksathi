@@ -17,6 +17,21 @@ export type Target =
   | { by: 'cell'; table?: number; row: number; column: number }
   | { by: 'document' };
 
+/**
+ * Formatting a question did ask for, so finding it is not a mistake.
+ *
+ * Everything not named here must come back exactly as it started. That is what
+ * makes "make the paragraph bold" mean bold *and nothing else*: bolding and
+ * italicising is two changes where one was asked for.
+ */
+export interface Exemption {
+  target: Target;
+  /** Character formatting the question asked for. */
+  marks?: MarkName[];
+  /** Paragraph formatting the question asked for. */
+  paragraph?: (keyof ParagraphFormatting)[];
+}
+
 /** Which blocks a paragraph-level criterion applies to. */
 export type BlockSelector = number | 'all';
 
@@ -59,13 +74,13 @@ export type Criterion = { label: string } & (
   /** Every cell in a column carries an ordered list, i.e. Word's auto number. */
   | { kind: 'columnAutoNumbered'; table?: number; column: number; skipHeader?: boolean }
   /**
-   * Nothing changed outside the named targets.
+   * Nothing changed that the question did not ask for.
    *
-   * This is what makes "bold X" also mean "and do not bold anything else": it
+   * This is what makes "bold X" also mean "and change nothing else": it
    * compares the submitted projection against the starting one and fails on any
-   * formatting or text difference outside `except`.
+   * text, character or paragraph difference the exemptions do not cover.
    */
-  | { kind: 'unchanged'; except: Target[] }
+  | { kind: 'unchanged'; except: Exemption[] }
 );
 
 /** The answer key for one question. Never sent to the browser. */

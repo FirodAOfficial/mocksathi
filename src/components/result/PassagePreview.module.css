@@ -1,0 +1,15 @@
+.preview :global(.ProseMirror) {
+  outline: 0;
+  font-family: Calibri, Carlito, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #1f2b38;
+}
+
+.preview :global(.ProseMirror p) {
+  margin: 0 0 8px;
+}
+
+.preview :global(.ProseMirror p:last-child) {
+  margin-bottom: 0;
+}

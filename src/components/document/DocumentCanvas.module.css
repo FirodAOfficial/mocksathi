@@ -81,4 +81,79 @@
   }
 }
 
-/*# sourceMappingURL=src_components_document_DocumentCanvas_module_css_1igg3k2._.single.css.map*/
+
+
+.page {
+  position: relative;
+}
+
+.columnFlow {
+  column-gap: 32px;
+}
+
+/*
+ * Web Layout drops the sheet metaphor: no fixed height, no shadow, text to the
+ * window's width, which is what Word shows.
+ */
+.web {
+  min-height: 0 !important;
+  box-shadow: none;
+  border: 0;
+}
+
+/* Draft strips the page down to the text, as Word's Draft view does. */
+.draft {
+  min-height: 0 !important;
+  box-shadow: none;
+  background: #fff;
+  border: 0;
+  padding: 24px 32px !important;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.gridlines {
+  background-image:
+    linear-gradient(to right, #d7e3f0 1px, transparent 1px),
+    linear-gradient(to bottom, #d7e3f0 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.pageBorder {
+  border: 2px solid #7d8fa3;
+  position: absolute;
+  inset: 24px;
+  pointer-events: none;
+}
+
+.watermark {
+  color: #00000014;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: 84px;
+  font-weight: 700;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-35deg);
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+ * Formatting marks. Paragraph ends get a pilcrow drawn after the block, which
+ * is decoration only — it never enters the document, so it cannot reach the
+ * marker.
+ */
+.marks :global(.ProseMirror p:after),
+.marks :global(.ProseMirror h1:after),
+.marks :global(.ProseMirror h2:after),
+.marks :global(.ProseMirror h3:after) {
+  content: "¶";
+  color: #3f7fd0;
+  padding-left: 2px;
+}
+
+.marks :global(.ProseMirror br:after) {
+  content: "↵";
+  color: #3f7fd0;
+}

@@ -132,6 +132,7 @@ export function markAttempt(
   const questionResults: QuestionResult[] = questions.map((question, index) => ({
     number: question.number,
     outcome: marks[index]?.outcome ?? 'unattempted',
+    feedback: marks[index]?.criteria ?? [],
     yourTimeSeconds: Math.round(submission.timePerQuestion?.[question.number] ?? 0),
     averageTimeSeconds: reference.averageTimePerQuestion[index] ?? 0,
     topperTimeSeconds: reference.topperTimePerQuestion[index] ?? 0,
