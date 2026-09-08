@@ -112,6 +112,33 @@ admins creating the listings), and `/dashboard/profile` and `/dashboard/settings
 - [x] `tsc --noEmit` and `eslint` clean on everything touched (whole `src/` tree, not just the
       changed files, given how many call sites the async `dashboardDataFor` touched).
 
+## Update — signup redesign, exam picker at signup, and a public exams API
+
+`/signup` got the same split-screen treatment as `/login` (`sdd/auth.md`), plus a new piece:
+picking a target exam is now part of creating an account, not something you can only do
+afterward from Profile.
+
+- [x] `SignupForm` gained an optional "Target exam" `<select>` (hidden entirely if no exams are
+      published yet — same honest-empty-state pattern as `ExamEnrollmentsCard`). `POST
+      /api/auth/signup` accepts an optional `examId` and, after the account is created,
+      best-effort registers it via `registerForExam` (silently skipped if the exam went away
+      between page load and submit — a signup should never fail because of that). Since it's the
+      account's first-ever registration, it becomes primary automatically, same rule as any other
+      first registration.
+- [x] **New: `GET /api/exams`** (`src/app/api/exams/route.ts`) — the one exam-related route that
+      doesn't require being signed in. Minimal fields only (`id`, `name`, `category` — never
+      organiser details, dates, fees, or anything else `exams` carries), and only `published`
+      exams (drafts stay invisible to it, same as everywhere else). Added specifically so an
+      unauthenticated context (the signup form, before there's a session) has a real API to call
+      rather than the page quietly reaching into the DB layer with no public surface at all.
+      Audited every other exam/enrollment route to confirm this is the only exception:
+      `/api/admin/exams*` still 307s (via `requireAdmin`) and `/api/profile/enrollments*` still
+      307s (via `requireUser`) when hit without a session.
+- [x] End-to-end verified: signed up a brand-new account with an exam selected, confirmed it
+      landed as that account's primary exam on both the Profile page and the topbar picker
+      immediately, no page reload beyond the signup redirect itself.
+- [x] `tsc --noEmit` and `eslint` clean.
+
 ## Not done / out of scope for this pass
 
 - [ ] No delete for an exam once created — add, list, and edit only.

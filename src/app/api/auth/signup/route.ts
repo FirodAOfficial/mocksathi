@@ -5,6 +5,7 @@ import { hashPassword } from '@/auth/password';
 import { createSession } from '@/auth/session';
 import { isValidEmail, normalizeEmail, MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import { db } from '@/db/client';
+import { registerForExam } from '@/db/enrollments';
 import { users } from '@/db/schema';
 
 /**
@@ -20,6 +21,8 @@ interface SignupBody {
   email?: string;
   password?: string;
   name?: string;
+  /** Optional: pre-registers the new account for this exam, as primary. */
+  examId?: string;
 }
 
 function badRequest(code: string, detail: string): NextResponse {
@@ -57,6 +60,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!user) {
     return NextResponse.json({ code: 'SIGNUP_FAILED', detail: 'Could not create the account.' }, { status: 500 });
   }
+
+  // Best-effort: a signup shouldn't fail because the chosen exam went away
+  // (unpublished, deleted) between the page loading and the form submitting.
+  if (body.examId) await registerForExam(user.id, body.examId);
 
   const session = await createSession(user.id);
   await setSessionCookie(session);

@@ -68,8 +68,21 @@ work — see the backlog at the bottom.
       government insignia is legally restricted in India to reproduce, so none of that made it in:
       the headline ("Master Word & Excel Efficiency with Mocksathi") is honest instead, since that
       genuinely is the exam content (`src/exam/seedAttempt.ts`); the Word/Excel "badges" are
-      generic coloured squares, not real (trademarked) Office icons. `/signup` is unchanged —
-      still the plain centred `AuthCard` from the first pass; this request was `/login` only.
+      generic coloured squares, not real (trademarked) Office icons.
+- [x] **Update — `/signup` got the same split-screen treatment**, plus a new "Target exam"
+      picker (optional, hidden entirely when no exams are published yet) — see `sdd/exams.md`'s
+      "signup redesign, exam picker at signup, and a public exams API" update for the full detail,
+      including the new public `GET /api/exams` endpoint this needed.
+- [x] **Full API auth audit**, prompted directly by "our db should be secure for unauthorised
+      access": every route under `src/app/api/**` checked for whether it touches the database and,
+      if so, whether it's gated. Result — no gaps. `requireAdmin()`: `/api/admin/exams*`.
+      `requireUser()`: `/api/profile/enrollments*`. Public by necessity (this *is* how a session
+      gets created/destroyed/checked): `/api/auth/{login,signup,logout,me}` — `logout` and `me`
+      only ever act on the caller's own cookie-derived session, never anyone else's data. Public by
+      design: `GET /api/exams` (minimal fields, published exams only — see `sdd/exams.md`).
+      `/api/attempts/submit` and `/api/document` are public too, but touch no database table at
+      all — pre-existing routes from before auth existed, mirroring `/exam` and `/editor`
+      themselves being unauthenticated pages.
 - [x] End-to-end verified against the real local database: signup → `/api/auth/me` returns the
       user → duplicate signup 409s → logout → `/api/auth/me` returns `null` → wrong password 401s →
       correct login issues a new session. Confirmed via `psql` that logout actually deletes the

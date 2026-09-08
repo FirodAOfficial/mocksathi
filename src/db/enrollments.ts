@@ -29,6 +29,11 @@ export async function enrollmentsForUser(userId: string): Promise<EnrollmentWith
   return rows;
 }
 
+/** Every published exam — the signup form's exam picker, before there's a user to filter against. */
+export async function publishedExams(): Promise<Exam[]> {
+  return db.select().from(exams).where(eq(exams.status, 'published')).orderBy(asc(exams.name));
+}
+
 /** Published exams the user isn't already registered for — the "add an exam" picker. */
 export async function availableExamsForUser(userId: string): Promise<Exam[]> {
   const registered = await db.select({ examId: enrollments.examId }).from(enrollments).where(eq(enrollments.userId, userId));
