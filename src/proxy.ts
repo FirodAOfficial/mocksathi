@@ -4,11 +4,14 @@ import { updateSession } from '@/utils/supabase/middleware';
 /**
  * Keeps the Supabase session alive.
  *
+ * Named `proxy` in a file called `proxy.ts`: Next 16 deprecates the
+ * `middleware` convention and warns on every dev start until it is moved.
+ *
  * A refresh token has to be exchanged before it expires, and only a response
  * can carry the new cookies back — so it happens here, on the way through,
  * rather than in a server component, which cannot set them.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return updateSession(request);
 }
 

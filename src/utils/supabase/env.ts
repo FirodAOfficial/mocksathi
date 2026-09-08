@@ -12,6 +12,20 @@
  * that prefix — it bypasses row-level security entirely.
  */
 
+/**
+ * The credentials, or null when the project is not configured.
+ *
+ * Anything that runs on every request has to use this rather than the throwing
+ * accessors below. `.env` and `.env.local` are gitignored, so a deployment that
+ * has not had these set in its own environment has neither — and a throw in
+ * that path takes down every route at once.
+ */
+export function supabaseConfig(): { url: string; key: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  return url && key ? { url, key } : null;
+}
+
 function required(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`${name} is not set. Copy .env.example to .env.local and fill it in.`);
