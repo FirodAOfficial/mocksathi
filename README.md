@@ -57,20 +57,39 @@ MongoDB for flexible content (question bank, analysis blobs) — not finalised. 
 
 ```bash
 cp .env.example .env      # defaults work as-is for local dev
-npm run db:up              # starts Postgres via docker compose (needs Docker Desktop running)
-npm run db:migrate         # applies db/migrations/ to it
+npm run db:up               # starts Postgres + Drizzle Gateway via docker compose (needs Docker Desktop running)
+npm run db:migrate          # applies db/migrations/ to it
 ```
 
 `DATABASE_URL` in `.env` points the app at that database. Other database scripts:
 
 ```bash
 npm run db:generate   # after changing src/db/schema.ts, writes a new file into db/migrations/
-npm run db:studio      # Drizzle Studio — browse/edit tables in the browser
-npm run db:down         # stops the container (data persists in its volume; add -v to wipe it)
+npm run db:studio      # drizzle-kit studio — quick one-off browse via local.drizzle.studio
+npm run db:down         # stops both containers (data persists in their volumes; add -v to wipe it)
 ```
 
 Migrations are checked-in SQL files under `db/migrations/`, generated from `src/db/schema.ts` —
 edit the schema, then run `db:generate`, review the generated SQL, and commit both.
+
+### Browsing data live — Drizzle Gateway
+
+`db:up` also starts [Drizzle Gateway](https://gateway.drizzle.team) (`ghcr.io/drizzle-team/gateway`
+via `docker-compose.yml`) — a self-hosted Drizzle Studio that keeps running in the background so
+you can watch table contents update in real time as the app writes to them, rather than a one-off
+snapshot.
+
+1. Open [http://localhost:4983](http://localhost:4983) and sign in with `DRIZZLE_GATEWAY_PASSWORD`
+   from `.env` (defaults to `mocksathi`).
+2. Add a connection: host `postgres` (the compose network's internal DNS name — not `localhost`),
+   port `5432`, and the `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` values from `.env`.
+   This is a one-time step per Gateway instance; it's saved in the `drizzle_gateway_data` volume.
+3. Browse the `users` and `sessions` tables, edit rows, or watch them change as you sign up, log
+   in, and log out through the app.
+
+`npm run db:studio` (`drizzle-kit studio`) is the alternative for a quick look without Docker —
+it's driven by `drizzle.config.ts` directly rather than a saved connection, but only runs while the
+command is running, in the foreground.
 
 ### Auth
 

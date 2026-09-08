@@ -18,5 +18,23 @@ services:
       timeout: 5s
       retries: 10
 
+  # Self-hosted Drizzle Studio (https://gateway.drizzle.team). Add a connection to
+  # Postgres in its UI at http://localhost:4983 using host "postgres" (this
+  # compose network's internal DNS name), port 5432, and the credentials above.
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4983
+      MASTERPASS: ${DRIZZLE_GATEWAY_PASSWORD:-mocksathi}
+    ports:
+      - '${DRIZZLE_GATEWAY_PORT:-4983}:4983'
+    volumes:
+      - drizzle_gateway_data:/app
+
 volumes:
   postgres_data:
+  drizzle_gateway_data:
