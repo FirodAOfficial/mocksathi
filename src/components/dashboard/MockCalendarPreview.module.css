@@ -1,0 +1,139 @@
+.card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.subheading {
+  font-size: 11.5px;
+  color: var(--db-text-muted);
+  margin: 0;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--db-text-faint);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 7px;
+}
+
+.cell {
+  height: 64px;
+  border-radius: 9px;
+  padding: 7px;
+  border: 1px solid transparent;
+}
+
+.cellDay {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cellNote {
+  font-size: 9.5px;
+  margin-top: 2px;
+}
+
+.attempted {
+  background: #f3fbf6;
+  border-color: #c7ead4;
+}
+
+.attempted .cellDay,
+.attempted .cellNote {
+  color: #15803d;
+}
+
+.missed {
+  background: #fef4f4;
+  border-color: #fbdcdc;
+}
+
+.missed .cellDay,
+.missed .cellNote {
+  color: #b91c1c;
+}
+
+.today {
+  background: #f2f7ff;
+  border: 1.5px solid var(--db-accent);
+  box-shadow: 0 0 0 3px rgba(28, 110, 242, 0.12);
+}
+
+.today .cellDay,
+.today .cellNote {
+  color: var(--db-accent);
+}
+
+.locked {
+  background: #fafbfd;
+  border-color: #eef2f7;
+}
+
+.locked .cellDay {
+  color: var(--db-text-faint);
+}
+
+.locked .cellNote {
+  color: var(--db-text-label);
+}
+
+.upcoming {
+  background: #fff8ed;
+  border-color: #fcd9a8;
+}
+
+.upcoming .cellDay,
+.upcoming .cellNote {
+  color: #8a5205;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+  color: var(--db-text-muted);
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}

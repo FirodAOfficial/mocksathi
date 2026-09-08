@@ -1,0 +1,47 @@
+.tile {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 16px;
+}
+
+.label {
+  font-size: 11.5px;
+  color: var(--db-text-muted);
+  margin-bottom: 7px;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--db-text);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.valueAccent {
+  composes: value;
+  color: var(--db-accent);
+}
+
+.unit {
+  font-size: 13px;
+  color: var(--db-text-faint);
+}
+
+.foot {
+  font-size: 11px;
+  color: var(--db-text-muted);
+  margin-top: 6px;
+}
+
+.footUp {
+  composes: foot;
+  color: #16a34a;
+}

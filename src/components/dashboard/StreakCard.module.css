@@ -1,0 +1,86 @@
+.card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 20px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.flameRing {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #fff4ec;
+  border: 2.5px solid #f97316;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: #f97316;
+}
+
+.heading {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0 0 2px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--db-text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.lockRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid var(--db-border);
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.lockLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lockLabel svg {
+  color: var(--db-text-faint);
+}
+
+.lockCountdown {
+  font-size: 12px;
+  color: var(--db-text);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 9px;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+}

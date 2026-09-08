@@ -1,3 +1,6 @@
+# Scratch extraction of design mockup archives — the .zip in design/ is the source of truth
+design/mockups_extracted/
+
 # Logs
 logs
 *.log
