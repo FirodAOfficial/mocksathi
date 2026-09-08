@@ -1,31 +1,42 @@
 import 'server-only';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
 
 /**
  * The database connection.
  *
- * Kept on `globalThis` in development: `next dev`'s module reloads would
- * otherwise open a fresh `Pool` — and a fresh set of TCP connections to
- * Postgres — on every edit.
+ * Resolved lazily, on first use. `next build` imports every route module to
+ * collect its config, and a build never talks to Postgres — connecting at
+ * import time would fail the build wherever `DATABASE_URL` isn't in the
+ * environment.
+ *
+ * Kept on `globalThis`: `next dev`'s module reloads would otherwise open a
+ * fresh `Pool` — and a fresh set of TCP connections to Postgres — on every
+ * edit.
  */
 
-function createPool(): Pool {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
-  }
-  return new Pool({ connectionString });
-}
+type Db = NodePgDatabase<typeof schema>;
 
 declare global {
-  var __mocksathiPgPool: Pool | undefined;
+  var __mocksathiDb: Db | undefined;
 }
 
-const pool = globalThis.__mocksathiPgPool ?? createPool();
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.__mocksathiPgPool = pool;
+function getDb(): Db {
+  if (!globalThis.__mocksathiDb) {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
+    }
+    globalThis.__mocksathiDb = drizzle(new Pool({ connectionString }), { schema });
+  }
+  return globalThis.__mocksathiDb;
 }
 
-export const db = drizzle(pool, { schema });
+export const db = new Proxy({} as Db, {
+  get(_target, prop) {
+    const instance = getDb();
+    const value = Reflect.get(instance, prop) as unknown;
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
