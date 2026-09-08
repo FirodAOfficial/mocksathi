@@ -84,6 +84,21 @@
   font-size: 13px;
 }
 
+.navButton {
+  composes: navItem;
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.navButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .navItem:hover {
   background: #f4f7fb;
 }

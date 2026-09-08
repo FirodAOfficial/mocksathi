@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, type ReactNode } from 'react';
 import type { CandidateProfile, ExamEnrollment, NavSection } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './PortalShell.module.css';
+
+const LOGOUT_HREF = '/logout';
 
 export interface PortalShellProps {
   candidate: CandidateProfile;
@@ -32,8 +34,20 @@ export function PortalShell({
   children,
 }: PortalShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
   const primaryExam = enrollments.find((enrollment) => enrollment.isPrimary) ?? enrollments[0];
   const otherExams = enrollments.filter((enrollment) => enrollment !== primaryExam);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      router.push('/login');
+      router.refresh();
+    }
+  }
 
   return (
     <div className={styles.shell}>
@@ -54,6 +68,21 @@ export function PortalShell({
           >
             {section.title && <div className={styles.navSectionTitle}>{section.title}</div>}
             {section.items.map((item) => {
+              if (item.href === LOGOUT_HREF) {
+                return (
+                  <button
+                    key={item.href}
+                    type="button"
+                    className={styles.navButton}
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                  >
+                    <DashboardIcon name={item.icon} size={17} />
+                    {loggingOut ? 'Logging out…' : item.label}
+                  </button>
+                );
+              }
+
               const active = pathname === item.href;
               return (
                 <Link

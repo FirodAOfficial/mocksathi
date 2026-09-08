@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mocksathi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mocksathi}
+      POSTGRES_DB: ${POSTGRES_DB:-mocksathi}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # Postgres 18+ images store versioned subdirectories under this single
+      # mount themselves (not .../data) — see docker-library/postgres#1259.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-mocksathi}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
