@@ -1,0 +1,148 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.cardBody {
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+  line-height: 1.55;
+  margin: 0;
+  flex: 1;
+}
+
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 9px;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--db-text);
+}
+
+.input:focus-visible {
+  outline: none;
+  border: 1.5px solid var(--db-accent);
+  box-shadow: 0 0 0 3px rgba(28, 110, 242, 0.1);
+}
+
+.secondary {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--db-border);
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: #f8fafc;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--db-text-faint);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.blankLink {
+  color: var(--db-accent);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.blankLink:hover {
+  text-decoration: underline;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

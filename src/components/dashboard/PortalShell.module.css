@@ -1,0 +1,275 @@
+.shell {
+  --db-accent: #1c6ef2;
+  --db-accent-soft: #e8effe;
+  --db-bg: #eceff4;
+  --db-surface: #fff;
+  --db-border: #e8edf5;
+  --db-text: #0f172a;
+  --db-text-muted: #64748b;
+  --db-text-faint: #94a3b8;
+  --db-text-label: #a3aec0;
+
+  display: flex;
+  align-items: stretch;
+  /* Fixed to the viewport, not min-height: the root layout's <body> (shared
+     with the document editor, which manages its own scroll regions) sets
+     `overflow: hidden`, so without a contained height here nothing under it
+     could scroll — .content below is the one region that does. */
+  height: 100vh;
+  overflow: hidden;
+  background: var(--db-bg);
+  color: var(--db-text);
+  font-family: var(--db-font, 'Inter', system-ui, -apple-system, sans-serif);
+  font-size: 13px;
+}
+
+.sidebar {
+  width: 224px;
+  flex: none;
+  background: var(--db-surface);
+  border-right: 1px solid var(--db-border);
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  color: #475569;
+  overflow-y: auto;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px 14px;
+}
+
+.logoMark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--db-accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 15px;
+  flex: none;
+}
+
+.logoName {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--db-text);
+  line-height: 1.1;
+}
+
+.logoBy {
+  font-size: 9.5px;
+  color: var(--db-text-faint);
+}
+
+.navSection + .navSection {
+  margin-top: 4px;
+}
+
+.navSectionTitle {
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--db-text-label);
+  padding: 12px 9px 5px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.navButton {
+  composes: navItem;
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.navButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.navItem:hover {
+  background: #f4f7fb;
+}
+
+.navItemActive,
+.navItemActive:hover {
+  background: var(--db-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.navBadge {
+  margin-left: auto;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.navItemActive .navBadge {
+  background: #fff;
+  color: var(--db-accent);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 20px;
+  background: var(--db-surface);
+  border-bottom: 1px solid var(--db-border);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.examPicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.examPickerButton {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 7px 11px;
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-text);
+  background: none;
+  cursor: default;
+}
+
+.alsoEnrolled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--db-text-muted);
+  flex-wrap: wrap;
+}
+
+.enrolledChip {
+  padding: 3px 8px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.streakBadge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-accent);
+}
+
+.streakBadge svg {
+  color: #f97316;
+}
+
+.bellButton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: var(--db-text-muted);
+}
+
+.bellDot {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+.userChip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--db-accent-soft);
+  color: var(--db-accent);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex: none;
+}
+
+.userName {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-text);
+  line-height: 1.1;
+}
+
+.userRole {
+  font-size: 10.5px;
+  color: var(--db-text-faint);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

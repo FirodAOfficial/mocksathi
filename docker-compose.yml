@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mocksathi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mocksathi}
+      POSTGRES_DB: ${POSTGRES_DB:-mocksathi}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # Postgres 18+ images store versioned subdirectories under this single
+      # mount themselves (not .../data) — see docker-library/postgres#1259.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-mocksathi}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Self-hosted Drizzle Studio (https://gateway.drizzle.team). Add a connection to
+  # Postgres in its UI at http://localhost:4983 using host "postgres" (this
+  # compose network's internal DNS name), port 5432, and the credentials above.
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4983
+      MASTERPASS: ${DRIZZLE_GATEWAY_PASSWORD:-mocksathi}
+    ports:
+      - '${DRIZZLE_GATEWAY_PORT:-4983}:4983'
+    volumes:
+      - drizzle_gateway_data:/app
+
+volumes:
+  postgres_data:
+  drizzle_gateway_data:
