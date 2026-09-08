@@ -8,6 +8,13 @@
       "when": 1788873965160,
       "tag": "0000_tranquil_hellcat",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788877078343,
+      "tag": "0001_fancy_bedlam",
+      "breakpoints": true
     }
   ]
 }

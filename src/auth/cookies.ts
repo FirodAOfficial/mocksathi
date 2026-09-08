@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 import { getUserBySessionToken, type CreatedSession } from './session';
 import type { User } from '@/db/schema';
@@ -48,5 +48,18 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+  return user;
+}
+
+/**
+ * Like `requireUser`, but for admin-only pages and routes: a signed-in
+ * non-admin gets a 404, not a redirect — that says "this doesn't exist"
+ * rather than "you're not allowed", which leaks less about what's here.
+ * Route handlers must call this too, not just the pages that link to them —
+ * a page-level check alone doesn't stop someone hitting the API directly.
+ */
+export async function requireAdmin(): Promise<User> {
+  const user = await requireUser();
+  if (user.role !== 'admin') notFound();
   return user;
 }

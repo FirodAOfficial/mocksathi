@@ -331,14 +331,27 @@ export function initialsFor(name: string): string {
 
 /**
  * `SEED_DASHBOARD` with the signed-in candidate's real name in place of the
- * fixture's. Everything else — mocks, streak, analysis — stays fixture data
- * until the dashboard itself reads from the database (`sdd/dashboard.md`
- * Phase 6); this just keeps the one thing every page shows (who you are)
- * honest now that `/dashboard` sits behind a real login.
+ * fixture's, and an "Admin" nav section appended for admins. Everything else
+ * — mocks, streak, analysis — stays fixture data until the dashboard itself
+ * reads from the database (`sdd/dashboard.md` Phase 6); this just keeps the
+ * things every page shows (who you are, what you can reach) honest now that
+ * `/dashboard` sits behind a real login with roles (`sdd/exams.md`).
  */
-export function dashboardDataFor(identity: { name: string }): DashboardData {
+export function dashboardDataFor(identity: { name: string; role: string }): DashboardData {
+  const navSections =
+    identity.role === 'admin'
+      ? [
+          ...SEED_DASHBOARD.navSections,
+          {
+            title: 'Admin',
+            items: [{ label: 'Manage Exams', icon: 'shield' as const, href: '/dashboard/admin/exams' }],
+          },
+        ]
+      : SEED_DASHBOARD.navSections;
+
   return {
     ...SEED_DASHBOARD,
     candidate: { ...SEED_DASHBOARD.candidate, name: identity.name, initials: initialsFor(identity.name) },
+    navSections,
   };
 }

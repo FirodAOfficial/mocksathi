@@ -156,7 +156,8 @@ export type NavIconName =
   | 'user'
   | 'settings'
   | 'circle-help'
-  | 'log-out';
+  | 'log-out'
+  | 'shield';
 
 export interface NavItem {
   label: string;
