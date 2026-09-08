@@ -104,7 +104,3 @@ export function parseExamInput(body: ExamInput): ParseExamInputResult {
     },
   };
 }
-
-export function isUniqueSlugViolation(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && (error as { code: unknown }).code === '23505';
-}

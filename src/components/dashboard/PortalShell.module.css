@@ -35,6 +35,35 @@
   overflow-y: auto;
 }
 
+/* The simplified menu has 5 items instead of ~15 — sized up so a full-height
+   sidebar doesn't read as mostly empty space below a short list. */
+.sidebarSpacious {
+  padding: 20px 16px;
+}
+
+.sidebarSpacious .logoRow {
+  padding: 4px 10px 26px;
+}
+
+.sidebarSpacious .logoMark {
+  width: 36px;
+  height: 36px;
+  font-size: 17px;
+}
+
+.sidebarSpacious .logoName {
+  font-size: 17px;
+}
+
+.sidebarSpacious .navItem,
+.sidebarSpacious .navButton {
+  padding: 14px 14px;
+  gap: 14px;
+  font-size: 15px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+}
+
 .logoRow {
   display: flex;
   align-items: center;
@@ -172,7 +201,18 @@
   font-weight: 600;
   color: var(--db-text);
   background: none;
-  cursor: default;
+  text-decoration: none;
+}
+
+/* The empty-enrollment state renders this as a <Link>; the normal state as a
+   plain, non-interactive <div> — same class either way. */
+a.examPickerButton {
+  color: var(--db-accent);
+  cursor: pointer;
+}
+
+a.examPickerButton:hover {
+  background: var(--db-accent-soft);
 }
 
 .alsoEnrolled {
@@ -233,10 +273,79 @@
   place-items: center;
 }
 
+.userMenu {
+  position: relative;
+}
+
 .userChip {
   display: flex;
   align-items: center;
   gap: 9px;
+  border: none;
+  background: none;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.userChip:hover {
+  background: #f4f7fb;
+}
+
+.userChip svg {
+  color: var(--db-text-faint);
+}
+
+.userText {
+  text-align: left;
+}
+
+.userMenuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 20;
+}
+
+.userMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  color: var(--db-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.userMenuItem svg {
+  color: var(--db-text-faint);
+}
+
+.userMenuItem:hover {
+  background: #f4f7fb;
+}
+
+.userMenuItem:disabled {
+  cursor: default;
+  opacity: 0.65;
 }
 
 .avatar {

@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/auth/cookies';
 import { db } from '@/db/client';
 import { exams } from '@/db/schema';
-import { isUniqueSlugViolation, parseExamInput, type ExamInput } from '@/db/examInput';
+import { parseExamInput, type ExamInput } from '@/db/examInput';
+import { isUniqueViolation } from '@/db/pgErrors';
 import { slugify } from '@/db/slug';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const [updated] = await db.update(exams).set(values).where(eq(exams.id, id)).returning();
     return NextResponse.json({ exam: updated }, { headers: { 'cache-control': 'no-store' } });
   } catch (error) {
-    if (isUniqueSlugViolation(error)) {
+    if (isUniqueViolation(error)) {
       const [updated] = await db
         .update(exams)
         .set({ ...values, slug: `${baseSlug}-${crypto.randomUUID().slice(0, 6)}` })

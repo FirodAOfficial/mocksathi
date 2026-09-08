@@ -8,5 +8,6 @@ import { dashboardDataFor } from '@/dashboard/seedDashboard';
  */
 export default async function DashboardPage() {
   const user = await requireUser();
-  return <DashboardScreen data={dashboardDataFor(user)} />;
+  const data = await dashboardDataFor(user);
+  return <DashboardScreen data={data} />;
 }

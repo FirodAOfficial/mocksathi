@@ -23,7 +23,7 @@ export const metadata: Metadata = {
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
-  const data = dashboardDataFor(user);
+  const data = await dashboardDataFor(user);
   const unreadNotifications = data.notifications.filter((notification) => !notification.read).length;
 
   return (
@@ -34,6 +34,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         challengeTotalDays={data.challenge.totalDays}
         unreadNotifications={unreadNotifications}
         navSections={data.navSections}
+        simplifiedMenu={user.role !== 'admin'}
       >
         {children}
       </PortalShell>

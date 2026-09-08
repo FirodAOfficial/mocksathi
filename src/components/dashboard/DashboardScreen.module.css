@@ -37,15 +37,8 @@
   gap: 14px;
 }
 
-.midRow {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 16px;
-}
-
 @media (max-width: 960px) {
-  .topRow,
-  .midRow {
+  .topRow {
     grid-template-columns: 1fr;
   }
 

@@ -1,0 +1,172 @@
+.panel {
+  --panel-accent: #4d8dff;
+
+  flex: 1 1 58%;
+  min-width: 0;
+  background: linear-gradient(155deg, #0b1638 0%, #0f1e46 55%, #142a5c 100%);
+  color: #dbe4fb;
+  padding: 44px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoMark {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 17px;
+  color: #fff;
+  flex: none;
+}
+
+.logoName {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.logoTagline {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: #93a6d6;
+  margin-top: 2px;
+}
+
+.main {
+  max-width: 480px;
+}
+
+.headline {
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin: 28px 0 14px;
+}
+
+.headlineAccent {
+  color: var(--panel-accent);
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #aebbe0;
+  margin: 0 0 26px;
+}
+
+.badges {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badgeIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.badgeIconWord {
+  background: linear-gradient(160deg, #2b6cf2, #1747a6);
+}
+
+.badgeIconExcel {
+  background: linear-gradient(160deg, #21a366, #0f6b3f);
+}
+
+.badgeLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #dbe4fb;
+  text-align: center;
+}
+
+.featureStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #93a6d6;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.featureStrip span:not(:last-child)::after {
+  content: '·';
+  margin-left: 8px;
+  color: #4c5c8c;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  color: var(--panel-accent);
+}
+
+.statLabel {
+  font-size: 11.5px;
+  color: #c3cdec;
+  line-height: 1.4;
+}
+
+.footerTagline {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #5f6f9e;
+  margin-top: 22px;
+}
+
+@media (max-width: 900px) {
+  .panel {
+    display: none;
+  }
+}

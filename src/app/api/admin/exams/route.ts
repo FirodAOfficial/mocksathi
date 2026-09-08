@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/auth/cookies';
 import { db } from '@/db/client';
 import { exams, type NewExam } from '@/db/schema';
-import { isUniqueSlugViolation, parseExamInput, type ExamInput } from '@/db/examInput';
+import { parseExamInput, type ExamInput } from '@/db/examInput';
+import { isUniqueViolation } from '@/db/pgErrors';
 import { slugify } from '@/db/slug';
 
 /**
@@ -40,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (error) {
     // Unique slug collision (Postgres 23505) — same exam name added twice.
     // Retry once with a short disambiguating suffix rather than failing.
-    if (isUniqueSlugViolation(error)) {
+    if (isUniqueViolation(error)) {
       const [created] = await db
         .insert(exams)
         .values({ ...values, slug: `${baseSlug}-${crypto.randomUUID().slice(0, 6)}` })

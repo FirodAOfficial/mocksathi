@@ -7,8 +7,6 @@ import { MockCalendarPreview } from './MockCalendarPreview';
 import { MocksTable } from './MocksTable';
 import { PerformanceSnapshot } from './PerformanceSnapshot';
 import { StreakCard } from './StreakCard';
-import { SubjectSnapshotList } from './SubjectSnapshotList';
-import { WeakAreasCallout } from './WeakAreasCallout';
 
 export interface DashboardScreenProps {
   data: DashboardData;
@@ -50,11 +48,6 @@ export function DashboardScreen({ data }: DashboardScreenProps) {
 
       <div className={styles.kpiRow}>
         <PerformanceSnapshot performance={data.performance} />
-      </div>
-
-      <div className={styles.midRow}>
-        <SubjectSnapshotList subjects={data.subjects} />
-        <WeakAreasCallout weakAreas={data.weakAreas} />
       </div>
 
       <MocksTable

@@ -1,12 +1,6 @@
-import { ComingSoonScreen } from '@/components/dashboard/ComingSoonScreen';
+import { redirect } from 'next/navigation';
 
+/** Settings merged into Profile — see `sdd/exams.md`. Redirect rather than delete: this was a real nav destination, might be bookmarked. */
 export default function SettingsPage() {
-  return (
-    <ComingSoonScreen
-      icon="settings"
-      title="Settings"
-      subtitle="Test-experience preferences and account settings."
-      note="Language, font, notification and subscription preferences will live here — see Profile for account details in the meantime."
-    />
-  );
+  redirect('/dashboard/profile');
 }

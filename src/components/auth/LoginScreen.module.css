@@ -1,0 +1,75 @@
+.split {
+  --db-accent: #1c6ef2;
+  --db-bg: #eceff4;
+  --db-surface: #fff;
+  --db-border: #e8edf5;
+  --db-text: #0f172a;
+  --db-text-muted: #64748b;
+  --db-text-faint: #94a3b8;
+
+  min-height: 100vh;
+  display: flex;
+  background: #fff;
+}
+
+.formSide {
+  flex: 1 1 42%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 44px 32px;
+  position: relative;
+}
+
+@media (min-width: 901px) {
+  .formSide {
+    clip-path: polygon(56px 0, 100% 0, 100% 100%, 0 100%);
+    margin-left: -56px;
+    padding-left: 88px;
+  }
+}
+
+.topTagline {
+  position: absolute;
+  top: 32px;
+  right: 40px;
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topTagline em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--db-text);
+}
+
+.topTagline::after {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--db-border);
+}
+
+.bottomTagline {
+  position: absolute;
+  bottom: 28px;
+  right: 40px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--db-text-faint);
+  text-align: right;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .topTagline,
+  .bottomTagline {
+    display: none;
+  }
+}
