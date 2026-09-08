@@ -6,15 +6,27 @@ import { SubjectSnapshotList } from './SubjectSnapshotList';
 export interface AnalysisScreenProps {
   performance: PerformanceSnapshotData;
   subjects: SubjectSnapshot[];
+  title?: string;
+  subtitle?: string;
 }
 
-/** Overall Analysis: the KPI tiles and subject breakdown also shown on the dashboard home, as their own page. */
-export function AnalysisScreen({ performance, subjects }: AnalysisScreenProps) {
+/**
+ * The KPI tiles and subject breakdown also shown on the dashboard home, as
+ * their own page — lives at `/dashboard/performance` (the simplified
+ * student menu's "Performance" item, and the same route as the full menu's
+ * "Performance" under Mocks), title/subtitle overridable for either.
+ */
+export function AnalysisScreen({
+  performance,
+  subjects,
+  title = 'Overall Analysis',
+  subtitle = 'Score, accuracy and attempt rate across your recent mocks.',
+}: AnalysisScreenProps) {
   return (
     <>
       <div className={styles.header}>
-        <h1 className={styles.title}>Overall Analysis</h1>
-        <p className={styles.subtitle}>Score, accuracy and attempt rate across your recent mocks.</p>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.subtitle}>{subtitle}</p>
       </div>
 
       <div className={styles.kpiRow}>

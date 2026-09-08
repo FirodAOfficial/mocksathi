@@ -1,0 +1,58 @@
+.card {
+  background: var(--db-surface);
+  border: 1.5px solid var(--db-accent);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.iconRing {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--db-accent-soft, #e8effe);
+  color: var(--db-accent);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.label {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--db-text-faint);
+  margin: 0 0 2px;
+}
+
+.name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 9px;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  flex: none;
+}

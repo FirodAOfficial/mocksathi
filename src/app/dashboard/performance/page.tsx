@@ -1,12 +1,17 @@
-import { ComingSoonScreen } from '@/components/dashboard/ComingSoonScreen';
+import { requireUser } from '@/auth/cookies';
+import { AnalysisScreen } from '@/components/dashboard/AnalysisScreen';
+import { dashboardDataFor } from '@/dashboard/seedDashboard';
 
-export default function PerformancePage() {
+export default async function PerformancePage() {
+  const user = await requireUser();
+  const data = dashboardDataFor(user);
+
   return (
-    <ComingSoonScreen
-      icon="bar-chart-3"
+    <AnalysisScreen
+      performance={data.performance}
+      subjects={data.subjects}
       title="Performance"
-      subtitle="Score and accuracy trend across every mock you've sat."
-      note="A dedicated performance trend view — see Overall Analysis in the meantime for the current snapshot."
+      subtitle="Score, accuracy and attempt rate across your recent mocks."
     />
   );
 }

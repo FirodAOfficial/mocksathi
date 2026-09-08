@@ -112,29 +112,71 @@ in full.
 
 ## Phase 5 — Remaining portal routes
 
-Every sidebar link now resolves to a real page under `src/app/dashboard/`, reusing `PortalShell`.
+Every sidebar link resolves to a real page under `src/app/dashboard/`, reusing `PortalShell`.
 `/dashboard` is gated: its layout calls `requireUser()` (`src/auth/cookies.ts`), so a signed-out
 visitor lands on `/login` before any of this renders. Two depth tiers:
+
+**Update — the sidebar is now role-based** (`dashboardDataFor` in `src/dashboard/seedDashboard.ts`).
+Admins get the full menu below; everyone else gets `SIMPLIFIED_NAV_SECTIONS` — a flat, five-item
+menu (Dashboard, My Tests → `/dashboard/mocks`, Performance, Help & Support, Share, plus Logout)
+matching a reference screenshot the user provided. The Analytics and Study tools sections from the
+full menu are still removed (not built yet, "will add those features in future" — their routes are
+untouched, just unlinked, so nothing to rebuild when they return); the dashboard home screen still
+links to a couple of them directly (Subject Analysis snapshot, Weak Areas callout's "see all" link)
+since that request was about the sidebar menu specifically.
+
+**Update — "Today's Mock" is no longer a sidebar item.** Its "1" badge read as a required task
+rather than an optional one; removed from the full menu's Mocks section (the simplified menu never
+had it). In its place, `/dashboard/mocks` (both "All Mocks" in the full menu and "My Tests" in the
+simplified one) now opens with a standalone `TodaysMockCard` above the table — same "Start Mock N"
+action, just reachable from the mocks list rather than forced into the nav. `/dashboard/today`
+itself is unchanged and still reachable from that card, the dashboard home's `StreakCard`, and the
+table's own "Today" row.
+
+**Update — the simplified menu is sized up.** Five items in a full-height sidebar read as mostly
+empty space below a short list; `PortalShell`'s new `simplifiedMenu` prop (set from
+`user.role !== 'admin'` in the layout) adds a `.sidebarSpacious` class that bumps nav item padding,
+font size, gap and icon size (17px → 20px) for that case only — the full/admin menu, dense enough
+already, is untouched.
+
+**Update — the topbar user chip is now a dropdown** (`PortalShell`), with Profile and Logout in
+it. Resolves the tension noted above: `SIMPLIFIED_NAV_SECTIONS` no longer carries a Logout item
+(it never had a Profile one), matching the reference screenshot, and the earlier "kept anyway
+since there's no topbar menu" reasoning no longer applies — that menu now exists. Click-outside and
+Escape both close it; the full/admin menu is untouched (Profile and Logout still sit in its
+Account section too, so admins have both paths — not removing anything from the menu explicitly
+asked to be preserved as-is).
+
+Two cards removed from the dashboard home (kept on their own pages): Subject analysis and Weak
+areas to fix first. `DashboardScreen`'s `midRow` is gone along with them; the KPI tiles and recent
+mocks table are unaffected.
+
+`/dashboard/analysis` (and its `/subject`, `/topic` children) is **deleted** — it had zero
+remaining internal links after the Analytics section was removed, and its real content (KPI tiles
++ subject breakdown, via `AnalysisScreen`) has moved into `/dashboard/performance`, which both
+menus already pointed "Performance" at (full menu under Mocks, simplified menu directly). One real
+page instead of a real one and a placeholder one both called Performance/Analysis. New
+`/dashboard/share` (`ComingSoonScreen`) for the simplified menu's Share item. Two new icons,
+`home` and `share`, on `DashboardIcon`/`NavIconName`.
 
 - [x] **Real, backed by fixture/DB data**: Today's Mock (`/dashboard/today` — the app's original
       `/` home page, moved here and restyled to the dashboard's card system: "start something new"
       is what today's mock *is*), Mock Calendar (`/dashboard/calendar`), All Mocks 1–30
       (`/dashboard/mocks` — `SEED_DASHBOARD.allMocks`, a full 30-row list added for this),
-      per-mock Solutions stub (`/dashboard/mocks/[mockNumber]/solutions`), Overall Analysis
-      (`/dashboard/analysis`), Subject Analysis (`/dashboard/analysis/subject`), Weak Areas
+      per-mock Solutions stub (`/dashboard/mocks/[mockNumber]/solutions`), Performance
+      (`/dashboard/performance` — KPI tiles + subject breakdown, `AnalysisScreen`), Weak Areas
       (`/dashboard/weak-areas`), Strong Areas (`/dashboard/strong-areas`, new `StrongAreasList`
       component), and Profile (`/dashboard/profile` — the one page reading the real `User` row:
       name, email, member-since date; enrolments and study plan are still fixture).
 - [x] **Honest placeholders** (`ComingSoonScreen`, real routes, not 404s — see it for why this
-      isn't "half-finished"): Performance, Previous Mocks, Compare Performance, Topic Analysis,
-      Practice Zone, Topic Tests, Previous Year Papers, Bookmarks, Settings, Help & Support.
+      isn't "half-finished"): Previous Mocks, Compare Performance, Practice Zone, Topic Tests,
+      Previous Year Papers, Bookmarks, Settings, Help & Support, Share.
 - [ ] Leaderboard (`1k`) — not yet a route; no nav item points at it either (the mockup's sidebar
       doesn't list it as a top-level item, only screen `1k` shows it standalone).
 - [ ] Give the placeholders real content, in roughly the order the mockup numbers their screens:
-      Overall/Subject/Topic Analysis already real; Practice Zone & Topic Tests (`1i`), Previous
-      Year Papers + Bookmarks (`1j`) next. Each will need its own schema additions in
-      `src/dashboard/types.ts` (`PracticeMode`, `PreviousYearPaper`, `BookmarkedQuestion`,
-      `LeaderboardEntry`).
+      Performance already real; Practice Zone & Topic Tests (`1i`), Previous Year Papers +
+      Bookmarks (`1j`) next. Each will need its own schema additions in `src/dashboard/types.ts`
+      (`PracticeMode`, `PreviousYearPaper`, `BookmarkedQuestion`, `LeaderboardEntry`).
 - [x] `MocksTable` (renamed from `RecentMocksTable`) is now the one component behind both the
       dashboard-home "Recent mocks" preview and the full "All Mocks" page — took a `heading` and
       optional `headerRight` instead of being hardcoded to one or the other.

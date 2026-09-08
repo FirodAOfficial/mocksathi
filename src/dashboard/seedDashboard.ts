@@ -1,4 +1,4 @@
-import type { DashboardData } from './types';
+import type { DashboardData, NavSection } from './types';
 
 /**
  * The dashboard's fixture data.
@@ -237,36 +237,18 @@ export const SEED_DASHBOARD: DashboardData = {
     { id: 'n2', message: 'Your Mock 18 solutions are ready to review.', whenLabel: '1d ago', read: false },
     { id: 'n3', message: 'New Previous Year Paper added: SSC CGL 2024 Tier 1.', whenLabel: '2d ago', read: false },
   ],
+  // The full menu — admins get this (plus the Admin section `dashboardDataFor`
+  // appends); everyone else gets `SIMPLIFIED_NAV_SECTIONS` below.
   navSections: [
     { items: [{ label: 'Dashboard', icon: 'layout-dashboard', href: '/dashboard' }] },
     {
       title: 'Mocks',
       items: [
-        { label: "Today's Mock", icon: 'file-check-2', href: '/dashboard/today', badge: '1' },
         { label: 'Mock Calendar', icon: 'calendar-days', href: '/dashboard/calendar' },
         { label: 'All Mocks (1–30)', icon: 'layers', href: '/dashboard/mocks' },
         { label: 'Performance', icon: 'bar-chart-3', href: '/dashboard/performance' },
         { label: 'Previous Mocks', icon: 'history', href: '/dashboard/mocks/previous' },
         { label: 'Compare Performance', icon: 'git-compare', href: '/dashboard/compare' },
-      ],
-    },
-    {
-      title: 'Analytics',
-      items: [
-        { label: 'Overall Analysis', icon: 'pie-chart', href: '/dashboard/analysis' },
-        { label: 'Subject Analysis', icon: 'book-open-check', href: '/dashboard/analysis/subject' },
-        { label: 'Topic Analysis', icon: 'git-branch', href: '/dashboard/analysis/topic' },
-        { label: 'Weak Areas', icon: 'trending-down', href: '/dashboard/weak-areas' },
-        { label: 'Strong Areas', icon: 'star', href: '/dashboard/strong-areas' },
-      ],
-    },
-    {
-      title: 'Study tools',
-      items: [
-        { label: 'Practice Zone', icon: 'dumbbell', href: '/dashboard/practice' },
-        { label: 'Topic Tests', icon: 'list-checks', href: '/dashboard/practice/topic-tests' },
-        { label: 'Previous Year Papers', icon: 'files', href: '/dashboard/papers' },
-        { label: 'Bookmarks', icon: 'bookmark', href: '/dashboard/bookmarks' },
       ],
     },
     {
@@ -280,6 +262,24 @@ export const SEED_DASHBOARD: DashboardData = {
     },
   ],
 };
+
+/**
+ * The menu everyone who isn't an admin sees — flat, no section headers,
+ * matching the simplified reference design (Dashboard / My Tests /
+ * Performance / Help & Support / Share). Logout and Profile live in the
+ * topbar's user menu (`PortalShell`) instead, matching that reference too.
+ */
+export const SIMPLIFIED_NAV_SECTIONS: NavSection[] = [
+  {
+    items: [
+      { label: 'Dashboard', icon: 'home', href: '/dashboard' },
+      { label: 'My Tests', icon: 'layers', href: '/dashboard/mocks' },
+      { label: 'Performance', icon: 'bar-chart-3', href: '/dashboard/performance' },
+      { label: 'Help & Support', icon: 'circle-help', href: '/dashboard/help' },
+      { label: 'Share', icon: 'share', href: '/dashboard/share' },
+    ],
+  },
+];
 
 /** `2670` -> `"2,670"`. */
 export function formatMarks(value: number): string {
@@ -331,14 +331,16 @@ export function initialsFor(name: string): string {
 
 /**
  * `SEED_DASHBOARD` with the signed-in candidate's real name in place of the
- * fixture's, and an "Admin" nav section appended for admins. Everything else
- * — mocks, streak, analysis — stays fixture data until the dashboard itself
- * reads from the database (`sdd/dashboard.md` Phase 6); this just keeps the
- * things every page shows (who you are, what you can reach) honest now that
- * `/dashboard` sits behind a real login with roles (`sdd/exams.md`).
+ * fixture's, and a role-appropriate nav: admins get the full menu (plus an
+ * "Admin" section), everyone else gets `SIMPLIFIED_NAV_SECTIONS`. Everything
+ * else — mocks, streak, analysis — stays fixture data until the dashboard
+ * itself reads from the database (`sdd/dashboard.md` Phase 6); this just
+ * keeps the things every page shows (who you are, what you can reach)
+ * honest now that `/dashboard` sits behind a real login with roles
+ * (`sdd/exams.md`).
  */
 export function dashboardDataFor(identity: { name: string; role: string }): DashboardData {
-  const navSections =
+  const navSections: NavSection[] =
     identity.role === 'admin'
       ? [
           ...SEED_DASHBOARD.navSections,
@@ -347,7 +349,7 @@ export function dashboardDataFor(identity: { name: string; role: string }): Dash
             items: [{ label: 'Manage Exams', icon: 'shield' as const, href: '/dashboard/admin/exams' }],
           },
         ]
-      : SEED_DASHBOARD.navSections;
+      : SIMPLIFIED_NAV_SECTIONS;
 
   return {
     ...SEED_DASHBOARD,

@@ -34,6 +34,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         challengeTotalDays={data.challenge.totalDays}
         unreadNotifications={unreadNotifications}
         navSections={data.navSections}
+        simplifiedMenu={user.role !== 'admin'}
       >
         {children}
       </PortalShell>

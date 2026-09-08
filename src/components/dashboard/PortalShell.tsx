@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { CandidateProfile, ExamEnrollment, NavSection } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './PortalShell.module.css';
@@ -15,6 +15,8 @@ export interface PortalShellProps {
   challengeTotalDays: number;
   unreadNotifications: number;
   navSections: NavSection[];
+  /** The simplified menu has far fewer items than the full one — sized up so it doesn't look sparse in a full-height sidebar. */
+  simplifiedMenu?: boolean;
   children: ReactNode;
 }
 
@@ -31,13 +33,34 @@ export function PortalShell({
   challengeTotalDays,
   unreadNotifications,
   navSections,
+  simplifiedMenu = false,
   children,
 }: PortalShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const primaryExam = enrollments.find((enrollment) => enrollment.isPrimary) ?? enrollments[0];
   const otherExams = enrollments.filter((enrollment) => enrollment !== primaryExam);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!userMenuRef.current?.contains(event.target as Node)) setUserMenuOpen(false);
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setUserMenuOpen(false);
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [userMenuOpen]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -49,9 +72,11 @@ export function PortalShell({
     }
   }
 
+  const iconSize = simplifiedMenu ? 20 : 17;
+
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
+      <aside className={simplifiedMenu ? `${styles.sidebar} ${styles.sidebarSpacious}` : styles.sidebar}>
         <div className={styles.logoRow}>
           <div className={styles.logoMark}>M</div>
           <div>
@@ -77,7 +102,7 @@ export function PortalShell({
                     onClick={handleLogout}
                     disabled={loggingOut}
                   >
-                    <DashboardIcon name={item.icon} size={17} />
+                    <DashboardIcon name={item.icon} size={iconSize} />
                     {loggingOut ? 'Logging out…' : item.label}
                   </button>
                 );
@@ -91,7 +116,7 @@ export function PortalShell({
                   className={active ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
                   aria-current={active ? 'page' : undefined}
                 >
-                  <DashboardIcon name={item.icon} size={17} />
+                  <DashboardIcon name={item.icon} size={iconSize} />
                   {item.label}
                   {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
                 </Link>
@@ -129,12 +154,45 @@ export function PortalShell({
               <DashboardIcon name="bell" size={18} />
               {unreadNotifications > 0 && <span className={styles.bellDot}>{unreadNotifications}</span>}
             </button>
-            <div className={styles.userChip}>
-              <div className={styles.avatar}>{candidate.initials}</div>
-              <div>
-                <div className={styles.userName}>{candidate.name}</div>
-                <div className={styles.userRole}>{candidate.role}</div>
-              </div>
+            <div className={styles.userMenu} ref={userMenuRef}>
+              <button
+                type="button"
+                className={styles.userChip}
+                onClick={() => setUserMenuOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+              >
+                <div className={styles.avatar}>{candidate.initials}</div>
+                <div className={styles.userText}>
+                  <div className={styles.userName}>{candidate.name}</div>
+                  <div className={styles.userRole}>{candidate.role}</div>
+                </div>
+                <DashboardIcon name="chevron-down" size={14} />
+              </button>
+
+              {userMenuOpen && (
+                <div className={styles.userMenuPanel} role="menu">
+                  <Link
+                    href="/dashboard/profile"
+                    role="menuitem"
+                    className={styles.userMenuItem}
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    <DashboardIcon name="user" size={16} />
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={styles.userMenuItem}
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                  >
+                    <DashboardIcon name="log-out" size={16} />
+                    {loggingOut ? 'Logging out…' : 'Logout'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>
