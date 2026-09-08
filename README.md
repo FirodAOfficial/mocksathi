@@ -15,14 +15,18 @@ npm install
 npm run dev
 ```
 
-The app runs at [http://localhost:3000](http://localhost:3000). Key routes:
+The app runs at [http://localhost:3000](http://localhost:3000), which redirects to `/dashboard` —
+needs [Database](#database) set up and running, since `/dashboard/*` requires being signed in.
+Key routes:
 
-- `/` — entry point (sample exam, open a `.docx`, or a blank document)
+- `/dashboard` — candidate dashboard: streak, mock calendar, performance, and every screen linked
+  from its sidebar (`sdd/dashboard.md`)
+- `/dashboard/today` — start something: sit the sample exam, open a `.docx`, or a blank document
+  (the app's original `/` home page, before the dashboard became the default landing page)
 - `/exam` — exam instructions and player
 - `/editor` — the document editor
 - `/result` — result and solutions screens (design preview, `?outcome=qualified|not-qualified`)
-- `/dashboard` — candidate dashboard (mock calendar, streak, performance)
-- `/signup`, `/login` — create an account / sign in (see [Database](#database) — needs Postgres running)
+- `/signup`, `/login` — create an account / sign in
 
 ## Other scripts
 

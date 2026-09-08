@@ -71,10 +71,13 @@ work — see the backlog at the bottom.
       `sdd/dashboard.md` Phase 4: skip running tests until after database integration lands, and
       `npm test` is separately blocked in this environment by the pre-existing Rollup
       native-binding issue noted in `README.md`.
-- [ ] `/dashboard` is not gated behind a session — it renders its fixture data regardless of
-      whether anyone is signed in. Wiring that up (redirect to `/login`, use the real signed-in
-      user instead of `SEED_DASHBOARD.candidate`) is a follow-up once the dashboard itself starts
-      reading from the database instead of the fixture (`sdd/dashboard.md` Phase 6).
+- [x] ~~`/dashboard` is not gated behind a session~~ — done: `src/app/dashboard/layout.tsx` calls
+      `requireUser()`, which redirects a signed-out visitor to `/login` before anything under
+      `/dashboard/*` renders (`redirect()` in a layout halts its whole child tree — no per-page
+      gating needed, though pages that need the user for their own content call it again anyway;
+      `getCurrentUser` is wrapped in React's `cache()` so that's one DB lookup per request, not
+      two). `dashboardDataFor(user)` overlays the real name onto the fixture candidate — see
+      `sdd/dashboard.md`'s Phase 5 update. Enrolments, streak, mocks etc. are still fixture data.
 - [ ] No password reset / email verification / rate limiting on login attempts.
 
 ## Backlog (future)

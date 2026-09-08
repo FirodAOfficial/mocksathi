@@ -27,6 +27,13 @@ data layer (planned as Postgres for relational/transactional data — users, enr
 streaks, leaderboard rank — plus MongoDB for flexible content — question bank, analysis blobs — not
 finalised) can be dropped in later without reshaping the types the screen renders.
 
+**Update — the dashboard is now the app's default page.** `/` redirects to `/dashboard`
+(`next.config.ts`), and `/dashboard/*` requires login (`sdd/auth.md`) now that real accounts
+exist. The old `/` home page (sit the sample exam / open a document / start blank) moved to
+`/dashboard/today`, restyled to the dashboard's card system — see Phase 5. `dashboardDataFor(user)`
+(`src/dashboard/seedDashboard.ts`) overlays the signed-in user's real name onto
+`SEED_DASHBOARD.candidate`; every page still fixture data otherwise.
+
 ## Phase 1 — Domain types & fixtures (schema)
 
 New module `src/dashboard/`, mirroring the existing `src/exam/` convention (flat types + a `seed*`
@@ -103,15 +110,34 @@ in full.
       is mobile-sized except the separate `1n` mobile set, which is out of scope here). Verified so
       far only via the rendered HTML/RSC payload (curl), not a real browser — do a visual pass too.
 
-## Phase 5 — Future: remaining portal routes (not built now)
+## Phase 5 — Remaining portal routes
 
-Backlog, each a route under `src/app/dashboard/` reusing `PortalShell`, in roughly the order the
-mockup numbers them: Mock Calendar + All Mocks (`1h`), Overall/Subject/Topic Analysis (`1f`),
-Weak & Strong Areas full page (`1g`), Practice Zone & Topic Tests (`1i`), Previous Year Papers +
-Bookmarks (`1j`), Leaderboard (`1k`), Profile & Settings (`1l`). Each will need its own schema
-additions in `src/dashboard/types.ts` (e.g. full `LeaderboardEntry`, `PracticeMode`,
-`PreviousYearPaper`, `BookmarkedQuestion`) — left out of Phase 1 except where a stub was cheap to
-add now.
+Every sidebar link now resolves to a real page under `src/app/dashboard/`, reusing `PortalShell`.
+`/dashboard` is gated: its layout calls `requireUser()` (`src/auth/cookies.ts`), so a signed-out
+visitor lands on `/login` before any of this renders. Two depth tiers:
+
+- [x] **Real, backed by fixture/DB data**: Today's Mock (`/dashboard/today` — the app's original
+      `/` home page, moved here and restyled to the dashboard's card system: "start something new"
+      is what today's mock *is*), Mock Calendar (`/dashboard/calendar`), All Mocks 1–30
+      (`/dashboard/mocks` — `SEED_DASHBOARD.allMocks`, a full 30-row list added for this),
+      per-mock Solutions stub (`/dashboard/mocks/[mockNumber]/solutions`), Overall Analysis
+      (`/dashboard/analysis`), Subject Analysis (`/dashboard/analysis/subject`), Weak Areas
+      (`/dashboard/weak-areas`), Strong Areas (`/dashboard/strong-areas`, new `StrongAreasList`
+      component), and Profile (`/dashboard/profile` — the one page reading the real `User` row:
+      name, email, member-since date; enrolments and study plan are still fixture).
+- [x] **Honest placeholders** (`ComingSoonScreen`, real routes, not 404s — see it for why this
+      isn't "half-finished"): Performance, Previous Mocks, Compare Performance, Topic Analysis,
+      Practice Zone, Topic Tests, Previous Year Papers, Bookmarks, Settings, Help & Support.
+- [ ] Leaderboard (`1k`) — not yet a route; no nav item points at it either (the mockup's sidebar
+      doesn't list it as a top-level item, only screen `1k` shows it standalone).
+- [ ] Give the placeholders real content, in roughly the order the mockup numbers their screens:
+      Overall/Subject/Topic Analysis already real; Practice Zone & Topic Tests (`1i`), Previous
+      Year Papers + Bookmarks (`1j`) next. Each will need its own schema additions in
+      `src/dashboard/types.ts` (`PracticeMode`, `PreviousYearPaper`, `BookmarkedQuestion`,
+      `LeaderboardEntry`).
+- [x] `MocksTable` (renamed from `RecentMocksTable`) is now the one component behind both the
+      dashboard-home "Recent mocks" preview and the full "All Mocks" page — took a `heading` and
+      optional `headerRight` instead of being hardcoded to one or the other.
 
 ## Phase 6 — Future: real data layer (not built now)
 
