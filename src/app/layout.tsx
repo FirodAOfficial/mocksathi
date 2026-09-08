@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -24,7 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         does not cascade to children, so a genuine hydration mismatch anywhere
         inside the app still reports normally.
       */}
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        {/*
+          Vercel Analytics. It injects its script only on Vercel, so local runs
+          and any other host are unaffected — nothing to gate it behind here.
+        */}
+        <Analytics />
+      </body>
     </html>
   );
 }

@@ -41,6 +41,7 @@
     "@tiptap/extensions": "3.31.3",
     "@tiptap/pm": "3.31.3",
     "@tiptap/react": "3.31.3",
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "5.11.1",
     "jszip": "3.10.1",
