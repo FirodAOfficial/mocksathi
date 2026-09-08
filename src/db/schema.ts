@@ -1,4 +1,4 @@
-import { date, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Database schema, source of truth for the migrations in `db/migrations/`.
@@ -96,3 +96,30 @@ export const exams = pgTable('exams', {
 
 export type Exam = typeof exams.$inferSelect;
 export type NewExam = typeof exams.$inferInsert;
+
+/**
+ * A candidate's registration for an exam — the "exams registered" the
+ * profile page manages. "Only one primary" is enforced in application code
+ * (`src/db/enrollments.ts`, in a transaction), not a DB constraint: a
+ * partial unique index would do it too, but every write already goes
+ * through that one module, so the extra DB-level guarantee wasn't worth the
+ * added migration complexity.
+ */
+export const enrollments = pgTable(
+  'enrollments',
+  {
+    id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    examId: uuid('exam_id')
+      .notNull()
+      .references(() => exams.id, { onDelete: 'cascade' }),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('enrollments_user_exam_unique').on(table.userId, table.examId)],
+);
+
+export type Enrollment = typeof enrollments.$inferSelect;
+export type NewEnrollment = typeof enrollments.$inferInsert;

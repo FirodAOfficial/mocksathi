@@ -201,7 +201,18 @@
   font-weight: 600;
   color: var(--db-text);
   background: none;
-  cursor: default;
+  text-decoration: none;
+}
+
+/* The empty-enrollment state renders this as a <Link>; the normal state as a
+   plain, non-interactive <div> — same class either way. */
+a.examPickerButton {
+  color: var(--db-accent);
+  cursor: pointer;
+}
+
+a.examPickerButton:hover {
+  background: var(--db-accent-soft);
 }
 
 .alsoEnrolled {

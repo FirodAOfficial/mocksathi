@@ -1,4 +1,6 @@
-import type { DashboardData, NavSection } from './types';
+import 'server-only';
+import { enrollmentsForUser } from '@/db/enrollments';
+import type { DashboardData, ExamEnrollment, NavSection } from './types';
 
 /**
  * The dashboard's fixture data.
@@ -254,8 +256,7 @@ export const SEED_DASHBOARD: DashboardData = {
     {
       title: 'Account',
       items: [
-        { label: 'Profile', icon: 'user', href: '/dashboard/profile' },
-        { label: 'Settings', icon: 'settings', href: '/dashboard/settings' },
+        { label: 'Profile & Settings', icon: 'user', href: '/dashboard/profile' },
         { label: 'Help & Support', icon: 'circle-help', href: '/dashboard/help' },
         { label: 'Logout', icon: 'log-out', href: '/logout' },
       ],
@@ -338,8 +339,13 @@ export function initialsFor(name: string): string {
  * keeps the things every page shows (who you are, what you can reach)
  * honest now that `/dashboard` sits behind a real login with roles
  * (`sdd/exams.md`).
+ *
+ * Async as of the `enrollments` table: exam registrations are real data now
+ * (`src/db/enrollments.ts`), not fixture — this is the one field on
+ * `DashboardData` that genuinely comes from the database for every caller,
+ * rather than being fixture with the odd real field overlaid.
  */
-export function dashboardDataFor(identity: { name: string; role: string }): DashboardData {
+export async function dashboardDataFor(identity: { id: string; name: string; role: string }): Promise<DashboardData> {
   const navSections: NavSection[] =
     identity.role === 'admin'
       ? [
@@ -351,9 +357,17 @@ export function dashboardDataFor(identity: { name: string; role: string }): Dash
         ]
       : SIMPLIFIED_NAV_SECTIONS;
 
+  const dbEnrollments = await enrollmentsForUser(identity.id);
+  const enrollments: ExamEnrollment[] = dbEnrollments.map((enrollment) => ({
+    examId: enrollment.exam.id,
+    examName: enrollment.exam.name,
+    isPrimary: enrollment.isPrimary,
+  }));
+
   return {
     ...SEED_DASHBOARD,
     candidate: { ...SEED_DASHBOARD.candidate, name: identity.name, initials: initialsFor(identity.name) },
     navSections,
+    enrollments,
   };
 }

@@ -6,6 +6,12 @@ weak/strong areas, mock calendar, practice zone, PYQ + bookmarks, leaderboard, p
 mobile). Extracted to `design/mockups_extracted/` for reference during build (gitignored scratch —
 not committed).
 
+**Update — `dashboardDataFor` is now `async`, real data for one field.** Exam registrations
+(`enrollments`) come from the database for every `/dashboard/*` page now, not the fixture — see
+`sdd/exams.md`'s "candidate exam registration" update for the full detail (new table, self-service
+API, Profile & Settings merge, a real bug caught and fixed along the way). Every other field on
+`DashboardData` is still `SEED_DASHBOARD` fixture, same as before.
+
 ## Scope decision
 
 The sidebar in every screen carries a standalone **Dashboard** nav item, separate from Mock

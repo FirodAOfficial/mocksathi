@@ -4,6 +4,6 @@ import { dashboardDataFor } from '@/dashboard/seedDashboard';
 
 export default async function TodaysMockPage() {
   const user = await requireUser();
-  const data = dashboardDataFor(user);
+  const data = await dashboardDataFor(user);
   return <TodaysMockScreen todaysMock={data.todaysMock} />;
 }

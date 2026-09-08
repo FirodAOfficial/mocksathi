@@ -4,7 +4,7 @@ import { dashboardDataFor } from '@/dashboard/seedDashboard';
 
 export default async function PerformancePage() {
   const user = await requireUser();
-  const data = dashboardDataFor(user);
+  const data = await dashboardDataFor(user);
 
   return (
     <AnalysisScreen

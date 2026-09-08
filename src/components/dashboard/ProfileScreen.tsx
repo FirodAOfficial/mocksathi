@@ -1,5 +1,6 @@
-import type { ChallengePlan, ExamEnrollment } from '@/dashboard/types';
+import type { ChallengePlan } from '@/dashboard/types';
 import { challengeProgressPct } from '@/dashboard/seedDashboard';
+import { ExamEnrollmentsCard, type RegisteredExam, type SelectableExam } from './ExamEnrollmentsCard';
 import styles from './ProfileScreen.module.css';
 
 export interface ProfileScreenProps {
@@ -8,15 +9,17 @@ export interface ProfileScreenProps {
   initials: string;
   role: string;
   memberSinceLabel: string;
-  enrollments: ExamEnrollment[];
+  enrollments: RegisteredExam[];
+  availableExams: SelectableExam[];
   challenge: ChallengePlan;
 }
 
 /**
- * Profile — the one dashboard screen backed by the real database today: name
- * and email come from the signed-in `User` row, not `SEED_DASHBOARD`.
- * Enrollments and study plan are still fixture data, same as the rest of the
- * candidate portal.
+ * Profile & Settings — merged, since a settings page with nothing but
+ * account-adjacent preferences didn't earn a separate one (`/dashboard/settings`
+ * now redirects here). The database-backed parts: name/email (the `User` row)
+ * and exam registrations (`enrollments` table, via `ExamEnrollmentsCard`).
+ * Study plan is still fixture, same as the rest of the candidate portal.
  */
 export function ProfileScreen({
   name,
@@ -25,6 +28,7 @@ export function ProfileScreen({
   role,
   memberSinceLabel,
   enrollments,
+  availableExams,
   challenge,
 }: ProfileScreenProps) {
   const pct = challengeProgressPct(challenge);
@@ -32,8 +36,8 @@ export function ProfileScreen({
   return (
     <>
       <div className={styles.header}>
-        <h1 className={styles.title}>Profile</h1>
-        <p className={styles.subtitle}>Your account, exam enrolments, and study plan.</p>
+        <h1 className={styles.title}>Profile &amp; Settings</h1>
+        <p className={styles.subtitle}>Your account, exam registrations, and study plan.</p>
       </div>
 
       <div className={styles.grid}>
@@ -59,18 +63,6 @@ export function ProfileScreen({
         </div>
 
         <div className={styles.card}>
-          <p className={styles.cardTitle}>Exam enrolments</p>
-          <div className={styles.list}>
-            {enrollments.map((enrollment) => (
-              <div key={enrollment.examId} className={styles.enrollmentRow}>
-                {enrollment.examName}
-                {enrollment.isPrimary && <span className={styles.primaryBadge}>Primary</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.card}>
           <p className={styles.cardTitle}>Study plan</p>
           <div className={styles.planRow}>
             <span>{challenge.name}</span>
@@ -82,6 +74,15 @@ export function ProfileScreen({
             <div className={styles.fill} style={{ width: `${pct}%` }} />
           </div>
         </div>
+      </div>
+
+      <ExamEnrollmentsCard enrollments={enrollments} availableExams={availableExams} />
+
+      <div className={styles.card}>
+        <p className={styles.cardTitle}>Preferences</p>
+        <p className={styles.preferencesNote}>
+          Language, font, notification and subscription preferences are planned here.
+        </p>
       </div>
     </>
   );

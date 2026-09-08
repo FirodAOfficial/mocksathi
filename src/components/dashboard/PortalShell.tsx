@@ -129,10 +129,16 @@ export function PortalShell({
       <div className={styles.main}>
         <header className={styles.topbar}>
           <div className={styles.examPicker}>
-            <div className={styles.examPickerButton}>
-              {primaryExam?.examName}
-              <DashboardIcon name="chevron-down" size={14} />
-            </div>
+            {primaryExam ? (
+              <div className={styles.examPickerButton}>
+                {primaryExam.examName}
+                <DashboardIcon name="chevron-down" size={14} />
+              </div>
+            ) : (
+              <Link href="/dashboard/profile" className={styles.examPickerButton}>
+                + Add your exam
+              </Link>
+            )}
             {otherExams.length > 0 && (
               <div className={styles.alsoEnrolled}>
                 also enrolled:

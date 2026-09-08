@@ -1,0 +1,177 @@
+.card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 20px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0 0 4px;
+}
+
+.cardSubtitle {
+  font-size: 12px;
+  color: var(--db-text-muted);
+  margin: 0 0 16px;
+}
+
+.empty {
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+  padding: 10px 0 16px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid var(--db-border);
+}
+
+.rowInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.examName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--db-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categoryChip {
+  font-size: 10.5px;
+  color: var(--db-text-muted);
+  background: #eef2f7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex: none;
+}
+
+.primaryBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--db-accent);
+  background: var(--db-accent-soft, #e8effe);
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex: none;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.linkButton {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--db-accent);
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.linkButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.removeButton {
+  composes: linkButton;
+  color: #b91c1c;
+}
+
+.linkButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+  text-decoration: none;
+}
+
+.addRow {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.select {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--db-text);
+  background: var(--db-surface);
+  min-width: 0;
+}
+
+.select:focus-visible {
+  outline: none;
+  border: 1.5px solid var(--db-accent);
+  box-shadow: 0 0 0 3px rgba(28, 110, 242, 0.1);
+}
+
+.registerButton {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+.registerButton:hover:not(:disabled) {
+  background: #0f4fc4;
+}
+
+.registerButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.allRegisteredNote {
+  font-size: 12px;
+  color: var(--db-text-muted);
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fbdcdc;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 12px;
+  margin: 0 0 12px;
+}

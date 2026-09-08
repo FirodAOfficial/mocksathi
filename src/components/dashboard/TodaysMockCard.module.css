@@ -1,4 +1,10 @@
 .card {
+  /* Stays put while the mocks list scrolls under it — sticky against
+     `.content` (PortalShell.module.css), the nearest scrolling ancestor. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex: none;
   background: var(--db-surface);
   border: 1.5px solid var(--db-accent);
   border-radius: 12px;

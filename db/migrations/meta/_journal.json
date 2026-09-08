@@ -15,6 +15,13 @@
       "when": 1788877078343,
       "tag": "0001_fancy_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788882136783,
+      "tag": "0002_whole_black_bolt",
+      "breakpoints": true
     }
   ]
 }

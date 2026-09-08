@@ -5,7 +5,7 @@ import { dashboardDataFor } from '@/dashboard/seedDashboard';
 export default async function MockSolutionsPage({ params }: { params: Promise<{ mockNumber: string }> }) {
   const { mockNumber } = await params;
   const user = await requireUser();
-  const data = dashboardDataFor(user);
+  const data = await dashboardDataFor(user);
   const mock = data.allMocks.find((entry) => entry.mockNumber === Number(mockNumber));
 
   return (
