@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
+import { AuthCard } from './AuthCard';
 import styles from './AuthCard.module.css';
 
 export function SignupForm() {
@@ -40,74 +41,72 @@ export function SignupForm() {
   }
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Create your account</h1>
-        <p className={styles.subtitle}>Track your mocks, streaks and analysis.</p>
-
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="name">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              autoComplete="name"
-              required
-              className={styles.input}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              className={styles.input}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={MIN_PASSWORD_LENGTH}
-              className={styles.input}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-
-          {error && (
-            <p className={styles.error} role="alert">
-              {error}
-            </p>
-          )}
-
-          <button type="submit" className={styles.primary} disabled={submitting}>
-            {submitting ? 'Creating account…' : 'Create account'}
-          </button>
-        </form>
-
-        <hr className={styles.divider} />
-        <p className={styles.footer}>
+    <AuthCard
+      title="Create your account"
+      subtitle="Track your mocks, streaks and analysis in one place."
+      footer={
+        <>
           Already have an account? <Link href="/login">Sign in</Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="name">
+            Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            autoComplete="name"
+            required
+            className={styles.input}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            className={styles.input}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={MIN_PASSWORD_LENGTH}
+            className={styles.input}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </div>
+
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" className={styles.primary} disabled={submitting}>
+          {submitting ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
+    </AuthCard>
   );
 }

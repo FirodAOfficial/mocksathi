@@ -181,6 +181,8 @@ export interface DashboardData {
   calendarDays: MockCalendarDay[];
   todaysMock: MockSummary;
   recentMocks: MockSummary[];
+  /** Every mock in the 30-day challenge, 1 through 30 — the "All Mocks" page. */
+  allMocks: MockSummary[];
   performance: PerformanceSnapshot;
   subjects: SubjectSnapshot[];
   weakAreas: WeakArea[];

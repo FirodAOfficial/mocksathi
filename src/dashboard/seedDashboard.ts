@@ -112,6 +112,40 @@ export const SEED_DASHBOARD: DashboardData = {
       unlockNote: 'Unlocks after you complete Mock 19',
     },
   ],
+  // Every mock 1–30. 19 Sep has no row: that's the missed day on the
+  // calendar, so mock numbering resumes at 15 on 20 Sep rather than 14b.
+  allMocks: [
+    { mockNumber: 1, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 118.0, maxScore: 200, accuracyPct: 62, rank: 4820, timeSpentSeconds: 58 * 60 + 40, dateLabel: '5 Sep' },
+    { mockNumber: 2, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 122.0, maxScore: 200, accuracyPct: 64, rank: 4530, timeSpentSeconds: 57 * 60 + 12, dateLabel: '6 Sep' },
+    { mockNumber: 3, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 126.0, maxScore: 200, accuracyPct: 67, rank: 4210, timeSpentSeconds: 56 * 60 + 48, dateLabel: '7 Sep' },
+    { mockNumber: 4, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 120.0, maxScore: 200, accuracyPct: 63, rank: 4460, timeSpentSeconds: 59 * 60 + 3, dateLabel: '8 Sep' },
+    { mockNumber: 5, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 131.0, maxScore: 200, accuracyPct: 70, rank: 3890, timeSpentSeconds: 55 * 60 + 37, dateLabel: '9 Sep' },
+    { mockNumber: 6, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 135.0, maxScore: 200, accuracyPct: 72, rank: 3640, timeSpentSeconds: 54 * 60 + 52, dateLabel: '10 Sep' },
+    { mockNumber: 7, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 129.0, maxScore: 200, accuracyPct: 69, rank: 3910, timeSpentSeconds: 56 * 60 + 15, dateLabel: '11 Sep' },
+    { mockNumber: 8, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 138.0, maxScore: 200, accuracyPct: 74, rank: 3400, timeSpentSeconds: 53 * 60 + 48, dateLabel: '12 Sep' },
+    { mockNumber: 9, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 141.0, maxScore: 200, accuracyPct: 76, rank: 3180, timeSpentSeconds: 54 * 60 + 2, dateLabel: '13 Sep' },
+    { mockNumber: 10, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 136.0, maxScore: 200, accuracyPct: 73, rank: 3350, timeSpentSeconds: 55 * 60 + 20, dateLabel: '14 Sep' },
+    { mockNumber: 11, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 144.0, maxScore: 200, accuracyPct: 78, rank: 2980, timeSpentSeconds: 52 * 60 + 55, dateLabel: '15 Sep' },
+    { mockNumber: 12, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 147.0, maxScore: 200, accuracyPct: 80, rank: 2790, timeSpentSeconds: 53 * 60 + 10, dateLabel: '16 Sep' },
+    { mockNumber: 13, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 149.0, maxScore: 200, accuracyPct: 81, rank: 2650, timeSpentSeconds: 54 * 60 + 30, dateLabel: '17 Sep' },
+    { mockNumber: 14, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 144.0, maxScore: 200, accuracyPct: 79, rank: 2820, timeSpentSeconds: 55 * 60 + 48, dateLabel: '18 Sep' },
+    { mockNumber: 15, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 172.0, maxScore: 200, accuracyPct: 92, rank: 1142, timeSpentSeconds: 53 * 60 + 47, dateLabel: '20 Sep', isBestScore: true },
+    { mockNumber: 16, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 149.0, maxScore: 200, accuracyPct: 85, rank: 2260, timeSpentSeconds: 58 * 60 + 3, dateLabel: '21 Sep' },
+    { mockNumber: 17, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 153.0, maxScore: 200, accuracyPct: 88, rank: 1988, timeSpentSeconds: 55 * 60 + 12, dateLabel: '22 Sep' },
+    { mockNumber: 18, paperName: 'Tier 1 Full Length · 100 Qs', state: 'done', score: 151.0, maxScore: 200, accuracyPct: 86, rank: 2104, timeSpentSeconds: 57 * 60 + 40, dateLabel: '23 Sep' },
+    { mockNumber: 19, paperName: 'Tier 1 Full Length · 100 Qs', state: 'today', dateLabel: '24 Sep', timeSpentSeconds: 60 * 60 },
+    { mockNumber: 20, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '25 Sep', unlockNote: 'Unlocks after you complete Mock 19' },
+    { mockNumber: 21, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '26 Sep', unlockNote: 'Unlocks after you complete Mock 20' },
+    { mockNumber: 22, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '27 Sep', unlockNote: 'Unlocks after you complete Mock 21' },
+    { mockNumber: 23, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '28 Sep', unlockNote: 'Unlocks after you complete Mock 22' },
+    { mockNumber: 24, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '29 Sep', unlockNote: 'Unlocks after you complete Mock 23' },
+    { mockNumber: 25, paperName: 'Full Revision · Cumulative', state: 'locked', dateLabel: '30 Sep', unlockNote: 'Unlocks after you complete Mock 24' },
+    { mockNumber: 26, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '1 Oct', unlockNote: 'Unlocks after you complete Mock 25' },
+    { mockNumber: 27, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '2 Oct', unlockNote: 'Unlocks after you complete Mock 26' },
+    { mockNumber: 28, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '3 Oct', unlockNote: 'Unlocks after you complete Mock 27' },
+    { mockNumber: 29, paperName: 'Tier 1 Full Length · 100 Qs', state: 'locked', dateLabel: '4 Oct', unlockNote: 'Unlocks after you complete Mock 28' },
+    { mockNumber: 30, paperName: 'Full Revision · Cumulative', state: 'locked', dateLabel: '5 Oct', unlockNote: 'Unlocks after you complete Mock 29' },
+  ],
   performance: {
     averageScore: 148.3,
     maxScore: 200,
@@ -281,4 +315,30 @@ export function streakLockCountdownLabel(lockHour: number, now: Date): string {
   const hours = Math.floor(remainingMinutes / 60);
   const minutes = remainingMinutes % 60;
   return `${hours}h ${minutes}m left`;
+}
+
+/** `"Aman Verma"` -> `"AV"`, `"Cher"` -> `"C"`. */
+export function initialsFor(name: string): string {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join('');
+  return initials || '?';
+}
+
+/**
+ * `SEED_DASHBOARD` with the signed-in candidate's real name in place of the
+ * fixture's. Everything else — mocks, streak, analysis — stays fixture data
+ * until the dashboard itself reads from the database (`sdd/dashboard.md`
+ * Phase 6); this just keeps the one thing every page shows (who you are)
+ * honest now that `/dashboard` sits behind a real login.
+ */
+export function dashboardDataFor(identity: { name: string }): DashboardData {
+  return {
+    ...SEED_DASHBOARD,
+    candidate: { ...SEED_DASHBOARD.candidate, name: identity.name, initials: initialsFor(identity.name) },
+  };
 }

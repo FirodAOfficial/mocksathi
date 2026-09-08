@@ -5,9 +5,11 @@ import styles from './WeakAreasCallout.module.css';
 
 export interface WeakAreasCalloutProps {
   weakAreas: WeakArea[];
+  /** Hidden on the dedicated Weak Areas page — pointless linking to the page you're already on. */
+  showFooterLink?: boolean;
 }
 
-export function WeakAreasCallout({ weakAreas }: WeakAreasCalloutProps) {
+export function WeakAreasCallout({ weakAreas, showFooterLink = true }: WeakAreasCalloutProps) {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -34,11 +36,13 @@ export function WeakAreasCallout({ weakAreas }: WeakAreasCalloutProps) {
         ))}
       </div>
 
-      <div className={styles.footer}>
-        <Link href="/dashboard/weak-areas" className={styles.footerLink}>
-          See all weak &amp; strong areas →
-        </Link>
-      </div>
+      {showFooterLink && (
+        <div className={styles.footer}>
+          <Link href="/dashboard/weak-areas" className={styles.footerLink}>
+            See all weak areas →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

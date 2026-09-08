@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import type { DashboardData } from '@/dashboard/types';
 import { ChallengeProgressCard } from './ChallengeProgressCard';
 import styles from './DashboardScreen.module.css';
+import mocksTableStyles from './MocksTable.module.css';
 import { MockCalendarPreview } from './MockCalendarPreview';
+import { MocksTable } from './MocksTable';
 import { PerformanceSnapshot } from './PerformanceSnapshot';
-import { RecentMocksTable } from './RecentMocksTable';
 import { StreakCard } from './StreakCard';
 import { SubjectSnapshotList } from './SubjectSnapshotList';
 import { WeakAreasCallout } from './WeakAreasCallout';
@@ -55,7 +57,15 @@ export function DashboardScreen({ data }: DashboardScreenProps) {
         <WeakAreasCallout weakAreas={data.weakAreas} />
       </div>
 
-      <RecentMocksTable todaysMock={data.todaysMock} recentMocks={data.recentMocks} />
+      <MocksTable
+        heading="Recent mocks"
+        mocks={[data.todaysMock, ...data.recentMocks]}
+        headerRight={
+          <Link href="/dashboard/mocks" className={mocksTableStyles.viewAll}>
+            View all mocks (1–30) →
+          </Link>
+        }
+      />
     </>
   );
 }

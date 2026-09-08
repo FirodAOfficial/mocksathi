@@ -1,12 +1,15 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
 import { DashboardIcon } from './icons/DashboardIcon';
-import styles from './RecentMocksTable.module.css';
+import styles from './MocksTable.module.css';
 
-export interface RecentMocksTableProps {
-  todaysMock: MockSummary;
-  recentMocks: MockSummary[];
+export interface MocksTableProps {
+  heading: string;
+  mocks: MockSummary[];
+  /** e.g. a "View all" link on the dashboard-home preview. Omitted on the full list. */
+  headerRight?: ReactNode;
 }
 
 function ScoreCells({ mock }: { mock: MockSummary }) {
@@ -55,9 +58,9 @@ function ActionCell({ mock }: { mock: MockSummary }) {
   }
 }
 
-function MockRow({ mock, highlight }: { mock: MockSummary; highlight?: boolean }) {
+function MockRow({ mock }: { mock: MockSummary }) {
   return (
-    <div className={highlight ? styles.rowToday : styles.row}>
+    <div className={mock.state === 'today' ? styles.rowToday : styles.row}>
       <b className={styles.mockNumber}>Mock {mock.mockNumber}</b>
       <span className={styles.paper}>
         {mock.paperName}
@@ -77,14 +80,13 @@ function MockRow({ mock, highlight }: { mock: MockSummary; highlight?: boolean }
   );
 }
 
-export function RecentMocksTable({ todaysMock, recentMocks }: RecentMocksTableProps) {
+/** A list of `MockSummary` rows — the dashboard-home "Recent mocks" preview and the full "All Mocks" page both render through this. */
+export function MocksTable({ heading, mocks, headerRight }: MocksTableProps) {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <p className={styles.heading}>Recent mocks</p>
-        <Link href="/dashboard/mocks" className={styles.viewAll}>
-          View all mocks (1–30) →
-        </Link>
+        <p className={styles.heading}>{heading}</p>
+        {headerRight}
       </div>
 
       <div className={styles.table}>
@@ -99,8 +101,7 @@ export function RecentMocksTable({ todaysMock, recentMocks }: RecentMocksTablePr
           <span className={styles.right}>Action</span>
         </div>
 
-        <MockRow mock={todaysMock} highlight />
-        {recentMocks.map((mock) => (
+        {mocks.map((mock) => (
           <MockRow key={mock.mockNumber} mock={mock} />
         ))}
       </div>

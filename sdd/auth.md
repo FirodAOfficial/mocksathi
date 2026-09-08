@@ -50,9 +50,13 @@ work — see the backlog at the bottom.
       generic "Incorrect email or password" / not-generic "that email already exists" split — the
       former avoids leaking which emails have accounts, the latter is fine to reveal since it's
       the account owner completing their own signup.
-- [x] `/signup`, `/login` pages (`src/components/auth/{Login,Signup}Form.tsx`) — same visual system
-      as the existing editor home page (`src/app/page.module.css`'s look), not the dashboard's,
-      since these gate the app generally rather than belonging to the candidate portal specifically.
+- [x] `/signup`, `/login` pages (`src/components/auth/{Login,Signup}Form.tsx`) — styled to match the
+      mockup's sign-in card (screen `1m`): Mocksathi logo, Inter font, `#1c6ef2` accent, rounded
+      accent-bordered inputs on focus, same tokens as `PortalShell.module.css` (duplicated in
+      `AuthCard.module.css` since these pages render outside `/dashboard`'s layout). Fields are
+      email/password rather than the mockup's phone/OTP, per the auth-method decision above; no
+      "Continue with Google" button, since that isn't wired up. First pass used the editor's
+      Office-blue theme instead — corrected after review.
 - [x] Dashboard's "Logout" nav item (previously a dead `Link` to `/logout`) now calls
       `POST /api/auth/logout` and redirects to `/login`.
 - [x] End-to-end verified against the real local database: signup → `/api/auth/me` returns the

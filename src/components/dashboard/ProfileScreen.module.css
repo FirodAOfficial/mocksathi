@@ -1,0 +1,152 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 20px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0 0 16px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--db-accent-soft, #e8effe);
+  color: var(--db-accent);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 700;
+  flex: none;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.role {
+  font-size: 12px;
+  color: var(--db-text-muted);
+  margin: 2px 0 0;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.fieldLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--db-text-faint);
+  margin-bottom: 4px;
+}
+
+.fieldValue {
+  font-size: 13.5px;
+  color: var(--db-text);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.enrollmentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid var(--db-border);
+  font-size: 13px;
+  color: var(--db-text);
+}
+
+.primaryBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--db-accent);
+  background: var(--db-accent-soft, #e8effe);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.planRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--db-text-muted);
+  margin-bottom: 7px;
+}
+
+.planRow b {
+  color: var(--db-text);
+}
+
+.track {
+  height: 8px;
+  border-radius: 4px;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.fill {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--db-accent);
+}

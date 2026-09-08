@@ -1,5 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
 import { getUserBySessionToken, type CreatedSession } from './session';
 import type { User } from '@/db/schema';
 
@@ -28,9 +30,23 @@ export async function readSessionToken(): Promise<string | undefined> {
   return cookieStore.get(SESSION_COOKIE_NAME)?.value;
 }
 
-/** The signed-in user for the current request, or `null` if not signed in. */
-export async function getCurrentUser(): Promise<User | null> {
+/**
+ * The signed-in user for the current request, or `null` if not signed in.
+ *
+ * Wrapped in React's `cache()`: every `/dashboard/*` layout and page calls
+ * this independently (there's no prop channel from a layout to its page), so
+ * without memoising, a request that renders both would look the session up
+ * twice. `cache()` dedupes it to one DB round trip per request.
+ */
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const token = await readSessionToken();
   if (!token) return null;
   return getUserBySessionToken(token);
+});
+
+/** Like `getCurrentUser`, but sends a signed-out visitor to `/login` instead of returning `null`. */
+export async function requireUser(): Promise<User> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+  return user;
 }

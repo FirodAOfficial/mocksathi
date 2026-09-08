@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { AuthCard } from './AuthCard';
 import styles from './AuthCard.module.css';
 
 export function LoginForm() {
@@ -38,58 +39,56 @@ export function LoginForm() {
   }
 
   return (
-    <div className={styles.screen}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Sign in</h1>
-        <p className={styles.subtitle}>Welcome back to Mocksathi.</p>
-
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              className={styles.input}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="password">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className={styles.input}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-
-          {error && (
-            <p className={styles.error} role="alert">
-              {error}
-            </p>
-          )}
-
-          <button type="submit" className={styles.primary} disabled={submitting}>
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-
-        <hr className={styles.divider} />
-        <p className={styles.footer}>
+    <AuthCard
+      title="Sign in to continue"
+      subtitle="Your streak, mocks and analysis stay linked to your account."
+      footer={
+        <>
           Don&apos;t have an account? <Link href="/signup">Create one</Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            className={styles.input}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            className={styles.input}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </div>
+
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
+
+        <button type="submit" className={styles.primary} disabled={submitting}>
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </AuthCard>
   );
 }
