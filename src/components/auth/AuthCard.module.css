@@ -160,3 +160,27 @@
 .footer a:hover {
   text-decoration: underline;
 }
+
+.trustNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--db-text-muted);
+}
+
+.trustNote svg {
+  color: var(--db-accent);
+  flex: none;
+  margin-top: 1px;
+}
+
+.trustNote b {
+  color: var(--db-text);
+}

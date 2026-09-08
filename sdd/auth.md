@@ -59,6 +59,17 @@ work — see the backlog at the bottom.
       Office-blue theme instead — corrected after review.
 - [x] Dashboard's "Logout" nav item (previously a dead `Link` to `/logout`) now calls
       `POST /api/auth/logout` and redirects to `/login`.
+- [x] **Update — `/login` redesigned as a split screen** (`LoginForm.tsx` restructured;
+      new `MarketingPanel.tsx`), from a second reference mockup: dark marketing panel on the left,
+      the same email/password card on the right (unchanged fields — kept the email/password
+      decision above rather than switching to that mockup's phone/OTP form). The reference claimed
+      "365 Mocks Available", an exclusive Rajasthan-government affiliation, and showed the
+      Rajasthan Staff Selection Board / High Court emblems — none true of this app, and official
+      government insignia is legally restricted in India to reproduce, so none of that made it in:
+      the headline ("Master Word & Excel Efficiency with Mocksathi") is honest instead, since that
+      genuinely is the exam content (`src/exam/seedAttempt.ts`); the Word/Excel "badges" are
+      generic coloured squares, not real (trademarked) Office icons. `/signup` is unchanged —
+      still the plain centred `AuthCard` from the first pass; this request was `/login` only.
 - [x] End-to-end verified against the real local database: signup → `/api/auth/me` returns the
       user → duplicate signup 409s → logout → `/api/auth/me` returns `null` → wrong password 401s →
       correct login issues a new session. Confirmed via `psql` that logout actually deletes the

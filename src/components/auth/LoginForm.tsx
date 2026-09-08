@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { AuthCard } from './AuthCard';
-import styles from './AuthCard.module.css';
+import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import cardStyles from './AuthCard.module.css';
+import { inter } from './authFont';
+import styles from './LoginScreen.module.css';
+import { MarketingPanel } from './MarketingPanel';
 
 export function LoginForm() {
   const router = useRouter();
@@ -39,56 +42,86 @@ export function LoginForm() {
   }
 
   return (
-    <AuthCard
-      title="Sign in to continue"
-      subtitle="Your streak, mocks and analysis stay linked to your account."
-      footer={
-        <>
-          Don&apos;t have an account? <Link href="/signup">Create one</Link>
-        </>
-      }
-    >
-      <form className={styles.form} onSubmit={handleSubmit} noValidate>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            className={styles.input}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </div>
+    <div className={`${styles.split} ${inter.className}`}>
+      <MarketingPanel />
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className={styles.input}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </div>
+      <div className={styles.formSide}>
+        <p className={styles.topTagline}>
+          Same exams. <em>Higher chances.</em>
+        </p>
 
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
+        <div className={cardStyles.card}>
+          <div className={cardStyles.logoRow}>
+            <div className={cardStyles.logoMark}>M</div>
+            <div>
+              <div className={cardStyles.logoName}>Mocksathi</div>
+              <div className={cardStyles.logoBy}>by TypingSathi</div>
+            </div>
+          </div>
+
+          <h1 className={cardStyles.title}>Welcome back</h1>
+          <p className={cardStyles.subtitle}>Sign in to continue your preparation.</p>
+
+          <form className={cardStyles.form} onSubmit={handleSubmit} noValidate>
+            <div className={cardStyles.field}>
+              <label className={cardStyles.label} htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                className={cardStyles.input}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </div>
+
+            <div className={cardStyles.field}>
+              <label className={cardStyles.label} htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className={cardStyles.input}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
+
+            {error && (
+              <p className={cardStyles.error} role="alert">
+                {error}
+              </p>
+            )}
+
+            <button type="submit" className={cardStyles.primary} disabled={submitting}>
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className={cardStyles.footer}>
+            Don&apos;t have an account? <Link href="/signup">Create one</Link>
           </p>
-        )}
 
-        <button type="submit" className={styles.primary} disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </AuthCard>
+          <div className={cardStyles.trustNote}>
+            <DashboardIcon name="shield" size={16} />
+            <span>
+              <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
+            </span>
+          </div>
+        </div>
+
+        <p className={styles.bottomTagline}>
+          Taiyari Wahi,
+          <br />
+          Sahi Saathi ke Saath.
+        </p>
+      </div>
+    </div>
   );
 }
