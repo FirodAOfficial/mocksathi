@@ -123,3 +123,73 @@ export const enrollments = pgTable(
 
 export type Enrollment = typeof enrollments.$inferSelect;
 export type NewEnrollment = typeof enrollments.$inferInsert;
+
+export const SUBSCRIPTION_STATUSES = ['active', 'expired', 'cancelled'] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
+export const subscriptionStatusEnum = pgEnum('subscription_status', SUBSCRIPTION_STATUSES);
+
+/**
+ * A plan an admin has defined — what it costs, how long it lasts, how many
+ * mocks it allows, what it advertises. Exactly one plan is `isDefault`: the
+ * one a brand-new signup is placed on automatically (see
+ * `src/app/api/auth/signup/route.ts`) and the one `currentPlanForUser`
+ * (`src/db/plans.ts`) falls back to for a user with no `subscriptions` row
+ * at all. "Only one default" is enforced in code, same reasoning as
+ * `enrollments`' "only one primary" — every write goes through
+ * `src/db/plans.ts`, so a DB-level partial unique index wasn't worth it.
+ */
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  /** Whole rupees. 0 for the free plan. */
+  priceInInr: integer('price_in_inr').notNull().default(0),
+  /** Null means the plan never expires (the free plan, typically). */
+  durationDays: integer('duration_days'),
+  /** Null means unlimited mock attempts. */
+  mockLimit: integer('mock_limit'),
+  /** Admin-authored bullet points, shown as-is on the upgrade page. */
+  features: text('features').array().notNull().default([]),
+  isDefault: boolean('is_default').notNull().default(false),
+  /** Highlighted as "Most Popular" on the upgrade page. At most one in practice, not DB-enforced — purely cosmetic, unlike `isDefault`. */
+  isPopular: boolean('is_popular').notNull().default(false),
+  /** An inactive plan is hidden from the upgrade page and can't be newly chosen, but existing subscribers on it are untouched. */
+  isActive: boolean('is_active').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type NewSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+
+/**
+ * A user's current subscription state — one row per user (`userId` unique),
+ * not a history log. A renewal or plan change updates this row in place;
+ * tracking past subscriptions would need a separate events/history table,
+ * not asked for yet. No payment gateway is wired up: choosing a plan on
+ * `/dashboard/subscription` activates it directly (`src/db/plans.ts`,
+ * `subscribeUserToPlan`) — there is no payment step to integrate yet, so the
+ * page says so rather than claiming "secure payment" it doesn't do.
+ */
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  // No onDelete: deliberately NO ACTION (Postgres default) — a plan with
+  // active subscribers on it can't be deleted out from under them. The
+  // admin plans UI only supports deactivating (`isActive`), not deleting.
+  planId: uuid('plan_id')
+    .notNull()
+    .references(() => subscriptionPlans.id),
+  status: subscriptionStatusEnum('status').notNull().default('active'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  /** Null means no expiry (the free plan, or an admin-granted comp). */
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;

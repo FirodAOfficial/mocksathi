@@ -9,6 +9,14 @@ import styles from './PortalShell.module.css';
 
 const LOGOUT_HREF = '/logout';
 
+export interface PlanWidgetData {
+  planName: string;
+  isSubscribed: boolean;
+  daysRemaining: number | null;
+  mockLimit: number | null;
+  mocksUsed: number;
+}
+
 export interface PortalShellProps {
   candidate: CandidateProfile;
   enrollments: ExamEnrollment[];
@@ -17,6 +25,8 @@ export interface PortalShellProps {
   navSections: NavSection[];
   /** The simplified menu has far fewer items than the full one — sized up so it doesn't look sparse in a full-height sidebar. */
   simplifiedMenu?: boolean;
+  /** The sidebar's bottom plan widget — shown only alongside `simplifiedMenu` (admins don't need it), and only once a default plan exists to fall back to. */
+  planWidget?: PlanWidgetData;
   children: ReactNode;
 }
 
@@ -34,6 +44,7 @@ export function PortalShell({
   unreadNotifications,
   navSections,
   simplifiedMenu = false,
+  planWidget,
   children,
 }: PortalShellProps) {
   const pathname = usePathname();
@@ -124,6 +135,53 @@ export function PortalShell({
             })}
           </nav>
         ))}
+
+        {simplifiedMenu && planWidget && (
+          <div className={styles.planWidget}>
+            <div className={styles.planCard}>
+              <div className={styles.planCardHeading}>
+                <DashboardIcon name="star" size={14} />
+                {planWidget.planName}
+              </div>
+              {planWidget.isSubscribed ? (
+                <>
+                  <p className={styles.planCardDetail}>
+                    {planWidget.daysRemaining !== null
+                      ? `${planWidget.daysRemaining} day${planWidget.daysRemaining === 1 ? '' : 's'} remaining`
+                      : 'No expiry'}
+                  </p>
+                  <Link href="/dashboard/subscription" className={styles.planCtaMuted}>
+                    Manage plan
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className={styles.planCardDetail}>
+                    {planWidget.mockLimit !== null
+                      ? `${Math.max(0, planWidget.mockLimit - planWidget.mocksUsed)} free mocks left`
+                      : 'Unlimited mocks'}
+                  </p>
+                  {planWidget.mockLimit !== null && (
+                    <>
+                      <div className={styles.planTrack}>
+                        <div
+                          className={styles.planFill}
+                          style={{ width: `${Math.min(100, (planWidget.mocksUsed / planWidget.mockLimit) * 100)}%` }}
+                        />
+                      </div>
+                      <p className={styles.planUsageLabel}>
+                        {planWidget.mocksUsed}/{planWidget.mockLimit} used
+                      </p>
+                    </>
+                  )}
+                  <Link href="/dashboard/subscription" className={styles.planCta}>
+                    Upgrade now
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className={styles.main}>

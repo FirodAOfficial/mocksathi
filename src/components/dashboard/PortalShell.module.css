@@ -64,6 +64,78 @@
   border-radius: 10px;
 }
 
+.planWidget {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.planCard {
+  background: linear-gradient(160deg, #0f1e46 0%, #142a5c 100%);
+  border-radius: 12px;
+  padding: 16px;
+  color: #dbe4fb;
+}
+
+.planCardHeading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.planCardHeading svg {
+  color: #f5b942;
+}
+
+.planCardDetail {
+  font-size: 11.5px;
+  color: #93a6d6;
+  margin-bottom: 12px;
+}
+
+.planTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.planFill {
+  height: 6px;
+  border-radius: 3px;
+  background: #4d8dff;
+}
+
+.planUsageLabel {
+  font-size: 10.5px;
+  color: #93a6d6;
+  margin-bottom: 12px;
+}
+
+.planCta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f5b942;
+  color: #3a2a06;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.planCtaMuted {
+  composes: planCta;
+  background: rgba(255, 255, 255, 0.1);
+  color: #dbe4fb;
+}
+
 .logoRow {
   display: flex;
   align-items: center;

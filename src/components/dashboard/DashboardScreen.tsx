@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { DashboardData } from '@/dashboard/types';
+import { fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
 import { ChallengeProgressCard } from './ChallengeProgressCard';
 import styles from './DashboardScreen.module.css';
 import mocksTableStyles from './MocksTable.module.css';
@@ -20,7 +21,7 @@ export interface DashboardScreenProps {
 export function DashboardScreen({ data }: DashboardScreenProps) {
   const firstName = data.candidate.name.split(' ')[0];
   const primaryExam = data.enrollments.find((enrollment) => enrollment.isPrimary);
-  const completedMocks = data.calendarDays.filter((day) => day.status === 'attempted').length;
+  const completedMocks = fixtureMocksUsedCount(data);
 
   return (
     <>

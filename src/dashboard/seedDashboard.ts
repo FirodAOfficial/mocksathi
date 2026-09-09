@@ -331,6 +331,17 @@ export function initialsFor(name: string): string {
 }
 
 /**
+ * Mocks attempted this month, per the fixture calendar — used both on the
+ * dashboard home's subtitle and the free-plan sidebar widget
+ * (`PortalShell`)'s "used" count. Real usage tracking doesn't exist yet
+ * (mocks themselves are still fixture data, `sdd/dashboard.md`), so this
+ * number is illustrative, same as everything else it's read from.
+ */
+export function fixtureMocksUsedCount(data: Pick<DashboardData, 'calendarDays'>): number {
+  return data.calendarDays.filter((day) => day.status === 'attempted').length;
+}
+
+/**
  * `SEED_DASHBOARD` with the signed-in candidate's real name in place of the
  * fixture's, and a role-appropriate nav: admins get the full menu (plus an
  * "Admin" section), everyone else gets `SIMPLIFIED_NAV_SECTIONS`. Everything
@@ -352,7 +363,11 @@ export async function dashboardDataFor(identity: { id: string; name: string; rol
           ...SEED_DASHBOARD.navSections,
           {
             title: 'Admin',
-            items: [{ label: 'Manage Exams', icon: 'shield' as const, href: '/dashboard/admin/exams' }],
+            items: [
+              { label: 'Manage Exams', icon: 'shield' as const, href: '/dashboard/admin/exams' },
+              { label: 'Subscriptions', icon: 'credit-card' as const, href: '/dashboard/admin/subscriptions' },
+              { label: 'Manage Plans', icon: 'credit-card' as const, href: '/dashboard/admin/plans' },
+            ],
           },
         ]
       : SIMPLIFIED_NAV_SECTIONS;

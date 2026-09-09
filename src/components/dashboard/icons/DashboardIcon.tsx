@@ -167,6 +167,13 @@ const PATHS: Record<DashboardIconName, JSX.Element> = {
       <path d="m8.7 12 2.3 2.3 4.3-4.6" />
     </g>
   ),
+  'credit-card': (
+    <g {...STROKE}>
+      <rect x="2.5" y="5" width="19" height="14" rx="2.2" />
+      <path d="M2.5 9.5h19" />
+      <path d="M6 14.5h5" />
+    </g>
+  ),
   home: (
     <g {...STROKE}>
       <path d="M3.5 10.5 12 3.5l8.5 7" />

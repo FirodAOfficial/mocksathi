@@ -22,6 +22,27 @@
       "when": 1788882136783,
       "tag": "0002_whole_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788917257581,
+      "tag": "0003_superb_nomad",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788917761632,
+      "tag": "0004_lowly_psynapse",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788917811780,
+      "tag": "0005_harsh_luckman",
+      "breakpoints": true
     }
   ]
 }
