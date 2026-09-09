@@ -1,65 +1,49 @@
-import Link from 'next/link';
+import type { CurrentPlan } from '@/db/plans';
 import type { DashboardData } from '@/dashboard/types';
 import { fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
-import { ChallengeProgressCard } from './ChallengeProgressCard';
+import { DashboardMocksTable } from './DashboardMocksTable';
 import styles from './DashboardScreen.module.css';
-import mocksTableStyles from './MocksTable.module.css';
-import { MockCalendarPreview } from './MockCalendarPreview';
-import { MocksTable } from './MocksTable';
-import { PerformanceSnapshot } from './PerformanceSnapshot';
-import { StreakCard } from './StreakCard';
+import { PerformanceOverviewCard } from './PerformanceOverviewCard';
+import { PremiumBanner } from './PremiumBanner';
 
 export interface DashboardScreenProps {
   data: DashboardData;
+  /** Null before any default plan is configured — the performance card just omits the plan name then. */
+  currentPlan: CurrentPlan | null;
 }
 
 /**
- * The candidate's home screen: today's mock, streak, calendar, and a snapshot
- * of performance pulled from the analysis and weak-areas screens planned for
- * later (`sdd/dashboard.md` Phase 5) — enough to act on without leaving here.
+ * The candidate's home screen.
+ *
+ * Redesigned from a reference mockup to cut the clutter of the original
+ * layout (calendar preview, streak card, and challenge progress all above the
+ * fold at once): a greeting, one performance summary, and the full mocks
+ * list. The calendar/streak/challenge widgets this used to show still exist
+ * at `/dashboard/calendar` — nothing was deleted, just moved off the page
+ * that was trying to show everything at once.
  */
-export function DashboardScreen({ data }: DashboardScreenProps) {
+export function DashboardScreen({ data, currentPlan }: DashboardScreenProps) {
   const firstName = data.candidate.name.split(' ')[0];
-  const primaryExam = data.enrollments.find((enrollment) => enrollment.isPrimary);
   const completedMocks = fixtureMocksUsedCount(data);
 
   return (
     <>
       <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Welcome back, {firstName}</h1>
-          <p className={styles.subtitle}>
-            {primaryExam?.examName} · {completedMocks} mocks attempted this month · streak day{' '}
-            {data.streak.currentStreakDays}
-          </p>
-        </div>
+        <h1 className={styles.title}>Good Morning, {firstName} 👋</h1>
+        <p className={styles.subtitle}>Practice today. A better tomorrow.</p>
       </div>
 
-      <div className={styles.topRow}>
-        <MockCalendarPreview
-          monthLabel={data.calendarMonthLabel}
-          challengeDayLabel={`${data.challenge.name} · day ${data.challenge.completedDays} of ${data.challenge.totalDays}`}
-          days={data.calendarDays}
-        />
-        <div className={styles.sideStack}>
-          <StreakCard streak={data.streak} todaysMock={data.todaysMock} />
-          <ChallengeProgressCard challenge={data.challenge} />
-        </div>
-      </div>
-
-      <div className={styles.kpiRow}>
-        <PerformanceSnapshot performance={data.performance} />
-      </div>
-
-      <MocksTable
-        heading="Recent mocks"
-        mocks={[data.todaysMock, ...data.recentMocks]}
-        headerRight={
-          <Link href="/dashboard/mocks" className={mocksTableStyles.viewAll}>
-            View all mocks (1–30) →
-          </Link>
-        }
+      <PerformanceOverviewCard
+        performance={data.performance}
+        mocksAttempted={completedMocks}
+        planName={currentPlan?.plan.name ?? null}
       />
+
+      <DashboardMocksTable mocks={data.allMocks} />
+
+      {currentPlan && !currentPlan.isSubscribed && (
+        <PremiumBanner mocksUsed={completedMocks} mockLimit={currentPlan.plan.mockLimit} />
+      )}
     </>
   );
 }

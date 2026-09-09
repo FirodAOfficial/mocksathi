@@ -84,6 +84,18 @@ controls how long a session lasts before its cookie/DB row expires and the holde
 `/login` — every page requires a session now except `/login` and `/signup` themselves. Other
 database scripts:
 
+> **Hosted Postgres (Supabase, etc.) — two connection strings, not one.** `DATABASE_URL` is what
+> the running app connects with — for Supabase, this must be the **pooler** connection (Supavisor,
+> transaction mode, port `6543`, host `aws-0-<region>.pooler.supabase.com`, username
+> `postgres.<project-ref>`). `MIGRATION_DATABASE_URL` (falls back to `DATABASE_URL` if unset) is
+> what `db:migrate`/`db:generate` use — this must be the **direct** connection (port `5432`, host
+> `db.<project-ref>.supabase.co`), since DDL and the advisory lock `drizzle-kit migrate` takes need
+> session state the transaction pooler doesn't carry. Using the direct connection for `DATABASE_URL`
+> works locally but fails on Vercel with `getaddrinfo ENOTFOUND db.<ref>.supabase.co` — that host
+> resolves IPv6-only, and Vercel's serverless functions are IPv4-only. Set both `DATABASE_URL` (to
+> the pooler string) and, if you ever migrate against Supabase from Vercel's build step,
+> `MIGRATION_DATABASE_URL` (to the direct string) in the Vercel project's environment variables.
+
 ```bash
 npm run db:generate   # after changing src/db/schema.ts, writes a new file into db/migrations/
 npm run db:studio      # drizzle-kit studio — quick one-off browse via local.drizzle.studio

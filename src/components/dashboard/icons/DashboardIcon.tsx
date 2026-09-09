@@ -19,7 +19,10 @@ export type DashboardIconName =
   | 'chevron-left'
   | 'chevron-right'
   | 'arrow-right'
-  | 'lock';
+  | 'lock'
+  | 'trophy'
+  | 'target'
+  | 'clock';
 
 const STROKE = {
   fill: 'none' as const,
@@ -209,6 +212,29 @@ const PATHS: Record<DashboardIconName, JSX.Element> = {
     <g {...STROKE}>
       <rect x="4.5" y="10.5" width="15" height="10" rx="2" />
       <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+    </g>
+  ),
+  trophy: (
+    <g {...STROKE}>
+      <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
+      <path d="M7 5H4.2a2.8 2.8 0 0 0 2.8 4.6" />
+      <path d="M17 5h2.8a2.8 2.8 0 0 1-2.8 4.6" />
+      <path d="M12 14v3.5" />
+      <path d="M9 20.5h6" />
+      <path d="M9.7 17.5h4.6v3h-4.6z" />
+    </g>
+  ),
+  target: (
+    <g {...STROKE}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5.2" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </g>
+  ),
+  clock: (
+    <g {...STROKE}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5.2l3.4 2" />
     </g>
   ),
 };

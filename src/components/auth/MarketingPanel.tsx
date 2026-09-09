@@ -54,10 +54,11 @@ const STATS = [
  * showed the Rajasthan Staff Selection Board / High Court emblems. None of
  * that is true of this app, and reproducing official government insignia is
  * legally restricted in India, so this keeps the layout and tone but not
- * the specific claims: the headline is honest (Word/Excel efficiency tasks
- * genuinely are the exam content, see `src/exam/seedAttempt.ts`), the badges
- * are generic Word/Excel-coloured squares rather than real Office icons
- * (also trademarked), and there's no exam-board affiliation claimed.
+ * those specific claims: the headline names the real target exams (RSSB LDC,
+ * High Court) as what the content is aimed at — not an affiliation claim, no
+ * emblems, nothing implying an official partnership with either body — and
+ * the badges are generic Word/Excel-coloured squares rather than real Office
+ * icons (also trademarked).
  */
 export function MarketingPanel() {
   return (
@@ -72,7 +73,8 @@ export function MarketingPanel() {
 
       <div className={styles.main}>
         <h1 className={styles.headline}>
-          Master Word &amp; Excel Efficiency <span className={styles.headlineAccent}>with Mocksathi</span>
+          Master Efficiency Tests for Rajasthan&rsquo;s{' '}
+          <span className={styles.headlineAccent}>RSSB LDC and High Court Exams</span>
         </h1>
         <p className={styles.subtitle}>
           Practice real exam-style Word and Excel tasks, review your solutions, and track how you
