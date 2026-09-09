@@ -159,7 +159,8 @@ export type NavIconName =
   | 'log-out'
   | 'shield'
   | 'home'
-  | 'share';
+  | 'share'
+  | 'credit-card';
 
 export interface NavItem {
   label: string;

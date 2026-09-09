@@ -6,6 +6,7 @@ import { createSession } from '@/auth/session';
 import { isValidEmail, normalizeEmail, MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import { db } from '@/db/client';
 import { registerForExam } from '@/db/enrollments';
+import { subscribeUserToDefaultPlan } from '@/db/plans';
 import { users } from '@/db/schema';
 
 /**
@@ -64,6 +65,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   // Best-effort: a signup shouldn't fail because the chosen exam went away
   // (unpublished, deleted) between the page loading and the form submitting.
   if (body.examId) await registerForExam(user.id, body.examId);
+  // Every account starts on the default plan (a no-op if none is configured yet).
+  await subscribeUserToDefaultPlan(user.id);
 
   const session = await createSession(user.id);
   await setSessionCookie(session);
