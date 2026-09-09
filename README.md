@@ -5,8 +5,26 @@ tracking mock-test performance. Built on Next.js (App Router).
 
 ## Prerequisites
 
-- Node.js 20+ and npm
+- Node.js 24+ (LTS) and npm — some dependencies (`@supabase/supabase-js`, `@supabase/storage-js`)
+  require Node ≥22; the project runs on 24 in practice
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the database — see below)
+
+> **Windows + `nvm-windows` note:** if `npm install` fails with `TypeError: Class extends value
+> undefined is not a constructor or null`, `C:\Program Files\nodejs` (the symlink nvm-windows
+> maintains) is pointing at a stale/corrupted version folder — `node --version` can still report
+> the right number while npm's own internals resolve from the wrong place. Fix from an **elevated**
+> terminal (nvm's symlink switch needs UAC, which fails silently, not loudly, if you're not
+> elevated):
+> ```
+> nvm use 24.21.0
+> ```
+> If that doesn't visibly change anything, do it by hand in the same elevated terminal:
+> ```
+> rmdir "C:\Program Files\nodejs"
+> mklink /D "C:\Program Files\nodejs" "C:\Users\<you>\AppData\Roaming\nvm\v24.21.0"
+> ```
+> Verify with `where node` (not just `node --version`) — it should resolve to the path you just
+> linked, and `npm ls` in this repo should run without the crash above.
 
 ## Setup
 
