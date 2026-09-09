@@ -79,7 +79,10 @@ npm run db:up               # starts Postgres + Drizzle Gateway via docker compo
 npm run db:migrate          # applies db/migrations/ to it
 ```
 
-`DATABASE_URL` in `.env` points the app at that database. Other database scripts:
+`DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `1`)
+controls how long a session lasts before its cookie/DB row expires and the holder is redirected to
+`/login` — every page requires a session now except `/login` and `/signup` themselves. Other
+database scripts:
 
 ```bash
 npm run db:generate   # after changing src/db/schema.ts, writes a new file into db/migrations/

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { JSONContent } from '@tiptap/core';
+import { requireUser } from '@/auth/cookies';
 import { evaluateCriterion } from '@/exam/marking/evaluate';
 import { markAttempt, validateQuestionBank } from '@/exam/marking/markAttempt';
 import {
@@ -51,6 +52,7 @@ function numericKeys(source: Record<string, unknown> | undefined): Record<number
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  await requireUser();
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) {
     return NextResponse.json({ code: 'TOO_LARGE', detail: 'The submission is too large.' }, { status: 413 });

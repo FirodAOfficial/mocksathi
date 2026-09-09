@@ -80,9 +80,21 @@ work — see the backlog at the bottom.
       gets created/destroyed/checked): `/api/auth/{login,signup,logout,me}` — `logout` and `me`
       only ever act on the caller's own cookie-derived session, never anyone else's data. Public by
       design: `GET /api/exams` (minimal fields, published exams only — see `sdd/exams.md`).
-      `/api/attempts/submit` and `/api/document` are public too, but touch no database table at
-      all — pre-existing routes from before auth existed, mirroring `/exam` and `/editor`
-      themselves being unauthenticated pages.
+- [x] **Update — every page requires a session now**, including `/exam`, `/editor`, and `/result`
+      (previously the deliberate exceptions, mirrored by `/api/attempts/submit` and `/api/document`
+      being unauthenticated). All five now call `requireUser()` as their first line — a signed-out
+      visitor, or one whose session has expired (`sessions.expires_at` in the past —
+      `getUserBySessionToken` already excludes it), is redirected to `/login`, same as every
+      `/dashboard/*` route. `/login` and `/signup` are the only page routes left unauthenticated,
+      necessarily — you can't require a session to reach the page that creates one. See the updated
+      exceptions table in `.claude/skills/auth-security-review/SKILL.md`.
+- [x] **Update — session lifetime is now configurable**, `SESSION_DURATION_HOURS` in `.env`
+      (`src/auth/session.ts::sessionDurationMs`), default **1 hour** (was a hardcoded 30 days).
+      Read fresh on every `createSession()` call rather than cached at module load, so changing it
+      doesn't need a code edit — just a dev-server restart to pick up the new `.env` value. An
+      expired session is already indistinguishable from no session at all
+      (`getUserBySessionToken`'s `gt(sessions.expiresAt, now())` check, unchanged) — shortening the
+      default just makes that path exercised far more often.
 - [x] End-to-end verified against the real local database: signup → `/api/auth/me` returns the
       user → duplicate signup 409s → logout → `/api/auth/me` returns `null` → wrong password 401s →
       correct login issues a new session. Confirmed via `psql` that logout actually deletes the

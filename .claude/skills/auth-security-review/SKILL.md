@@ -55,6 +55,12 @@ against it, and re-run the audit procedure below when asked to review or harden 
 
 ### Deliberately public routes — the exceptions, and why each is safe
 
+Every *page* route now requires a session (`requireUser()`), redirecting a signed-out or
+expired-session visitor to `/login` — including `/exam`, `/editor`, and `/result`, which used to be
+deliberate exceptions. `/login` and `/signup` are the only unauthenticated pages left, necessarily
+(you can't require a session to reach the page that creates one). The remaining public *API*
+exceptions are all ones a signed-out visitor genuinely needs to hit:
+
 | Route | Why it's public | Why it's still safe |
 |---|---|---|
 | `POST /api/auth/login` | Has to be — it's how a session gets created | Rate-limiting/lockout not yet implemented (`sdd/auth.md` "not done") |
@@ -62,7 +68,12 @@ against it, and re-run the audit procedure below when asked to review or harden 
 | `POST /api/auth/logout` | Must work even for a stale/expired cookie | Only ever deletes the session named by the caller's *own* cookie |
 | `GET /api/auth/me` | Client needs to check its own login state | Returns only the caller's own identity (or `null`), never anyone else's |
 | `GET /api/exams` | Signup's exam picker runs before there's a session | Minimal fields, published exams only — see point 7 |
-| `POST /api/attempts/submit`, `GET /api/document` | Predate the auth system; mirror `/exam` and `/editor` being unauthenticated pages | Touch no database table at all — verified, not assumed |
+
+`POST /api/attempts/submit` and `GET /api/document` are no longer on this list — now that the pages
+that call them (`/exam`, `/editor`) require a session, the routes were gated the same way
+(`requireUser()` as their first line) rather than left reachable directly by an unauthenticated
+caller. They still touch no database table, but that stopped being the reason they're gated; it's
+just no longer a reason they'd need to be public either.
 
 If you're adding a new public route, it must earn a row in this table with the same rigor — "why
 public" and "why still safe" both answered, not just the first one.
