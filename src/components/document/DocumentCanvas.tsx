@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { EditorContent, type Editor } from '@tiptap/react';
+import { useDrawerLayout, useIsPhone } from '@/hooks/useMediaQuery';
 import { MARGIN_PRESETS, pageSize, useUiStore } from '@/state/uiStore';
 import { Ruler } from './Ruler';
 import styles from './DocumentCanvas.module.css';
@@ -40,7 +41,47 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
   const usableHeight = height - margins.top - margins.bottom;
 
   const pageRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [pageHeight, setPageHeight] = useState(height);
+
+  /*
+   * On a phone the sheet is fitted to the screen by scaling it, not by making
+   * it narrower.
+   *
+   * That distinction is load-bearing. Questions 8 and 13 ask the candidate to
+   * format "the 2nd line of the document", and the answer key stores that line
+   * as character offsets measured at this page width in the default font
+   * (`BOAT_LINE_TWO`). Reflowing the page for a narrow screen would move where
+   * line 2 wraps, and those two questions would silently mark the wrong words.
+   * A transform changes what the eye sees and nothing about the layout, so the
+   * wrap — and the answer key — hold at every screen size.
+   */
+  const isPhone = useIsPhone();
+  const isNarrow = useDrawerLayout();
+  const setZoom = useUiStore((state) => state.setZoom);
+
+  useEffect(() => {
+    // Only where the panels have collapsed to drawers. On a full desktop the
+    // zoom is the candidate's to choose, and a sheet a few pixels wider than
+    // its column scrolls, exactly as it always has.
+    if (!isNarrow) return;
+
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const fit = (): void => {
+      // A little breathing room either side, as the sheet has on desktop.
+      const available = element.clientWidth - 16;
+      // Only when the sheet cannot be shown whole. On a wide screen the zoom is
+      // the candidate's to choose and nothing here touches it.
+      if (available > 0 && available < width) setZoom(available / width);
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [isNarrow, width, setZoom]);
 
   useEffect(() => {
     const element = pageRef.current;
@@ -60,14 +101,14 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
 
   return (
     <div className={styles.canvas}>
-      <div className={styles.scroll} data-page-column>
+      <div className={styles.scroll} data-page-column ref={scrollRef}>
         {/*
           Ruler and sheet share one scroll container and one width, so they stay
           aligned when the page is wider than the column and cannot spill over
           the side panels.
         */}
         <div className={styles.content} style={{ width: width * zoom }}>
-          {showRuler && viewMode === 'print' ? (
+          {showRuler && viewMode === 'print' && !isPhone ? (
             <Ruler pageWidth={width} marginLeft={margins.left} marginRight={margins.right} zoom={zoom} />
           ) : null}
 

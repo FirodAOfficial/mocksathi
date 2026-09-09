@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDrawerLayout } from '@/hooks/useMediaQuery';
 import { useClipboard } from '@/editor/useClipboard';
 import { useDocumentEditor } from '@/editor/useDocumentEditor';
 import { useFormatState } from '@/editor/useFormatState';
@@ -79,6 +80,14 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
   });
 
   const [dialog, setDialog] = useState<OpenDialog>(null);
+
+  /*
+   * Below 768px the three columns cannot coexist: the page alone is wider than
+   * the viewport. The side panels become drawers over the document instead, and
+   * only one is open at a time.
+   */
+  const isMobile = useDrawerLayout();
+  const [drawer, setDrawer] = useState<'questions' | 'summary' | null>(null);
   const [pages, setPages] = useState(1);
   /**
    * Which document's notice was dismissed, rather than a plain boolean: a newly
@@ -105,6 +114,14 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
   }, [editor, dialog]);
 
   const handlePageCount = useCallback((value: number) => setPages(value), []);
+
+  /*
+   * Derived rather than reset in an effect: on a wide screen both panels are
+   * already columns on the page, so there is no such thing as an open drawer.
+   * Widening the window therefore cannot leave one floating over the layout,
+   * and nothing has to notice the change to put it away.
+   */
+  const openDrawer = isMobile ? drawer : null;
 
   /*
    * Opening the exam shell starts a sitting: the clock runs from here, and the
@@ -246,7 +263,11 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         panels can be removed without the editor knowing they existed.
       */}
       <div className={styles.workspace}>
-        {exam && !focusMode ? <QuestionListPanel /> : null}
+        {exam && !focusMode ? (
+          <Panel side="left" open={openDrawer === 'questions'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+            <QuestionListPanel />
+          </Panel>
+        ) : null}
 
         <main className={styles.main}>
           {exam ? <InstructionStrip /> : null}
@@ -258,12 +279,40 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         </main>
 
         {exam && !focusMode ? (
-          <ExamSummaryPanel
-            onClearAnswer={questionAnswers.clearCurrent}
-            onSaveAnswer={questionAnswers.saveCurrent}
-          />
+          <Panel side="right" open={openDrawer === 'summary'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+            <ExamSummaryPanel
+              onClearAnswer={questionAnswers.clearCurrent}
+              onSaveAnswer={questionAnswers.saveCurrent}
+            />
+          </Panel>
         ) : null}
       </div>
+
+      {/*
+        The drawer handles, at the bottom of the screen where a thumb reaches.
+        Only rendered on the layout that has drawers — on a wide screen both
+        panels are already on the page and a button to open them would be a lie.
+      */}
+      {exam && !focusMode && isMobile ? (
+        <nav className={styles.drawerBar} aria-label="Exam panels">
+          <button
+            type="button"
+            className={styles.drawerTab}
+            aria-expanded={openDrawer === 'questions'}
+            onClick={() => setDrawer((open) => (open === 'questions' ? null : 'questions'))}
+          >
+            Questions
+          </button>
+          <button
+            type="button"
+            className={styles.drawerTab}
+            aria-expanded={openDrawer === 'summary'}
+            onClick={() => setDrawer((open) => (open === 'summary' ? null : 'summary'))}
+          >
+            Progress &amp; Submit
+          </button>
+        </nav>
+      ) : null}
 
       <StatusBar pages={pages} words={format.words} readOnly={readOnly || locked} />
 
@@ -282,6 +331,58 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         />
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A side panel: a column on a wide screen, a drawer on a narrow one.
+ *
+ * On mobile the panel is only mounted while it is open. That is deliberate
+ * rather than hiding it with CSS: a closed drawer left in the DOM keeps its
+ * buttons in the tab order and its headings in the screen-reader outline, so a
+ * keyboard user would tab into a panel nobody can see.
+ */
+function Panel({
+  side,
+  open,
+  isMobile,
+  onClose,
+  children,
+}: {
+  side: 'left' | 'right';
+  open: boolean;
+  isMobile: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  // Escape closes the drawer, which is what every overlay on the web does.
+  useEffect(() => {
+    if (!isMobile || !open) return;
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isMobile, open, onClose]);
+
+  if (!isMobile) return <div className={styles.column}>{children}</div>;
+  if (!open) return null;
+
+  return (
+    <>
+      <div className={styles.scrim} onClick={onClose} aria-hidden="true" />
+      <div
+        className={`${styles.drawer} ${side === 'left' ? styles.drawerLeft : styles.drawerRight}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={side === 'left' ? 'Questions' : 'Progress and submit'}
+      >
+        <button type="button" className={styles.drawerClose} onClick={onClose}>
+          Close
+        </button>
+        <div className={styles.drawerBody}>{children}</div>
+      </div>
+    </>
   );
 }
 

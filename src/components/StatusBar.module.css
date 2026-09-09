@@ -68,3 +68,20 @@
   min-width: 38px;
 }
 
+
+/*
+ * Narrow screens keep the page and word counts — the two figures a candidate
+ * checks — and drop the zoom slider, which is a mouse control and is replaced
+ * on touch by pinch-zoom and the fit-to-width the canvas applies on load.
+ */
+@media (max-width: 767px) {
+  .bar {
+    gap: 10px;
+    padding: 0 8px;
+  }
+
+  .slider,
+  .zoomButton {
+    display: none;
+  }
+}

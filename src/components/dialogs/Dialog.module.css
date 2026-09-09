@@ -4,8 +4,17 @@
   color: var(--text);
   background: linear-gradient(#fff, #f3f7fc);
   border-radius: 3px;
-  min-width: 340px;
+  /*
+   * `min-width` alone overflowed a 320px phone. The dialog now asks for its
+   * comfortable width but never more than the viewport can show, and scrolls
+   * inside itself rather than off the bottom of the screen.
+   */
+  width: min(340px, calc(100vw - 1.5rem));
+  min-width: 0;
+  max-width: calc(100vw - 1.5rem);
+  max-height: calc(100dvh - 1.5rem);
   padding: 0;
+  overflow: auto;
   font-size: 12px;
   box-shadow: 0 10px 32px #0f233c59;
 }

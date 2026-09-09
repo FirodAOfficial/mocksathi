@@ -55,7 +55,7 @@
 
 .filterMenu {
   flex-direction: column;
-  min-width: 170px;
+  min-width: min(170px, 100%);
   display: flex;
 }
 
@@ -82,7 +82,7 @@
 .legend {
   border-bottom: 1px solid #e2ebf3;
   flex: none;
-  grid-template-columns: repeat(3, auto);
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
   justify-content: start;
   gap: 5px 16px;
   margin: 0;
