@@ -61,6 +61,9 @@ export interface MockCalendarDay {
 
 export type MockState = 'done' | 'today' | 'missed' | 'locked';
 
+/** Which skill the mock tests — drives the "Type" column badge and the All Mocks filter pills. */
+export type MockType = 'word' | 'excel' | 'mixed';
+
 /**
  * One row of the mocks list.
  *
@@ -73,6 +76,9 @@ export interface MockSummary {
   mockNumber: number;
   paperName: string;
   state: MockState;
+  mockType: MockType;
+  /** Also embedded in `paperName` today ("· 100 Qs") — broken out so the All Mocks table has a plain number to show. */
+  questionCount: number;
   /** Absent until the mock is attempted. */
   score?: number;
   maxScore?: number;
@@ -96,6 +102,8 @@ export interface PerformanceSnapshot {
   bestPercentile: number;
   bestPercentileMockNumber: number;
   bestPercentileRank: number;
+  /** Shown on the dashboard-home performance summary; the detailed analysis page doesn't use this one. */
+  avgTimePerQuestionSeconds: number;
 }
 
 export interface SubjectSnapshot {

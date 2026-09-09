@@ -1,5 +1,6 @@
 import 'server-only';
 import { asc, eq } from 'drizzle-orm';
+import { cache } from 'react';
 import { db } from './client';
 import { subscriptionPlans, subscriptions, type NewSubscriptionPlan, type Subscription, type SubscriptionPlan } from './schema';
 
@@ -61,8 +62,16 @@ export interface CurrentPlan {
   daysRemaining: number | null;
 }
 
-/** Null only if there's no subscription row *and* no default plan has been configured yet (a fresh install, before an admin sets one up). */
-export async function currentPlanForUser(userId: string): Promise<CurrentPlan | null> {
+/**
+ * Null only if there's no subscription row *and* no default plan has been
+ * configured yet (a fresh install, before an admin sets one up).
+ *
+ * Wrapped in React's `cache()`: `dashboard/layout.tsx` (sidebar plan widget)
+ * and `dashboard/page.tsx` (home screen's performance card) both call this
+ * independently for the same request — same reasoning as `getCurrentUser` in
+ * `src/auth/cookies.ts`, dedupes to one DB round trip instead of two.
+ */
+export const currentPlanForUser = cache(async (userId: string): Promise<CurrentPlan | null> => {
   const [row] = await db
     .select({ subscription: subscriptions, plan: subscriptionPlans })
     .from(subscriptions)
@@ -82,7 +91,7 @@ export async function currentPlanForUser(userId: string): Promise<CurrentPlan | 
   const defaultPlan = await getDefaultPlan();
   if (!defaultPlan) return null;
   return { plan: defaultPlan, subscription: null, isSubscribed: false, daysRemaining: null };
-}
+});
 
 export type SubscribeResult = { ok: true } | { ok: false; code: 'NOT_FOUND' | 'INACTIVE'; detail: string };
 
