@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { requireUser } from '@/auth/cookies';
 import { fetchRemoteDocument } from '@/server/fetchRemoteDocument';
 import type { DocumentErrorCode } from '@/services/document/errors';
 import { toDocumentError } from '@/services/document/errors';
@@ -31,6 +32,7 @@ const STATUS_BY_CODE: Record<DocumentErrorCode, number> = {
 };
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  await requireUser();
   const target = request.nextUrl.searchParams.get('url');
 
   try {

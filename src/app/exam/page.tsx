@@ -1,3 +1,4 @@
+import { requireUser } from '@/auth/cookies';
 import { PAPER } from '@/exam/result';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { isLanguage } from '@/exam/types';
@@ -16,6 +17,7 @@ export default async function ExamInstructionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireUser();
   const params = await searchParams;
   const raw = Array.isArray(params.lang) ? params.lang[0] : params.lang;
 

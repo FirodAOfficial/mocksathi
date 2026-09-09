@@ -132,8 +132,12 @@ export function SubscriptionScreen({
               <div className={styles.featureList}>
                 {(plan.mockLimit ? [`${plan.mockLimit} mock attempts`] : ['Unlimited attempts'])
                   .concat(plan.features)
-                  .map((feature) => (
-                    <div className={styles.featureItem} key={feature}>
+                  .map((feature, index) => (
+                    // Index, not the text, as the key: an admin-authored feature can
+                    // legitimately repeat the auto-prepended limit line's wording
+                    // (e.g. also typing "Unlimited attempts" as a bullet) — see the
+                    // duplicate-key warning this fixed.
+                    <div className={styles.featureItem} key={`${index}-${feature}`}>
                       <DashboardIcon name="file-check-2" size={14} />
                       {feature}
                     </div>

@@ -385,7 +385,10 @@ function buildQuestions(): ExamQuestion[] {
 }
 
 export const SEED_ATTEMPT: ExamAttempt = {
-  candidateName: 'Praveen',
+  // Overridden with the signed-in user's real name at the start of a sitting
+  // (`WordShell`, via `/api/auth/me`) — this is only what shows for a guest,
+  // or before that check resolves.
+  candidateName: 'Candidate',
   durationSeconds: 10 * 60,
   sections: [{ name: 'Word Processing', questions: buildQuestions() }],
 };

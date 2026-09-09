@@ -63,6 +63,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
   const attempt = useExamStore((state) => state.attempt);
   const startedAt = useExamStore((state) => state.startedAt);
   const startAttempt = useExamStore((state) => state.startAttempt);
+  const setAttempt = useExamStore((state) => state.setAttempt);
   const timePerQuestion = useExamStore((state) => state.timePerQuestion);
   const language = useExamStore((state) => state.language);
 
@@ -118,6 +119,31 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
   useEffect(() => {
     if (exam) startAttempt(examLanguage);
   }, [exam, startAttempt, examLanguage]);
+
+  /*
+   * The panel shows "Candidate" (the `SEED_ATTEMPT` fixture's default) until
+   * this resolves. Fetched, not passed as a prop: the exam store is a client
+   * module singleton with no server-rendered page feeding it, and `/exam`
+   * itself stays open to a signed-out visitor sitting the sample paper —
+   * this only replaces the name when someone actually is signed in.
+   */
+  useEffect(() => {
+    if (!exam) return;
+
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch('/api/auth/me', { signal: controller.signal });
+        if (!response.ok) return;
+        const body = (await response.json()) as { user: { name: string } | null };
+        if (body.user) setAttempt({ ...useExamStore.getState().attempt, candidateName: body.user.name });
+      } catch {
+        // Signed out, offline, or the request was aborted — the fixture's name stands.
+      }
+    })();
+
+    return () => controller.abort();
+  }, [exam, setAttempt]);
 
   /*
    * Marking happens on the server, so closing the paper starts a request rather

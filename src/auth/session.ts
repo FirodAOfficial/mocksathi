@@ -14,7 +14,18 @@ import { sessions, users, type User } from '@/db/schema';
  * browser's cookie, set by `src/auth/cookies.ts`.
  */
 
-export const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const DEFAULT_SESSION_DURATION_HOURS = 1;
+
+/**
+ * How long a session lasts, read fresh on every call rather than cached at
+ * module load — so tests (and a running dev server, on restart) pick up an
+ * env change without needing a code edit.
+ */
+export function sessionDurationMs(): number {
+  const raw = process.env.SESSION_DURATION_HOURS;
+  const hours = raw ? Number(raw) : DEFAULT_SESSION_DURATION_HOURS;
+  return (Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_SESSION_DURATION_HOURS) * 60 * 60 * 1000;
+}
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -27,7 +38,7 @@ export interface CreatedSession {
 
 export async function createSession(userId: string): Promise<CreatedSession> {
   const token = randomBytes(32).toString('base64url');
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  const expiresAt = new Date(Date.now() + sessionDurationMs());
 
   await db.insert(sessions).values({
     id: hashToken(token),
