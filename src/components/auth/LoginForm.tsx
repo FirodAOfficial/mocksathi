@@ -16,36 +16,49 @@ export interface LoginFormProps {
   googleError?: string;
 }
 
+type Status = 'idle' | 'submitting' | 'redirecting';
+
 export function LoginForm({ googleError }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
-  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSubmitting(true);
+    setStatus('submitting');
 
+    let response: Response;
     try {
-      const response = await fetch('/api/auth/login', {
+      response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-        setError(body?.detail ?? 'Something went wrong. Try again.');
-        return;
-      }
-
-      router.push('/dashboard');
-      router.refresh();
-    } finally {
-      setSubmitting(false);
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('idle');
+      return;
     }
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      setError(body?.detail ?? 'Something went wrong. Try again.');
+      setStatus('idle');
+      return;
+    }
+
+    // Deliberately never resets to 'idle' on success: `router.push` returns
+    // as soon as the navigation *starts*, not once `/dashboard` has actually
+    // rendered (it still has its own DB queries to run). Resetting here in a
+    // `finally` — the previous shape of this function — re-enabled the
+    // button for that whole gap, which read as the click having done
+    // nothing right up until the page suddenly swapped in.
+    setStatus('redirecting');
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -106,8 +119,8 @@ export function LoginForm({ googleError }: LoginFormProps) {
               </p>
             )}
 
-            <button type="submit" className={cardStyles.primary} disabled={submitting}>
-              {submitting ? 'Signing in…' : 'Sign in'}
+            <button type="submit" className={cardStyles.primary} disabled={status !== 'idle'}>
+              {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 

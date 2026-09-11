@@ -26,6 +26,8 @@ export interface SignupFormProps {
   googleError?: string;
 }
 
+type Status = 'idle' | 'submitting' | 'redirecting';
+
 export function SignupForm({ exams, googleError }: SignupFormProps) {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -33,32 +35,40 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
   const [password, setPassword] = useState('');
   const [examId, setExamId] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
-  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
   const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSubmitting(true);
+    setStatus('submitting');
 
+    let response: Response;
     try {
-      const response = await fetch('/api/auth/signup', {
+      response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name, email, password, examId: examId || undefined }),
       });
-
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-        setError(body?.detail ?? 'Something went wrong. Try again.');
-        return;
-      }
-
-      router.push('/dashboard');
-      router.refresh();
-    } finally {
-      setSubmitting(false);
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('idle');
+      return;
     }
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      setError(body?.detail ?? 'Something went wrong. Try again.');
+      setStatus('idle');
+      return;
+    }
+
+    // See the identical comment in `LoginForm` — deliberately never resets to
+    // 'idle' on success, or the button flashes back to normal for however
+    // long `/dashboard` takes to actually render before the page swaps in.
+    setStatus('redirecting');
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -159,8 +169,8 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
 
             <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
 
-            <button type="submit" className={cardStyles.primary} disabled={submitting || !agreed}>
-              {submitting ? 'Creating account…' : 'Create account'}
+            <button type="submit" className={cardStyles.primary} disabled={status !== 'idle' || !agreed}>
+              {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Creating account…' : 'Create account'}
             </button>
           </form>
 
