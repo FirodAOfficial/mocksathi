@@ -7,6 +7,8 @@ import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { RibbonColumn, RibbonGroup, RibbonRow } from '@/components/ribbon/RibbonGroup';
 import { GRID_ELEMENT_ID } from '@/components/spreadsheet/grid/SpreadsheetGrid';
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
+import { formatAddress } from '@/spreadsheet/model/address';
+import { autoSumRange } from '@/spreadsheet/model/autoSumRange';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { SHEET_ZOOM_LEVELS, useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
 import styles from './SpreadsheetRibbon.module.css';
@@ -53,8 +55,26 @@ export function SheetFormulasTab() {
   const active = selection.active;
   const locked = readOnly ? 'the sheet is protected' : undefined;
 
-  const insert = (formula: string): void => {
-    store.setCellInput(active.row, active.col, formula, 'ribbon');
+  /**
+   * Inserts an aggregate over the range Excel would propose.
+   *
+   * Not `=SUM()` with empty brackets: that evaluates to `#N/A`, so the button
+   * appeared to work and silently wrote an error into the sheet. When there is
+   * nothing to total, say so rather than writing anything.
+   */
+  const insertAggregate = (fn: 'SUM' | 'AVERAGE' | 'COUNT'): void => {
+    const target = autoSumRange(store.activeSheet(), active);
+    if (!target) {
+      setNotice(`${fn} found no numbers above or to the left of ${formatAddress(active)}.`);
+      return;
+    }
+
+    store.setCellInput(
+      active.row,
+      active.col,
+      `=${fn}(${formatAddress(target.start)}:${formatAddress(target.end)})`,
+      'ribbon',
+    );
     void store.ensureEngine();
   };
 
@@ -68,7 +88,7 @@ export function SheetFormulasTab() {
             glyph="Σ"
             disabled={readOnly}
             disabledReason={locked}
-            onClick={() => insert('=SUM()')}
+            onClick={() => insertAggregate('SUM')}
           />
           <RibbonColumn>
             <ToolbarButton
@@ -77,7 +97,7 @@ export function SheetFormulasTab() {
               glyph="x̄"
               disabled={readOnly}
               disabledReason={locked}
-              onClick={() => insert('=AVERAGE()')}
+              onClick={() => insertAggregate('AVERAGE')}
             />
             <ToolbarButton
               label="Count"
@@ -85,25 +105,29 @@ export function SheetFormulasTab() {
               glyph="#"
               disabled={readOnly}
               disabledReason={locked}
-              onClick={() => insert('=COUNT()')}
+              onClick={() => insertAggregate('COUNT')}
             />
           </RibbonColumn>
           <RibbonColumn>
+            {/*
+              IF and VLOOKUP take arguments no button can guess. Excel opens its
+              Function Arguments dialog for them; this build has no such dialog,
+              and inserting `=IF()` wrote `#N/A` into the cell — a control that
+              looked like it worked. Type the formula into the cell instead.
+            */}
             <ToolbarButton
               label="IF"
               size="wide"
               glyph="?"
-              disabled={readOnly}
-              disabledReason={locked}
-              onClick={() => insert('=IF()')}
+              disabled
+              disabledReason="no Function Arguments dialog in this build — type =IF(...) into the cell"
             />
             <ToolbarButton
               label="VLOOKUP"
               size="wide"
               glyph="⌕"
-              disabled={readOnly}
-              disabledReason={locked}
-              onClick={() => insert('=VLOOKUP()')}
+              disabled
+              disabledReason="no Function Arguments dialog in this build — type =VLOOKUP(...) into the cell"
             />
           </RibbonColumn>
         </RibbonRow>
@@ -489,7 +513,25 @@ export function SheetPageLayoutTab() {
  * tab is here, where a candidate expects it, and says what is missing.
  */
 export function SheetDataTab() {
-  const NO_ROW_OPS = 'rewriting rows needs reference-shifting the command layer does not have yet';
+  const store = useWorkbookStore();
+  useSelection();
+  useWorkbookVersion();
+  const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
+  const readOnly = useSpreadsheetUiStore((state) => state.readOnly);
+
+  const NO_ROW_OPS = 'this build sorts and fills rows, but does not add, hide or split them';
+
+  /**
+   * Sorts, or says why it could not.
+   *
+   * The refusal is the point: sorting a range that holds formulas would have to
+   * move their references too, and being subtly wrong about that gives a
+   * plausible wrong number nobody can see.
+   */
+  const sort = (direction: 'asc' | 'desc'): void => {
+    const blocker = store.sortSelection(direction);
+    if (blocker) setNotice(`The selection could not be sorted: ${blocker}.`);
+  };
 
   return (
     <div className={styles.tab}>
@@ -521,12 +563,33 @@ export function SheetDataTab() {
 
       <RibbonGroup label="Sort &amp; Filter">
         <RibbonRow>
-          <ToolbarButton label="Sort" size="large" glyph="⇅" disabled disabledReason={NO_ROW_OPS} />
-          <ToolbarButton label="Filter" size="large" glyph="⊽" disabled disabledReason={NO_ROW_OPS} />
+          <ToolbarButton
+            label="Sort A to Z"
+            size="large"
+            glyph="↓"
+            disabled={readOnly}
+            disabledReason={readOnly ? 'the sheet is protected' : undefined}
+            onClick={() => sort('asc')}
+          />
+          <ToolbarButton
+            label="Sort Z to A"
+            size="large"
+            glyph="↑"
+            disabled={readOnly}
+            disabledReason={readOnly ? 'the sheet is protected' : undefined}
+            onClick={() => sort('desc')}
+          />
+          <ToolbarButton
+            label="Filter"
+            size="large"
+            glyph="⊽"
+            disabled
+            disabledReason="filtering hides rows, which this build cannot do"
+          />
           <RibbonColumn>
-            <ToolbarButton label="Clear" size="wide" glyph="✕" disabled disabledReason={NO_ROW_OPS} />
-            <ToolbarButton label="Reapply" size="wide" glyph="↻" disabled disabledReason={NO_ROW_OPS} />
-            <ToolbarButton label="Advanced" size="wide" glyph="⚙" disabled disabledReason={NO_ROW_OPS} />
+            <ToolbarButton label="Clear" size="wide" glyph="✕" disabled disabledReason="there is no filter to clear" />
+            <ToolbarButton label="Reapply" size="wide" glyph="↻" disabled disabledReason="there is no filter to reapply" />
+            <ToolbarButton label="Advanced" size="wide" glyph="⚙" disabled disabledReason="advanced filters are not in this build" />
           </RibbonColumn>
         </RibbonRow>
       </RibbonGroup>
@@ -706,9 +769,19 @@ export function SheetViewTab() {
     <div className={styles.tab}>
       <RibbonGroup label="Workbook Views">
         <RibbonRow>
-          {/* Normal is not a choice here, it is the only view — shown active so
-              the tab reads truthfully rather than as three dead options. */}
-          <ToolbarButton label="Normal" size="large" glyph="▦" active onClick={() => undefined} />
+          {/*
+            Normal is not a choice here, it is the only view. Shown active *and*
+            disabled: a button that is enabled but does nothing on click reads as
+            broken, and the reason says why there is nothing to switch to.
+          */}
+          <ToolbarButton
+            label="Normal"
+            size="large"
+            glyph="▦"
+            active
+            disabled
+            disabledReason="this is the only view in this build; the others need a print pipeline"
+          />
           <ToolbarButton label="Page Break Preview" size="large" glyph="⎯" disabled disabledReason={NO_PRINT} />
           <ToolbarButton label="Page Layout" size="large" glyph="▯" disabled disabledReason={NO_PRINT} />
           <ToolbarButton

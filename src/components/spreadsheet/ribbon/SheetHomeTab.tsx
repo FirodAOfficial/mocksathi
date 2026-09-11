@@ -95,6 +95,16 @@ export function SheetHomeTab() {
    */
   const protectedReason = readOnly ? 'the sheet is protected — turn it off on the Review tab' : undefined;
 
+  /*
+   * How many rows or columns Insert and Delete act on.
+   *
+   * Excel uses the size of the selection: three rows selected inserts three.
+   * A single cell means one.
+   */
+  const selectedRange = store.selection.getRanges()[0];
+  const selectedRows = selectedRange ? selectedRange.end.row - selectedRange.start.row + 1 : 1;
+  const selectedColumns = selectedRange ? selectedRange.end.col - selectedRange.start.col + 1 : 1;
+
   const toggle = (key: 'bold' | 'italic' | 'underline' | 'strikethrough', label: string, control: string): void => {
     apply({ [key]: style[key] ? undefined : true }, label, control);
   };
@@ -394,26 +404,69 @@ export function SheetHomeTab() {
 
       <RibbonGroup label="Cells">
         <RibbonRow>
+          {/*
+            Excel splits these into Sheet Rows and Sheet Columns rather than one
+            Insert button, because the two do different things to the sheet and
+            a candidate is asked for one or the other by name.
+          */}
           <RibbonColumn>
-            {/*
-              Inserting and deleting rows shifts every reference below them, and
-              there is no operation for that in the command layer yet. A button
-              that reflowed the sheet without the formulas following would
-              corrupt a workbook silently, so it says what it is instead.
-            */}
             <ToolbarButton
-              label="Insert"
+              label="Insert Sheet Rows"
               size="wide"
               glyph="+"
-              disabled
-              disabledReason="inserting rows and columns is not in this build"
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              onClick={() =>
+                store.editStructure(
+                  { axis: 'row', at: active.row, delta: selectedRows },
+                  'Insert Sheet Rows',
+                  'home.cells.insertRows',
+                )
+              }
             />
             <ToolbarButton
-              label="Delete"
+              label="Insert Sheet Columns"
+              size="wide"
+              glyph="+"
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              onClick={() =>
+                store.editStructure(
+                  { axis: 'column', at: active.col, delta: selectedColumns },
+                  'Insert Sheet Columns',
+                  'home.cells.insertColumns',
+                )
+              }
+            />
+          </RibbonColumn>
+          <RibbonColumn>
+            <ToolbarButton
+              label="Delete Sheet Rows"
               size="wide"
               glyph="−"
-              disabled
-              disabledReason="deleting rows and columns is not in this build"
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              onClick={() =>
+                store.editStructure(
+                  { axis: 'row', at: active.row, delta: -selectedRows },
+                  'Delete Sheet Rows',
+                  'home.cells.deleteRows',
+                )
+              }
+            />
+            <ToolbarButton
+              label="Delete Sheet Columns"
+              size="wide"
+              glyph="−"
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              onClick={() =>
+                store.editStructure(
+                  { axis: 'column', at: active.col, delta: -selectedColumns },
+                  'Delete Sheet Columns',
+                  'home.cells.deleteColumns',
+                )
+              }
             />
           </RibbonColumn>
           <RibbonColumn>

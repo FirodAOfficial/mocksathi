@@ -96,6 +96,23 @@ export class Workbook {
    * Excel refuses too: a workbook with no sheets has nowhere to put a cell, and
    * every consumer would need a "what if there are no sheets" branch.
    */
+  /**
+   * Swaps a sheet's contents for a rebuilt one, keeping its id and position.
+   *
+   * Used by structural edits — inserting a row, sorting a range — which are
+   * written as transforms producing a whole new `Worksheet`. Replacing rather
+   * than mutating means the sheet's private row index, merge table and bounds
+   * cache are rebuilt correctly instead of patched in four places.
+   */
+  replaceSheet(id: string, sheet: Worksheet): boolean {
+    const index = this.sheets.findIndex((existing) => existing.id === id);
+    if (index === -1 || sheet.id !== id) return false;
+
+    this.sheets[index] = sheet;
+    this.byId.set(id, sheet);
+    return true;
+  }
+
   removeSheet(id: string): Worksheet | undefined {
     if (this.sheets.length <= 1) return undefined;
 

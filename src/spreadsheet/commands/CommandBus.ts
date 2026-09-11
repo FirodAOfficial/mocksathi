@@ -1,6 +1,7 @@
 import { eachAddress, type RangeAddress } from '../model/address';
 import type { Cell } from '../model/Cell';
 import type { Workbook } from '../model/Workbook';
+import { sheetFromSnapshot, type SheetSnapshot } from '../model/snapshot';
 import { Worksheet, type ColumnProps, type RowProps, type SheetView } from '../model/Worksheet';
 import type { StyleId } from '../model/styles';
 import type { CommandSource, Operation, Transaction } from './Operation';
@@ -200,6 +201,16 @@ export class WorkbookMutator {
     this.operations.push({ kind: 'setSheetVisible', sheetId, before: sheet.visible, after: visible });
     sheet.visible = visible;
     return true;
+  }
+
+  /** Replaces a sheet wholesale; see `ReplaceSheetOp` for why. */
+  replaceSheet(sheetId: string, before: SheetSnapshot, after: SheetSnapshot): void {
+    this.operations.push({ kind: 'replaceSheet', sheetId, before, after });
+    this.restoreSheet(sheetId, after);
+  }
+
+  private restoreSheet(sheetId: string, snapshot: SheetSnapshot): void {
+    this.workbook.replaceSheet(sheetId, sheetFromSnapshot(sheetId, snapshot, this.workbook));
   }
 
   /** Gridlines and headings, which Excel stores per sheet. */
@@ -463,6 +474,13 @@ export class CommandBus {
         if (target) target.visible = operation[direction];
         return;
       }
+
+      case 'replaceSheet':
+        this.workbook.replaceSheet(
+          operation.sheetId,
+          sheetFromSnapshot(operation.sheetId, operation[direction], this.workbook),
+        );
+        return;
 
       case 'setSheetView':
         if (sheet) sheet.view = { ...operation[direction] };

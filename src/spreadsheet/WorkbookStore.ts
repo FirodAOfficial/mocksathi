@@ -5,8 +5,16 @@ import { loadFormulaEngine } from './calc/FastFormulaEngine';
 import type { FormulaEngine } from './calc/FormulaEngine';
 import { coerceInput, type Cell } from './model/Cell';
 import { DEFAULT_STYLE_ID, type CellStyle, type StyleId } from './model/styles';
-import type { CellAddress, RangeAddress } from './model/address';
+import { isSingleCell, type CellAddress, type RangeAddress } from './model/address';
 import { fillSeries } from './model/fillSeries';
+import { snapshotSheet } from './model/snapshot';
+import {
+  applySheetEdit,
+  sortBlocker,
+  sortSheetRange,
+  type SheetEdit,
+  type SortDirection,
+} from './model/structuralEdit';
 import { translateFormula } from './model/translateFormula';
 import { Workbook } from './model/Workbook';
 import { SelectionModel } from './grid/SelectionModel';
@@ -325,6 +333,58 @@ export class WorkbookStore {
     });
 
     return true;
+  }
+
+  /**
+   * Inserts or deletes rows or columns, moving every formula that pointed there.
+   *
+   * The whole sheet is rebuilt from a transformed snapshot, because the cells,
+   * the row heights, the merges, the frozen panes, the print area *and* every
+   * formula on the sheet all move together — and a formula left pointing at the
+   * old position gives a plausible wrong number.
+   */
+  editStructure(edit: SheetEdit, label: string, control: string): void {
+    const sheet = this.activeSheet();
+    const before = snapshotSheet(sheet, this.workbook);
+    const after = applySheetEdit(before, edit);
+
+    this.commit({ label, source: 'ribbon', control }, (mutator) => {
+      mutator.replaceSheet(sheet.id, before, after);
+    });
+
+    this.rebuildDependencies();
+    this.recalculateAll();
+  }
+
+  /**
+   * Sorts the selected range by one of its columns.
+   *
+   * Returns the reason it could not, so the caller can say so. Sorting a range
+   * holding formulas or merged cells is refused rather than attempted: moving
+   * rows would have to move their references too, and being subtly wrong about
+   * that is worse than declining.
+   */
+  sortSelection(direction: SortDirection): string | null {
+    const sheet = this.activeSheet();
+    const selected = this.selection.getRanges()[0];
+    if (!selected) return 'nothing is selected';
+
+    // A single cell means "sort the block around me", which is what Excel does.
+    const range = isSingleCell(selected) ? (sheet.usedRange() ?? selected) : selected;
+
+    const before = snapshotSheet(sheet, this.workbook);
+    const blocker = sortBlocker(before, range);
+    if (blocker) return blocker;
+
+    const after = sortSheetRange(before, range, range.start.col, direction);
+
+    this.commit(
+      { label: direction === 'asc' ? 'Sort A to Z' : 'Sort Z to A', source: 'ribbon', control: 'data.sort' },
+      (mutator) => mutator.replaceSheet(sheet.id, before, after),
+    );
+
+    this.selection.selectRange(range);
+    return null;
   }
 
   setColumnWidth(col: number, width: number): void {

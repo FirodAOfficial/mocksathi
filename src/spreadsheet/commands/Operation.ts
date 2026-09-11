@@ -1,5 +1,6 @@
 import type { RangeAddress } from '../model/address';
 import type { Cell } from '../model/Cell';
+import type { SheetSnapshot } from '../model/snapshot';
 import type { ColumnProps, RowProps, SheetView } from '../model/Worksheet';
 import type { StyleId } from '../model/styles';
 
@@ -140,6 +141,21 @@ export interface SetPrintAreaOp {
   after: RangeAddress | null;
 }
 
+/**
+ * A structural edit, recorded as the sheet before and after.
+ *
+ * Inserting a row moves every cell below it and rewrites every formula on the
+ * sheet that pointed there. Recording that as thousands of individual cell
+ * operations would be slower to undo and far easier to get wrong than keeping
+ * the two states — and an exam sheet is a few dozen cells.
+ */
+export interface ReplaceSheetOp {
+  kind: 'replaceSheet';
+  sheetId: string;
+  before: SheetSnapshot;
+  after: SheetSnapshot;
+}
+
 export type Operation =
   | SetCellOp
   | SetStyleOp
@@ -151,6 +167,7 @@ export type Operation =
   | RemoveSheetOp
   | RenameSheetOp
   | MoveSheetOp
+  | ReplaceSheetOp
   | SetSheetVisibleOp
   | SetSheetViewOp
   | SetPrintAreaOp
