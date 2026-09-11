@@ -45,9 +45,14 @@ export const MARGIN_PRESETS: Record<MarginPreset, { top: number; right: number; 
   wide: { top: 96, right: 192, bottom: 96, left: 192 },
 };
 
-export const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-export const MIN_ZOOM = 0.5;
+/*
+ * 25%, not 50%: a 320px phone showing an 816px sheet needs about 37% to fit it,
+ * and a floor of 50% left the page overflowing the screen with no way to pull
+ * it back. Word's own minimum is 10%.
+ */
+export const MIN_ZOOM = 0.25;
 export const MAX_ZOOM = 2;
 
 interface UiState {

@@ -1,5 +1,6 @@
 .grid {
-  grid-template-columns: repeat(5, 1fr);
+  /* Five across when there is room, fewer when there is not. */
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
   gap: 10px 12px;
   padding: 14px;
   display: grid;
@@ -56,3 +57,10 @@
   padding: 18px 14px;
 }
 
+/* A finger needs a bigger cell than a mouse pointer does. */
+@media (pointer: coarse) {
+  .cell {
+    height: auto;
+    min-height: 44px;
+  }
+}

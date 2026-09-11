@@ -73,3 +73,47 @@
   word-break: normal;
   font-size: 12px;
 }
+
+/*
+ * Touch targets.
+ *
+ * Keyed to the pointer, not the viewport: a 24px icon is right for a mouse at
+ * any window size and wrong for a finger at any window size. `pointer: coarse`
+ * asks the question that actually matters.
+ */
+@media (pointer: coarse) {
+  .small {
+    width: 44px;
+    height: 44px;
+  }
+
+  .wide {
+    min-height: 44px;
+    padding: 0 10px 0 8px;
+  }
+}
+
+/* A tablet has room to grow the stacked buttons as well. */
+@media (pointer: coarse) and (min-width: 768px) {
+  .large {
+    min-width: 64px;
+    min-height: 64px;
+  }
+}
+
+/*
+ * A phone does not. The target stays 44px, but the button stops reserving two
+ * lines for its caption — on a 375px screen the ribbon was claiming half the
+ * viewport and leaving the document a slot to peer through.
+ */
+@media (max-width: 767px) {
+  .large {
+    width: 52px;
+    min-height: 46px;
+    padding: 2px 2px 1px;
+  }
+
+  .caption {
+    font-size: 0.625rem;
+  }
+}

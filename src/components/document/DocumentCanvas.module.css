@@ -157,3 +157,18 @@
   content: "↵";
   color: #3f7fd0;
 }
+
+/*
+ * The ruler is a pointer instrument — it exists to be dragged. On a phone it
+ * only costs vertical space, so the sheet gets it back.
+ */
+@media (max-width: 767px) {
+  .scroll {
+    padding-bottom: 12px;
+  }
+
+  .scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}

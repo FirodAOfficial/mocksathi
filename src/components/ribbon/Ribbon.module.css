@@ -48,3 +48,56 @@
   overflow: visible;
 }
 
+
+/* ---------------------------------------------------------------------- *
+ * Narrow screens. The ribbon keeps every tab and every group — hiding
+ * commands would change what the paper tests — but both strips scroll
+ * sideways instead of being clipped by the viewport.
+ * ---------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  .tabstrip {
+    scrollbar-width: none;
+    height: auto;
+    padding: 2px 4px 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabstrip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    /* Comfortably tappable, and tall enough not to need a precise aim. */
+    min-height: 38px;
+    flex: none;
+    padding: 0 14px;
+    font-size: 0.875rem;
+  }
+
+  .panel {
+    /*
+     * Capped: the ribbon is a toolbar, not the page. Groups that do not fit
+     * across scroll sideways rather than growing downwards into the document.
+     */
+    min-height: 0;
+    max-height: 6.75rem;
+    padding: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* A visible, thin scrollbar: the strip has to look scrollable to be found. */
+  .panel::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .panel::-webkit-scrollbar-thumb {
+    background: #a5bcd4;
+    border-radius: 3px;
+  }
+}
