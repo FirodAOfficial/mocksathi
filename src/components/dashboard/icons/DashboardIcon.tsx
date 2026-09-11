@@ -22,7 +22,9 @@ export type DashboardIconName =
   | 'lock'
   | 'trophy'
   | 'target'
-  | 'clock';
+  | 'clock'
+  | 'menu'
+  | 'x';
 
 const STROKE = {
   fill: 'none' as const,
@@ -237,6 +239,8 @@ const PATHS: Record<DashboardIconName, JSX.Element> = {
       <path d="M12 7v5.2l3.4 2" />
     </g>
   ),
+  menu: <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" {...STROKE} />,
+  x: <path d="M5 5l14 14M19 5 5 19" {...STROKE} />,
 };
 
 export interface DashboardIconProps {

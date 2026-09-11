@@ -35,6 +35,59 @@
   overflow-y: auto;
 }
 
+.menuButton {
+  display: none;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  /* Below 901px the sidebar is a full-height drawer, off-canvas by default
+     — 224px was already unusable stealing that much width from a ~375px
+     phone screen, so it's not a squeeze-it-in job, it has to come off the
+     page entirely until asked for. */
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    max-width: 84vw;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 0 transparent;
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+    box-shadow: 12px 0 32px rgba(16, 24, 40, 0.18);
+  }
+
+  .menuButton {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--db-border);
+    border-radius: 8px;
+    background: var(--db-surface);
+    color: var(--db-text);
+    cursor: pointer;
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: rgba(15, 23, 42, 0.4);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+}
+
 /* The simplified menu has 5 items instead of ~15 — sized up so a full-height
    sidebar doesn't read as mostly empty space below a short list. */
 .sidebarSpacious {
@@ -324,16 +377,31 @@ a.examPickerButton:hover {
 }
 
 .bellButton {
+  /* Was just a bare 18px icon with no hit area, sizing, or hover state — the
+     one topbar control with no button chrome at all, next to `.userChip`
+     (padded, hover bg) and `.menuButton` (bordered chip). Matched to
+     `.menuButton`'s footprint so the row of controls reads as one family. */
   position: relative;
   display: grid;
   place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: none;
   color: var(--db-text-muted);
+  cursor: pointer;
+}
+
+.bellButton:hover {
+  background: #f4f7fb;
+  color: var(--db-text);
 }
 
 .bellDot {
   position: absolute;
-  top: -4px;
-  right: -5px;
+  top: 3px;
+  right: 3px;
   width: 15px;
   height: 15px;
   border-radius: 50%;
@@ -453,4 +521,67 @@ a.examPickerButton:hover {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (max-width: 900px) {
+  /* The topbar packs a lot in: menu button, exam name, streak, bell, and a
+     full name+role user chip. On a phone that's more than one row's worth
+     unless something gives — trimmed to the essentials below, in order of
+     what's least missed (the streak count and the user's name/role are both
+     shown elsewhere: the dashboard home's performance card and the user
+     menu's own dropdown, respectively). */
+  .topbar {
+    padding: 10px 14px;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .examPicker {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .examPickerButton {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .examPickerLabel {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .alsoEnrolled {
+    display: none;
+  }
+
+  .streakLabel {
+    display: none;
+  }
+
+  .topbarRight {
+    flex: none;
+    gap: 10px;
+  }
+
+  .userText {
+    display: none;
+  }
+
+  .userChip {
+    gap: 0;
+    padding: 4px;
+  }
+
+  .userChip svg {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 14px;
+  }
 }
