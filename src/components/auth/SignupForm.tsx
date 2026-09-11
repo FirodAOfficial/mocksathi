@@ -7,6 +7,7 @@ import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
+import { LegalLinks } from './LegalLinks';
 import styles from './LoginScreen.module.css';
 import { MarketingPanel } from './MarketingPanel';
 
@@ -29,6 +30,7 @@ export function SignupForm({ exams }: SignupFormProps) {
   const [examId, setExamId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -151,7 +153,9 @@ export function SignupForm({ exams }: SignupFormProps) {
               </p>
             )}
 
-            <button type="submit" className={cardStyles.primary} disabled={submitting}>
+            <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
+
+            <button type="submit" className={cardStyles.primary} disabled={submitting || !agreed}>
               {submitting ? 'Creating account…' : 'Create account'}
             </button>
           </form>

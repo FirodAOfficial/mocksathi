@@ -55,11 +55,15 @@ against it, and re-run the audit procedure below when asked to review or harden 
 
 ### Deliberately public routes — the exceptions, and why each is safe
 
-Every *page* route now requires a session (`requireUser()`), redirecting a signed-out or
-expired-session visitor to `/login` — including `/exam`, `/editor`, and `/result`, which used to be
-deliberate exceptions. `/login` and `/signup` are the only unauthenticated pages left, necessarily
-(you can't require a session to reach the page that creates one). The remaining public *API*
-exceptions are all ones a signed-out visitor genuinely needs to hit:
+Every *page* route requires a session (`requireUser()`), redirecting a signed-out or expired-session
+visitor to `/login` — including `/exam`, `/editor`, and `/result`, which used to be deliberate
+exceptions. `/login` and `/signup` are the only unauthenticated pages left, necessarily (you can't
+require a session to reach the page that creates one). The three legal documents (Terms, Privacy,
+Refund & Cancellation Policy) aren't pages at all — `src/components/legal/LegalDocumentLink`
+shows each one in a modal from wherever it's linked (login/signup show Terms + Privacy;
+`/dashboard/subscription` shows all three, Refund Policy included, since that's the only place a
+purchase happens) — so there was never a route to gate. The remaining public *API* exceptions are
+all ones a signed-out visitor genuinely needs to hit:
 
 | Route | Why it's public | Why it's still safe |
 |---|---|---|

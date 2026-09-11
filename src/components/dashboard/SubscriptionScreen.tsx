@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { LegalDocumentLink } from '@/components/legal/LegalDocumentLink';
 import headerStyles from './AnalysisScreen.module.css';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './SubscriptionScreen.module.css';
@@ -43,6 +44,7 @@ export function SubscriptionScreen({
   const router = useRouter();
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleChoose(planId: string) {
     setError(null);
@@ -108,6 +110,20 @@ export function SubscriptionScreen({
         </p>
       )}
 
+      <label className={styles.consentRow}>
+        <input
+          type="checkbox"
+          className={styles.consentCheckbox}
+          checked={agreed}
+          onChange={(event) => setAgreed(event.target.checked)}
+        />
+        <span className={styles.consentText}>
+          I agree to the <LegalDocumentLink doc="terms" label="Terms & Conditions" onAccept={() => setAgreed(true)} />,{' '}
+          <LegalDocumentLink doc="privacy" label="Privacy Policy" onAccept={() => setAgreed(true)} />, and{' '}
+          <LegalDocumentLink doc="refund" label="Refund & Cancellation Policy" onAccept={() => setAgreed(true)} />.
+        </span>
+      </label>
+
       <div className={styles.plansGrid}>
         {plans.map((plan) => {
           const isCurrent = plan.id === currentPlanId;
@@ -147,7 +163,7 @@ export function SubscriptionScreen({
                 type="button"
                 className={isCurrent ? styles.planCtaCurrent : plan.isPopular ? styles.planCtaPopular : styles.planCta}
                 onClick={() => handleChoose(plan.id)}
-                disabled={isCurrent || pendingPlanId !== null}
+                disabled={isCurrent || pendingPlanId !== null || !agreed}
               >
                 {isCurrent ? 'Current Plan' : pendingPlanId === plan.id ? 'Activating…' : `Choose ${plan.name}`}
               </button>

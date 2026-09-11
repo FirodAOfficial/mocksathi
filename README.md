@@ -81,7 +81,10 @@ npm run db:migrate          # applies db/migrations/ to it
 
 `DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `1`)
 controls how long a session lasts before its cookie/DB row expires and the holder is redirected to
-`/login` — every page requires a session now except `/login` and `/signup` themselves. Other
+`/login` — every page requires a session except `/login`/`/signup`. The three legal documents
+(Terms, Privacy, Refund & Cancellation Policy — `src/components/legal/`) aren't pages; they open in
+a modal from wherever they're linked (login/signup show Terms + Privacy, the subscription page
+shows all three). Other
 database scripts:
 
 > **Hosted Postgres (Supabase, etc.) — two connection strings, not one.** `DATABASE_URL` is what

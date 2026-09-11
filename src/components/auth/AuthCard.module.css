@@ -190,3 +190,26 @@
 .trustNote b {
   color: var(--db-text);
 }
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 16px 0 0;
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--db-accent);
+  cursor: pointer;
+}
+
+.consentText {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--db-text-muted);
+}
