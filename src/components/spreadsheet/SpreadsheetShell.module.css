@@ -1,0 +1,114 @@
+.shell {
+  display: grid;
+  /* `minmax(0, …)` for the same reason the grid frame uses it: a bare `1fr`
+     keeps an `auto` minimum and would let the sheet push the shell taller than
+     the viewport instead of scrolling inside it. */
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: #f0f4f8;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 3px 8px;
+  background: linear-gradient(to bottom, var(--frame-top, #e8f1fb), var(--frame-bottom, #c9dcf0));
+  border-bottom: 1px solid var(--frame-border, #7d9bbd);
+}
+
+.quickAccess {
+  display: flex;
+  gap: 2px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f3a55;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.windowButtons {
+  display: flex;
+  gap: 2px;
+}
+
+.windowButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 18px;
+  font-size: 11px;
+  color: #1f3a55;
+  background: linear-gradient(to bottom, #f4f9ff, #d7e6f5);
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+}
+
+.closeButton {
+  background: linear-gradient(to bottom, #f8b8b8, #d96a6a);
+}
+
+.workspace {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Between closing the paper and the server answering. */
+.marking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100dvh;
+  padding: 24px;
+  text-align: center;
+  background: #f0f4f8;
+}
+
+.markingTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #17365d;
+}
+
+.markingDetail {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.875rem;
+  color: #a4262c;
+}
+
+@media (width <= 767px) {
+  .windowButtons {
+    display: none;
+  }
+
+  .title {
+    text-align: left;
+  }
+}

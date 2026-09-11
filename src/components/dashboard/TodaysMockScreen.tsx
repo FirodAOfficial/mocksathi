@@ -1,9 +1,17 @@
 import Link from 'next/link';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { MockSummary } from '@/dashboard/types';
 import styles from './TodaysMockScreen.module.css';
 
 export interface TodaysMockScreenProps {
   todaysMock: MockSummary;
+  /**
+   * The next Excel paper, shown beside the Word one.
+   *
+   * Optional because a candidate's schedule may not contain one; the card is
+   * simply absent then rather than showing an empty slot.
+   */
+  excelMock?: MockSummary;
 }
 
 /**
@@ -16,7 +24,7 @@ export interface TodaysMockScreenProps {
  * Restyled to the dashboard's card system; the three options themselves are
  * unchanged.
  */
-export function TodaysMockScreen({ todaysMock }: TodaysMockScreenProps) {
+export function TodaysMockScreen({ todaysMock, excelMock }: TodaysMockScreenProps) {
   return (
     <>
       <div className={styles.header}>
@@ -28,15 +36,32 @@ export function TodaysMockScreen({ todaysMock }: TodaysMockScreenProps) {
 
       <div className={styles.grid}>
         <div className={styles.card}>
-          <p className={styles.cardTitle}>Sit the mock</p>
+          <p className={styles.cardTitle}>
+            Word mock <span className={styles.typeBadge}>W</span>
+          </p>
           <p className={styles.cardBody}>
             Fifteen word-processing tasks, ten minutes. The instructions page covers the rules and
             is where the language is chosen.
           </p>
-          <Link href="/exam" className={styles.primary}>
+          <Link href={startHrefFor(todaysMock)} className={styles.primary}>
             Read the instructions
           </Link>
         </div>
+
+        {excelMock ? (
+          <div className={styles.card}>
+            <p className={styles.cardTitle}>
+              Excel mock <span className={`${styles.typeBadge} ${styles.typeBadgeExcel}`}>X</span>
+            </p>
+            <p className={styles.cardBody}>
+              Mock {excelMock.mockNumber} · fifteen spreadsheet tasks, fifteen minutes. The
+              instructions page covers the rules and is where the language is chosen.
+            </p>
+            <Link href={startHrefFor(excelMock)} className={styles.primary}>
+              Read the instructions
+            </Link>
+          </div>
+        ) : null}
 
         <div className={styles.card}>
           <p className={styles.cardTitle}>Open a document</p>

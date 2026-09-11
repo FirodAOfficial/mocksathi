@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   EXAM_INSTRUCTIONS,
+  EXCEL_INSTRUCTIONS,
+  EXCEL_PALETTE_KEY,
+  EXCEL_TERMS,
   INSTRUCTION_COPY,
   PALETTE_KEY,
   TERMS,
@@ -49,6 +52,13 @@ export function InstructionsScreen({
 
   const say = (key: keyof typeof INSTRUCTION_COPY): string =>
     localised(INSTRUCTION_COPY[key], readingIn);
+
+  /*
+   * Which paper this is, read from the attempt rather than taken as a prop.
+   * The attempt already carries it, and a second source would be one more thing
+   * that could disagree — a Word instructions page in front of an Excel paper.
+   */
+  const isExcel = attempt.subject === 'excel';
 
   const minutes = Math.round(attempt.durationSeconds / 60);
 
@@ -106,7 +116,7 @@ export function InstructionsScreen({
             {say('instructionsTitle')}
           </h2>
           <ol className={styles.rules}>
-            {localised(EXAM_INSTRUCTIONS, readingIn).map((rule, index) => (
+            {localised(isExcel ? EXCEL_INSTRUCTIONS : EXAM_INSTRUCTIONS, readingIn).map((rule, index) => (
               <li key={rule}>
                 <span className={styles.ruleNumber} aria-hidden="true">
                   {index + 1}
@@ -129,7 +139,7 @@ export function InstructionsScreen({
           </h2>
 
           <ul className={styles.key}>
-            {PALETTE_KEY.map((row) => (
+            {(isExcel ? EXCEL_PALETTE_KEY : PALETTE_KEY).map((row) => (
               <li key={row.state}>
                 <span className={`${styles.swatch} ${styles[row.state] ?? ''}`} aria-hidden="true" />
                 <strong className={styles.keyName}>{localised(row.name, readingIn)}</strong>
@@ -138,7 +148,7 @@ export function InstructionsScreen({
             ))}
           </ul>
 
-          <p className={styles.keyNote}>{say('paletteNote')}</p>
+          <p className={styles.keyNote}>{say(isExcel ? 'paletteNoteExcel' : 'paletteNote')}</p>
         </section>
 
         <section className={styles.card}>
@@ -177,7 +187,7 @@ export function InstructionsScreen({
           </h2>
           <div className={styles.cardBody}>
             <ul className={styles.terms}>
-              {localised(TERMS, readingIn).map((term) => (
+              {localised(isExcel ? EXCEL_TERMS : TERMS, readingIn).map((term) => (
                 <li key={term}>{term}</li>
               ))}
             </ul>
@@ -205,7 +215,7 @@ export function InstructionsScreen({
             type="button"
             className={styles.primaryButton}
             disabled={!agreed}
-            onClick={() => router.push(`/editor?mode=exam&lang=${sittingIn}`)}
+            onClick={() => router.push(`${isExcel ? '/spreadsheet' : '/editor'}?mode=exam&lang=${sittingIn}`)}
           >
             {say('start')} <span aria-hidden="true">→</span>
           </button>

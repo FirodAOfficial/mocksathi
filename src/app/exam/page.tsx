@@ -1,8 +1,22 @@
 import { requireUser } from '@/auth/cookies';
-import { PAPER } from '@/exam/result';
+import { EXCEL_PAPER, PAPER } from '@/exam/result';
+import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { isLanguage } from '@/exam/types';
 import { InstructionsScreen } from '@/components/exam/InstructionsScreen';
+import type { Metadata } from 'next';
+
+/** The tab says which paper is about to be sat, not just "Editor". */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;
+
+  return { title: `${subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName} · MockSathi` };
+}
 
 /**
  * The instructions the candidate reads before the paper opens.
@@ -20,13 +34,20 @@ export default async function ExamInstructionsPage({
   await requireUser();
   const params = await searchParams;
   const raw = Array.isArray(params.lang) ? params.lang[0] : params.lang;
+  const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;
+
+  // Anything other than `excel` is the Word paper, which is what a bare `/exam`
+  // has always meant and what every existing link points at.
+  const excel = subject === 'excel';
+  const attempt = excel ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;
+  const paper = excel ? EXCEL_PAPER : PAPER;
 
   return (
     <InstructionsScreen
-      attempt={SEED_ATTEMPT}
-      testName={PAPER.testName}
-      maximumMarks={PAPER.maximumMarks}
-      qualifyingMarks={PAPER.qualifyingMarks}
+      attempt={attempt}
+      testName={paper.testName}
+      maximumMarks={paper.maximumMarks}
+      qualifyingMarks={paper.qualifyingMarks}
       initialLanguage={isLanguage(raw) ? raw : 'en'}
     />
   );

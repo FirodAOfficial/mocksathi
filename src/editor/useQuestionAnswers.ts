@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Editor } from '@tiptap/react';
 import { EditorState } from '@tiptap/pm/state';
-import { findQuestion } from '@/exam/types';
+import { findQuestion, isWordQuestion, type WordQuestion } from '@/exam/types';
 import { useExamStore } from '@/state/examStore';
 import { defaultAnswerDocument, documentsEqual, type AnswerDocument } from './answerDocument';
 
@@ -73,9 +73,24 @@ export function useQuestionAnswers(
     instance.chain().focus('start').run();
   }, []);
 
+  /**
+   * The Word question with this number.
+   *
+   * The editor only ever sits a Word paper; an Excel question reaching here
+   * would mean the wrong shell was mounted, and installing its (absent)
+   * passage would blank the document rather than fail loudly.
+   */
+  const wordQuestion = useCallback(
+    (number: number): WordQuestion | undefined => {
+      const question = findQuestion(attempt, number);
+      return question && isWordQuestion(question) ? question : undefined;
+    },
+    [attempt],
+  );
+
   const persist = useCallback(
     (instance: Editor, number: number): void => {
-      const question = findQuestion(attempt, number);
+      const question = wordQuestion(number);
       if (!question) return;
 
       // Both documents go through the schema so the comparison is between two
@@ -86,14 +101,14 @@ export function useQuestionAnswers(
       if (documentsEqual(current, untouched)) clearAnswer(number);
       else saveAnswer(number, current);
     },
-    [attempt, language, saveAnswer, clearAnswer],
+    [wordQuestion, language, saveAnswer, clearAnswer],
   );
 
   useEffect(() => {
     if (!editor || !enabled) return;
     if (installedRef.current === selectedNumber) return;
 
-    const question = findQuestion(attempt, selectedNumber);
+    const question = wordQuestion(selectedNumber);
     if (!question) return;
 
     const previous = installedRef.current;
@@ -104,19 +119,19 @@ export function useQuestionAnswers(
       persist(editor, selectedNumber);
     } else {
       const stored = useExamStore.getState().answers[selectedNumber];
-      install(editor, stored ?? defaultAnswerDocument(question, language));
+      install(editor, (stored as AnswerDocument | undefined) ?? defaultAnswerDocument(question, language));
     }
 
     installedRef.current = selectedNumber;
-  }, [editor, enabled, selectedNumber, attempt, language, adoptInitialContent, install, persist]);
+  }, [editor, enabled, selectedNumber, wordQuestion, language, adoptInitialContent, install, persist]);
 
   const clearCurrent = useCallback(() => {
-    const question = findQuestion(attempt, selectedNumber);
+    const question = wordQuestion(selectedNumber);
     if (!editor || !question) return;
 
     clearAnswer(selectedNumber);
     install(editor, defaultAnswerDocument(question, language));
-  }, [editor, attempt, language, selectedNumber, clearAnswer, install]);
+  }, [editor, wordQuestion, language, selectedNumber, clearAnswer, install]);
 
   const saveCurrent = useCallback(() => {
     if (editor && installedRef.current !== null) persist(editor, installedRef.current);

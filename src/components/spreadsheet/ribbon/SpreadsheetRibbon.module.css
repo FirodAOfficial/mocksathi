@@ -1,0 +1,151 @@
+.ribbon {
+  background: linear-gradient(to bottom, var(--ribbon-top, #fcfdff), var(--ribbon-bottom, #e8f0f9));
+  border-bottom: 1px solid var(--ribbon-border, #a5bcd4);
+}
+
+.tabstrip {
+  display: flex;
+  gap: 1px;
+  padding: 2px 6px 0;
+  background: linear-gradient(to bottom, #217346, #1a5c38);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabstrip::-webkit-scrollbar {
+  display: none;
+}
+
+.tabButton {
+  padding: 4px 14px;
+  font-size: 12px;
+  color: #eaf4ee;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  border-radius: 3px 3px 0 0;
+  cursor: pointer;
+}
+
+.tabButton:hover {
+  background: rgb(255 255 255 / 18%);
+}
+
+.tabButtonActive {
+  color: #1a5c38;
+  font-weight: 700;
+  background: var(--ribbon-top, #fcfdff);
+}
+
+.panel {
+  padding: 4px 6px;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 84px;
+}
+
+/* A ribbon button that opens a menu. Matches `ToolbarButton`'s large form. */
+.menuTrigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 52px;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 16px;
+  color: #17365d;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.menuTrigger:hover:not(:disabled),
+.menuTriggerOpen {
+  border-color: var(--control-hover-border, #e0b64f);
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.menuTrigger:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.menuCaption {
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.symbolGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 6px;
+  max-width: 320px;
+}
+
+.symbol {
+  width: 28px;
+  height: 26px;
+  font-size: 14px;
+  color: #17365d;
+  background: #fff;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.symbol:hover {
+  border-color: var(--control-hover-border, #e0b64f);
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.zoomMenu {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  min-width: 96px;
+}
+
+.zoomOption {
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: #17365d;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.zoomOption:hover,
+.zoomOption[aria-checked='true'] {
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.unbuilt {
+  max-width: 52ch;
+  margin: 0;
+  padding: 6px 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #37506b;
+}
+
+@media (width <= 767px) {
+  .tab {
+    min-height: 0;
+  }
+
+  .panel {
+    padding: 2px 4px;
+  }
+}

@@ -1,5 +1,5 @@
 import type { JSONContent } from '@tiptap/core';
-import type { ExamQuestion, Language } from '@/exam/types';
+import type { Language, WordQuestion } from '@/exam/types';
 
 /**
  * The document each question starts with, and how to tell it has been changed.
@@ -18,7 +18,7 @@ export type AnswerDocument = JSONContent;
  * no scratch paragraph. The whole document is therefore the answer, which is
  * what lets the marker treat every character in it as under test.
  */
-export function defaultAnswerDocument(question: ExamQuestion, language: Language): AnswerDocument {
+export function defaultAnswerDocument(question: WordQuestion, language: Language): AnswerDocument {
   // Deep-copied: the passage is shared question data, and the editor would
   // otherwise mutate the paper itself as the candidate types.
   return structuredClone(question.passage[language]) as AnswerDocument;

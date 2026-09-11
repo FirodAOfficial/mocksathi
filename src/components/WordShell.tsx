@@ -21,6 +21,7 @@ import { WordCountDialog } from './dialogs/WordCountDialog';
 import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
 import { QuestionListPanel } from './exam/QuestionListPanel';
+import { ExamDrawerBar, ExamPanel, type DrawerSide } from './exam/ExamPanels';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
 import { ResultView } from './result/ResultView';
@@ -87,7 +88,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
    * only one is open at a time.
    */
   const isMobile = useDrawerLayout();
-  const [drawer, setDrawer] = useState<'questions' | 'summary' | null>(null);
+  const [drawer, setDrawer] = useState<DrawerSide | null>(null);
   const [pages, setPages] = useState(1);
   /**
    * Which document's notice was dismissed, rather than a plain boolean: a newly
@@ -176,6 +177,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         const marked = await submitAttempt(
           {
             answers,
+            subject: 'word',
             language,
             timePerQuestion,
             totalTimeSeconds: elapsedSeconds(startedAt),
@@ -264,9 +266,9 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
       */}
       <div className={styles.workspace}>
         {exam && !focusMode ? (
-          <Panel side="left" open={openDrawer === 'questions'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+          <ExamPanel side="left" open={openDrawer === 'questions'} isMobile={isMobile} onClose={() => setDrawer(null)}>
             <QuestionListPanel />
-          </Panel>
+          </ExamPanel>
         ) : null}
 
         <main className={styles.main}>
@@ -279,12 +281,12 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         </main>
 
         {exam && !focusMode ? (
-          <Panel side="right" open={openDrawer === 'summary'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+          <ExamPanel side="right" open={openDrawer === 'summary'} isMobile={isMobile} onClose={() => setDrawer(null)}>
             <ExamSummaryPanel
               onClearAnswer={questionAnswers.clearCurrent}
               onSaveAnswer={questionAnswers.saveCurrent}
             />
-          </Panel>
+          </ExamPanel>
         ) : null}
       </div>
 
@@ -294,24 +296,10 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         panels are already on the page and a button to open them would be a lie.
       */}
       {exam && !focusMode && isMobile ? (
-        <nav className={styles.drawerBar} aria-label="Exam panels">
-          <button
-            type="button"
-            className={styles.drawerTab}
-            aria-expanded={openDrawer === 'questions'}
-            onClick={() => setDrawer((open) => (open === 'questions' ? null : 'questions'))}
-          >
-            Questions
-          </button>
-          <button
-            type="button"
-            className={styles.drawerTab}
-            aria-expanded={openDrawer === 'summary'}
-            onClick={() => setDrawer((open) => (open === 'summary' ? null : 'summary'))}
-          >
-            Progress &amp; Submit
-          </button>
-        </nav>
+        <ExamDrawerBar
+          open={openDrawer}
+          onToggle={(side) => setDrawer((current) => (current === side ? null : side))}
+        />
       ) : null}
 
       <StatusBar pages={pages} words={format.words} readOnly={readOnly || locked} />
@@ -331,58 +319,6 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         />
       ) : null}
     </div>
-  );
-}
-
-/**
- * A side panel: a column on a wide screen, a drawer on a narrow one.
- *
- * On mobile the panel is only mounted while it is open. That is deliberate
- * rather than hiding it with CSS: a closed drawer left in the DOM keeps its
- * buttons in the tab order and its headings in the screen-reader outline, so a
- * keyboard user would tab into a panel nobody can see.
- */
-function Panel({
-  side,
-  open,
-  isMobile,
-  onClose,
-  children,
-}: {
-  side: 'left' | 'right';
-  open: boolean;
-  isMobile: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  // Escape closes the drawer, which is what every overlay on the web does.
-  useEffect(() => {
-    if (!isMobile || !open) return;
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isMobile, open, onClose]);
-
-  if (!isMobile) return <div className={styles.column}>{children}</div>;
-  if (!open) return null;
-
-  return (
-    <>
-      <div className={styles.scrim} onClick={onClose} aria-hidden="true" />
-      <div
-        className={`${styles.drawer} ${side === 'left' ? styles.drawerLeft : styles.drawerRight}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={side === 'left' ? 'Questions' : 'Progress and submit'}
-      >
-        <button type="button" className={styles.drawerClose} onClick={onClose}>
-          Close
-        </button>
-        <div className={styles.drawerBody}>{children}</div>
-      </div>
-    </>
   );
 }
 

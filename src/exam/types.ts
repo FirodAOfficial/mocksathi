@@ -1,4 +1,9 @@
 import type { JSONContent } from '@tiptap/core';
+import type { RangeAddress } from '@/spreadsheet/model/address';
+import type { CellValue } from '@/spreadsheet/model/Cell';
+import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
+import type { CellStyle } from '@/spreadsheet/model/styles';
+import type { ColumnProps, FrozenPanes, SheetView } from '@/spreadsheet/model/Worksheet';
 
 /** The paper is offered in one language at a time, chosen before it starts. */
 export type Language = 'hi' | 'en';
@@ -58,9 +63,43 @@ export interface ModelAnswer {
   attrs?: Record<string, unknown>;
 }
 
+/**
+ * How the workbook looks once the question has been answered correctly.
+ *
+ * A patch applied to the starting workbook, never a second copy of it — the
+ * same choice `ModelAnswer` makes and for the same reason: a stored copy would
+ * drift from the data the candidate was actually given, and the review screen
+ * would then show a worked answer to a different question.
+ *
+ * Public, like `ModelAnswer`. The instruction already says what to do; what
+ * counts as correct is still decided server-side against the answer key.
+ */
+export interface WorkbookAnswer {
+  /** Cells the answer fills in — a total, a formula, a label. */
+  cells?: Array<{ row: number; col: number; value?: CellValue; formula?: string }>;
+  /** Formatting the answer applies, per range. */
+  styles?: Array<{ range: RangeAddress; style: Partial<CellStyle> }>;
+  merges?: RangeAddress[];
+  columns?: Array<[number, ColumnProps]>;
+  frozen?: FrozenPanes;
+  /** Gridlines and headings, which Excel stores per sheet. */
+  view?: Partial<SheetView>;
+  printArea?: RangeAddress | null;
+}
+
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-export interface ExamQuestion {
+/**
+ * Which application a paper is sat in.
+ *
+ * A paper is all one or all the other — the candidate sits a Word practical or
+ * an Excel practical, never a mixture — so this lives on the attempt as well as
+ * on each question, and the screens branch once rather than per question.
+ */
+export type Subject = 'word' | 'excel';
+
+/** Everything a question has regardless of which application it is sat in. */
+interface BaseQuestion {
   /** 1-based, as shown to the candidate. */
   number: number;
   /** What the question exercises, shown on the review screen. */
@@ -75,14 +114,6 @@ export interface ExamQuestion {
    */
   instruction: Localised<string>;
   /**
-   * The document the candidate starts from and formats, per language.
-   *
-   * The passage differs by language, so the rubric must not depend on its
-   * words: criteria address whole blocks, table cells, or text derived from
-   * the passage itself, which keeps one answer key correct for both.
-   */
-  passage: Localised<JSONContent>;
-  /**
    * How the operation is performed, step by step.
    *
    * Shown on the solutions screen after the paper closes. This is teaching
@@ -91,12 +122,55 @@ export interface ExamQuestion {
    * counts as correct lives server-side in the question bank.
    */
   solution: Localised<string[]>;
-  /** The passage as it looks when the question has been answered correctly. */
-  modelAnswer: ModelAnswer;
   /** Marks awarded for getting the whole question right. */
   marks: number;
   /** Flagged by the candidate to come back to. */
   bookmarked: boolean;
+}
+
+export interface WordQuestion extends BaseQuestion {
+  subject: 'word';
+  /**
+   * The document the candidate starts from and formats, per language.
+   *
+   * The passage differs by language, so the rubric must not depend on its
+   * words: criteria address whole blocks, table cells, or text derived from
+   * the passage itself, which keeps one answer key correct for both.
+   */
+  passage: Localised<JSONContent>;
+  /** The passage as it looks when the question has been answered correctly. */
+  modelAnswer: ModelAnswer;
+}
+
+export interface ExcelQuestion extends BaseQuestion {
+  subject: 'excel';
+  /**
+   * The workbook the candidate starts from, per language.
+   *
+   * Only the labels differ between languages; the numbers, the layout and the
+   * addresses do not — which is what keeps one answer key correct for both, the
+   * same property the Word passages have.
+   */
+  workbook: Localised<WorkbookSnapshot>;
+  /** The workbook as it looks when the question has been answered correctly. */
+  modelAnswer: WorkbookAnswer;
+}
+
+/**
+ * A question, whichever application it is sat in.
+ *
+ * A union rather than one interface with optional fields: a Word question with
+ * no passage and an Excel question with no workbook are both nonsense, and the
+ * compiler should say so at the point they are written.
+ */
+export type ExamQuestion = WordQuestion | ExcelQuestion;
+
+export function isWordQuestion(question: ExamQuestion): question is WordQuestion {
+  return question.subject === 'word';
+}
+
+export function isExcelQuestion(question: ExamQuestion): question is ExcelQuestion {
+  return question.subject === 'excel';
 }
 
 export interface ExamSection {
@@ -106,10 +180,21 @@ export interface ExamSection {
 
 export interface ExamAttempt {
   candidateName: string;
+  subject: Subject;
   sections: ExamSection[];
   /** Total time allowed, in seconds. */
   durationSeconds: number;
 }
+
+/**
+ * What a candidate submits for one question.
+ *
+ * A Word answer is the document they ended up with; an Excel answer is the
+ * workbook they ended up with. Both are plain JSON, and neither is inspected
+ * by anything between the editor and the marker — the store, the palette and
+ * the transport all treat an answer as opaque.
+ */
+export type AnswerPayload = JSONContent | WorkbookSnapshot;
 
 /** The set of question numbers that have been edited away from their default. */
 export type AnsweredSet = ReadonlySet<number>;

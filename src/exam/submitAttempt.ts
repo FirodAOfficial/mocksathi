@@ -1,8 +1,7 @@
 'use client';
 
-import type { JSONContent } from '@tiptap/core';
 import type { ExamResult } from './result';
-import type { Language } from './types';
+import type { AnswerPayload, Language, Subject } from './types';
 
 /**
  * Sends the paper for marking.
@@ -12,7 +11,15 @@ import type { Language } from './types';
  * score, and the criteria never reach the browser.
  */
 export interface SubmitPayload {
-  answers: Record<number, JSONContent>;
+  answers: Record<number, AnswerPayload>;
+  /**
+   * Which paper was sat.
+   *
+   * The only thing the client gets to choose, and it is one of two known
+   * values. The questions, the marks and the answer key are all selected from
+   * it server-side, so this cannot be used to influence a score.
+   */
+  subject: Subject;
   language: Language;
   timePerQuestion: Record<number, number>;
   totalTimeSeconds: number;

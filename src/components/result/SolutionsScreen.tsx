@@ -3,9 +3,20 @@
 import { useState } from 'react';
 import type { JSONContent } from '@tiptap/core';
 import { modelAnswerDocument } from '@/exam/seedAttempt';
+import { modelWorkbookSnapshot } from '@/exam/modelWorkbook';
 import type { ExamResult, QuestionOutcome, QuestionResult } from '@/exam/result';
-import { allQuestions, localised, type ExamAttempt, type ExamQuestion, type Language } from '@/exam/types';
+import {
+  allQuestions,
+  isWordQuestion,
+  localised,
+  type AnswerPayload,
+  type ExamAttempt,
+  type ExamQuestion,
+  type Language,
+} from '@/exam/types';
+import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
 import { PassagePreview } from './PassagePreview';
+import { WorkbookPreview } from './WorkbookPreview';
 import { MetaIconMark, MockSathiLogo } from './ResultArt';
 import styles from './SolutionsScreen.module.css';
 
@@ -20,7 +31,7 @@ export interface SolutionsScreenProps {
    * Absent on the design preview route, which has a result but no paper behind
    * it; the attempt panel then says the question was not attempted.
    */
-  answers?: Record<number, JSONContent>;
+  answers?: Record<number, AnswerPayload>;
   language: Language;
   onBack: () => void;
 }
@@ -269,7 +280,7 @@ function AttemptPanel({
 }: {
   question: ExamQuestion;
   language: Language;
-  submitted: JSONContent | undefined;
+  submitted: AnswerPayload | undefined;
   marked: QuestionResult | undefined;
 }) {
   const outcome = marked?.outcome ?? 'unattempted';
@@ -282,13 +293,17 @@ function AttemptPanel({
         <span className={`${styles.panelBadge} ${correct ? styles.badgeGood : styles.badgeBad}`} aria-hidden="true">
           {correct ? '✓' : '✕'}
         </span>
-        Your Attempted Passage
+        {isWordQuestion(question) ? 'Your Attempted Passage' : 'Your Attempted Sheet'}
       </h2>
 
       <div className={styles.panelBody}>
         {submitted ? (
           <div className={styles.passage}>
-            <PassagePreview document={submitted} />
+            {isWordQuestion(question) ? (
+              <PassagePreview document={submitted as JSONContent} />
+            ) : (
+              <WorkbookPreview workbook={submitted as WorkbookSnapshot} />
+            )}
           </div>
         ) : (
           <p className={styles.empty}>
@@ -349,7 +364,11 @@ function ApproachPanel({ question, language }: { question: ExamQuestion; languag
             <span aria-hidden="true">✓</span> Correct Answer
           </h3>
           <div className={styles.passage}>
-            <PassagePreview document={modelAnswerDocument(question, language)} />
+            {isWordQuestion(question) ? (
+              <PassagePreview document={modelAnswerDocument(question, language)} />
+            ) : (
+              <WorkbookPreview workbook={modelWorkbookSnapshot(question, language)} />
+            )}
           </div>
         </div>
       </div>

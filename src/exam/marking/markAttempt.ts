@@ -1,9 +1,5 @@
-import type { JSONContent } from '@tiptap/core';
-import { proseMirrorToDocument } from '@/editor/proseMirrorToDocument';
-import type { DocumentMetadata } from '@/services/document/types';
 import type { CriterionResult, QuestionRubric } from './criteria';
-import { flatten, type FlatDocument } from './flatten';
-import { allQuestions, type ExamAttempt, type ExamQuestion, type Language } from '../types';
+import { allQuestions, type AnswerPayload, type ExamAttempt, type ExamQuestion, type Language } from '../types';
 import {
   formatClock,
   percent,
@@ -13,14 +9,6 @@ import {
   type ScoreLine,
 } from '../result';
 
-/** Marking never reads metadata; this satisfies the model's shape. */
-const NO_METADATA: DocumentMetadata = {
-  title: '',
-  format: 'blank',
-  sourceUrl: null,
-  unsupportedFeatures: [],
-};
-
 export interface QuestionMark {
   number: number;
   outcome: QuestionOutcome;
@@ -28,8 +16,27 @@ export interface QuestionMark {
   criteria: CriterionResult[];
 }
 
-function project(document: JSONContent): FlatDocument {
-  return flatten(proseMirrorToDocument(document, NO_METADATA));
+/**
+ * Everything that is specific to one application, in one object.
+ *
+ * This is the seam. Marking a paper is the same job whichever application it
+ * was sat in — look up the rubric, project the answer, check every criterion,
+ * award all or nothing — and only three steps differ: how an answer becomes
+ * something comparable, where the starting state comes from, and what a
+ * criterion means. A marker supplies those three and nothing else, so the
+ * scoring below never learns which application it is dealing with.
+ */
+export interface SubjectMarker<Projection, C> {
+  /** The candidate's answer, in the form criteria are checked against. */
+  project(answer: AnswerPayload): Projection;
+  /**
+   * What the question started from.
+   *
+   * Derived from the question rather than sent by the client — otherwise a
+   * candidate could submit a starting state that makes their answer correct.
+   */
+  start(question: ExamQuestion, language: Language): Projection;
+  evaluate(criterion: C, submitted: Projection, start: Projection): CriterionResult;
 }
 
 /**
@@ -39,16 +46,12 @@ function project(document: JSONContent): FlatDocument {
  * still come back so the candidate can be told which step they missed — the
  * feedback is per-criterion even though the score is not.
  */
-export function markQuestion(
+export function markQuestion<Projection, C>(
   question: ExamQuestion,
-  rubric: QuestionRubric | undefined,
-  submitted: JSONContent | undefined,
-  evaluate: (
-    criterion: QuestionRubric['criteria'][number],
-    submittedDoc: FlatDocument,
-    startDoc: FlatDocument,
-  ) => CriterionResult,
-  /** Which passage the candidate was working from. */
+  rubric: QuestionRubric<C> | undefined,
+  submitted: AnswerPayload | undefined,
+  marker: SubjectMarker<Projection, C>,
+  /** Which version of the paper the candidate was working from. */
   language: Language,
 ): QuestionMark {
   if (!submitted) {
@@ -66,9 +69,9 @@ export function markQuestion(
     };
   }
 
-  const submittedDoc = project(submitted);
-  const startDoc = project(question.passage[language]);
-  const criteria = rubric.criteria.map((criterion) => evaluate(criterion, submittedDoc, startDoc));
+  const submittedDoc = marker.project(submitted);
+  const startDoc = marker.start(question, language);
+  const criteria = rubric.criteria.map((criterion) => marker.evaluate(criterion, submittedDoc, startDoc));
   const correct = criteria.every((result) => result.passed);
 
   return {
@@ -80,8 +83,8 @@ export function markQuestion(
 }
 
 export interface AttemptSubmission {
-  /** Answer documents by question number. Missing means untouched. */
-  answers: Record<number, JSONContent>;
+  /** Answers by question number. Missing means untouched. */
+  answers: Record<number, AnswerPayload>;
   /** The language the paper was sat in. */
   language: Language;
   /** Seconds spent per question, by question number. */
@@ -102,12 +105,12 @@ export interface ReferenceLines {
   averageTimePerQuestion: number[];
 }
 
-export function markAttempt(
+export function markAttempt<Projection, C>(
   attempt: ExamAttempt,
-  rubrics: QuestionRubric[],
+  rubrics: QuestionRubric<C>[],
   submission: AttemptSubmission,
   reference: ReferenceLines,
-  evaluate: Parameters<typeof markQuestion>[3],
+  marker: SubjectMarker<Projection, C>,
   paper: { testName: string; tagline: string; qualifyingMarks: number },
 ): MarkedAttempt {
   const questions = allQuestions(attempt);
@@ -118,7 +121,7 @@ export function markAttempt(
       question,
       byNumber.get(question.number),
       submission.answers[question.number],
-      evaluate,
+      marker,
       submission.language,
     ),
   );
@@ -177,7 +180,7 @@ export function totalMarks(attempt: ExamAttempt): number {
  */
 export function validateQuestionBank(
   attempt: ExamAttempt,
-  rubrics: QuestionRubric[],
+  rubrics: QuestionRubric<unknown>[],
   expectedTotal: number,
 ): string[] {
   const problems: string[] = [];

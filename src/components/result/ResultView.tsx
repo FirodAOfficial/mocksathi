@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { JSONContent } from '@tiptap/core';
 import type { ExamResult } from '@/exam/result';
-import type { ExamAttempt, Language } from '@/exam/types';
+import type { AnswerPayload, ExamAttempt, Language } from '@/exam/types';
 import { ResultScreen } from './ResultScreen';
 import { SolutionsScreen } from './SolutionsScreen';
 
@@ -12,7 +11,7 @@ export interface ResultViewProps {
   /** The paper behind the result, for the worked solutions. */
   attempt: ExamAttempt;
   /** What the candidate submitted, for the review screen. */
-  answers?: Record<number, JSONContent>;
+  answers?: Record<number, AnswerPayload>;
   language: Language;
   backHref?: string;
 }

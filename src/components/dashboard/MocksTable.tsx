@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { ReactNode } from 'react';
 import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
@@ -36,7 +37,7 @@ function ActionCell({ mock }: { mock: MockSummary }) {
   switch (mock.state) {
     case 'today':
       return (
-        <Link href="/dashboard/today" className={styles.actionPrimary}>
+        <Link href={startHrefFor(mock)} className={styles.actionPrimary}>
           Start
         </Link>
       );

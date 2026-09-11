@@ -1,0 +1,70 @@
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: linear-gradient(to bottom, #eef4fa, #dbe7f3);
+  border-top: 1px solid #a5bcd4;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tab {
+  padding: 3px 12px;
+  font-size: 12px;
+  color: #23415d;
+  white-space: nowrap;
+  background: linear-gradient(to bottom, #e6eef7, #cfdded);
+  border: 1px solid #a5bcd4;
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #fff;
+  font-weight: 700;
+  color: #217346;
+}
+
+.rename {
+  width: 110px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid #217346;
+}
+
+.add,
+.remove {
+  width: 22px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 1;
+  color: #23415d;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.add:hover,
+.remove:hover:not(:disabled) {
+  border-color: var(--control-hover-border, #e0b64f);
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.remove:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.error {
+  font-size: 11px;
+  color: #a4262c;
+}

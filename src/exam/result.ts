@@ -134,6 +134,20 @@ export const REFERENCE_AVERAGE_TIMES = [28, 32, 45, 30, 28, 30, 52, 28, 32, 28, 
 const QUALIFIED_OUTCOMES: QuestionOutcome[] = [C, C, X, C, C, U, X, C, C, C, C, C, C, X, C];
 
 /** Identity and pass mark of the demo paper. */
+/**
+ * The Excel practical paper's identity.
+ *
+ * Separate from `PAPER` rather than parameterised: the two papers have
+ * different names, lengths and totals, and a single record with fields that
+ * mean different things depending on a flag would be harder to read than two.
+ */
+export const EXCEL_PAPER = {
+  testName: 'Rajasthan Efficiency Test - Excel 01',
+  tagline: 'Your Progress Brings You Closer to Success',
+  maximumMarks: 50,
+  qualifyingMarks: 12.5,
+} as const;
+
 export const PAPER = {
   testName: 'Rajasthan Efficiency Test - 01',
   tagline: 'Your Progress Brings You Closer to Success',
