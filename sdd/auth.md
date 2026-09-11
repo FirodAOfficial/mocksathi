@@ -54,9 +54,10 @@ work — see the backlog at the bottom.
       mockup's sign-in card (screen `1m`): Mocksathi logo, Inter font, `#1c6ef2` accent, rounded
       accent-bordered inputs on focus, same tokens as `PortalShell.module.css` (duplicated in
       `AuthCard.module.css` since these pages render outside `/dashboard`'s layout). Fields are
-      email/password rather than the mockup's phone/OTP, per the auth-method decision above; no
-      "Continue with Google" button, since that isn't wired up. First pass used the editor's
-      Office-blue theme instead — corrected after review.
+      email/password rather than the mockup's phone/OTP, per the auth-method decision above. First
+      pass used the editor's Office-blue theme instead — corrected after review.
+- [x] **Update — "Continue with Google" wired up**, see `sdd/google-signin.md` for the full plan
+      and implementation notes.
 - [x] Dashboard's "Logout" nav item (previously a dead `Link` to `/logout`) now calls
       `POST /api/auth/logout` and redirects to `/login`.
 - [x] **Update — `/login` redesigned as a split screen** (`LoginForm.tsx` restructured;
@@ -119,7 +120,8 @@ work — see the backlog at the bottom.
 ## Backlog (future)
 
 - Phone + OTP sign-in and "Continue with Google", matching mockup screen `1m`, as additional
-  methods alongside email/password rather than a replacement for it.
+  methods alongside email/password rather than a replacement for it. Google sign-in has its own
+  plan now — see `sdd/google-signin.md`.
 - Session listing / "sign out of all devices" (trivial once wanted — it's just `DELETE FROM
   sessions WHERE user_id = ...`).
 - Roles/permissions, once there's more than one kind of account.

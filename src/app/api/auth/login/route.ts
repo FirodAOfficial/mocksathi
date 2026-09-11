@@ -39,6 +39,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user) return invalidCredentials();
 
+  // A Google-only account has no password to check against — a clear,
+  // specific error here rather than `invalidCredentials()`, since this isn't
+  // a wrong guess, it's the wrong method entirely.
+  if (!user.passwordHash) {
+    return NextResponse.json(
+      { code: 'NO_PASSWORD_SET', detail: 'This account signs in with Google. Use "Continue with Google" instead.' },
+      { status: 401 },
+    );
+  }
+
   const passwordOk = await verifyPassword(password, user.passwordHash);
   if (!passwordOk) return invalidCredentials();
 

@@ -4,23 +4,6 @@
  * duplicated here rather than shared because these pages render outside
  * `/dashboard`'s layout.
  */
-.screen {
-  --db-accent: #1c6ef2;
-  --db-bg: #eceff4;
-  --db-surface: #fff;
-  --db-border: #e8edf5;
-  --db-text: #0f172a;
-  --db-text-muted: #64748b;
-  --db-text-faint: #94a3b8;
-
-  min-height: 100vh;
-  background: var(--db-bg);
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  color: var(--db-text);
-}
-
 .card {
   width: min(400px, 100%);
   background: var(--db-surface);
@@ -30,11 +13,29 @@
   padding: 28px;
 }
 
+@media (max-width: 480px) {
+  .card {
+    padding: 22px 18px;
+    border-radius: 12px;
+  }
+}
+
+/*
+ * Shown only where `MarketingPanel` (the left/top branding panel) isn't:
+ * `MarketingPanel.module.css` hides it below 901px, so the card carries the
+ * Mocksathi identity there instead — never both at once, and never neither.
+ */
 .logoRow {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 10px;
   margin-bottom: 26px;
+}
+
+@media (max-width: 900px) {
+  .logoRow {
+    display: flex;
+  }
 }
 
 .logoMark {
@@ -189,4 +190,80 @@
 
 .trustNote b {
   color: var(--db-text);
+}
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 16px 0 0;
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  accent-color: var(--db-accent);
+  cursor: pointer;
+}
+
+.consentText {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--db-text-muted);
+}
+
+.googleButton {
+  /* `.input`/`.primary` get their full width for free — they're flex items
+     inside `.form`, which stretches children by default. This sits outside
+     the form, in plain block flow, so without an explicit width it shrinks
+     to fit its own content instead of spanning the card like everything
+     else — the actual cause of it reading as visually out of place. */
+  width: 100%;
+  box-sizing: border-box;
+  height: 46px;
+  border: 1px solid var(--db-border);
+  border-radius: 10px;
+  background: var(--db-surface);
+  color: var(--db-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.googleButton:hover {
+  background: #f8fafc;
+}
+
+.googleButton:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.googleButton:disabled:hover {
+  background: var(--db-surface);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 11px;
+  color: var(--db-text-faint);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--db-border);
 }

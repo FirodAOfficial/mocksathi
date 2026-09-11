@@ -1,0 +1,14 @@
+.trigger {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--db-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: var(--db-accent);
+}

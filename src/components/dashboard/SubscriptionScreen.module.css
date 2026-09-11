@@ -211,3 +211,25 @@
   color: var(--db-text-muted);
   justify-content: center;
 }
+
+.consentRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.consentCheckbox {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--db-accent);
+  cursor: pointer;
+}
+
+.consentText {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--db-text-muted);
+}

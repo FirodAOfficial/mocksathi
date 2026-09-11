@@ -7,7 +7,13 @@
   --db-text-muted: #64748b;
   --db-text-faint: #94a3b8;
 
-  min-height: 100vh;
+  /* A fixed height, not min-height: `body` sets `overflow: hidden` globally
+     (globals.css, for the editor's own chrome) — this page never had a
+     scroll container of its own because the card was always short enough to
+     fit. Now that it isn't always, `.formSide` below is the one that
+     scrolls; this just has to stop being taller than the viewport itself. */
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   background: #fff;
 }
@@ -15,6 +21,8 @@
 .formSide {
   flex: 1 1 42%;
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,8 +40,19 @@
   }
 }
 
+@media (max-width: 480px) {
+  .formSide {
+    padding: 28px 16px;
+  }
+}
+
 .topTagline {
-  position: absolute;
+  /* `fixed`, not `absolute`: absolute pinned these to `.formSide`'s own
+     content box, which is fine while that box is exactly viewport height,
+     but once the card grows taller than the viewport and `.formSide` starts
+     scrolling, an absolutely-positioned corner marker scrolls (and can
+     overlap) with it instead of staying put — see the scrolling fix above. */
+  position: fixed;
   top: 32px;
   right: 40px;
   font-size: 12.5px;
@@ -41,6 +60,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  pointer-events: none;
 }
 
 .topTagline em {
@@ -57,7 +77,7 @@
 }
 
 .bottomTagline {
-  position: absolute;
+  position: fixed;
   bottom: 28px;
   right: 40px;
   font-size: 12.5px;
@@ -65,6 +85,7 @@
   color: var(--db-text-faint);
   text-align: right;
   line-height: 1.5;
+  pointer-events: none;
 }
 
 @media (max-width: 900px) {

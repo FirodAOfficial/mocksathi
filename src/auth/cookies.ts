@@ -8,6 +8,8 @@ import type { User } from '@/db/schema';
 /** Next.js-specific glue between the session store and the browser cookie. */
 
 export const SESSION_COOKIE_NAME = 'mocksathi_session';
+/** CSRF token for the Google OAuth round trip — short-lived, cleared as soon as the callback reads it. */
+export const GOOGLE_STATE_COOKIE_NAME = 'mocksathi_google_state';
 
 export async function setSessionCookie(session: CreatedSession): Promise<void> {
   const cookieStore = await cookies();
@@ -28,6 +30,26 @@ export async function clearSessionCookie(): Promise<void> {
 export async function readSessionToken(): Promise<string | undefined> {
   const cookieStore = await cookies();
   return cookieStore.get(SESSION_COOKIE_NAME)?.value;
+}
+
+/** Stashes the CSRF `state` before redirecting to Google — 10 minutes is generous for a consent-screen round trip. */
+export async function setGoogleStateCookie(state: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(GOOGLE_STATE_COOKIE_NAME, state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 10 * 60,
+  });
+}
+
+/** Reads and clears the state cookie in one step — it's single-use, so nothing should read it twice. */
+export async function consumeGoogleStateCookie(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get(GOOGLE_STATE_COOKIE_NAME)?.value;
+  cookieStore.delete(GOOGLE_STATE_COOKIE_NAME);
+  return value;
 }
 
 /**
