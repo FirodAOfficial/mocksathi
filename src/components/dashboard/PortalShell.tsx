@@ -51,7 +51,18 @@ export function PortalShell({
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  // React's own documented pattern for "adjusting state when a prop
+  // changes" without an effect — a ref would trip this project's
+  // react-hooks/refs rule (no ref reads/writes during render), so this
+  // tracks the same thing in state instead, which React explicitly permits
+  // to set conditionally mid-render.
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
+    if (mobileNavOpen) setMobileNavOpen(false);
+  }
   const primaryExam = enrollments.find((enrollment) => enrollment.isPrimary) ?? enrollments[0];
   const otherExams = enrollments.filter((enrollment) => enrollment !== primaryExam);
 
@@ -73,6 +84,17 @@ export function PortalShell({
     };
   }, [userMenuOpen]);
 
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMobileNavOpen(false);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileNavOpen]);
+
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -85,9 +107,26 @@ export function PortalShell({
 
   const iconSize = simplifiedMenu ? 20 : 17;
 
+  const sidebarClassName = [
+    styles.sidebar,
+    simplifiedMenu ? styles.sidebarSpacious : '',
+    mobileNavOpen ? styles.sidebarOpen : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div className={styles.shell}>
-      <aside className={simplifiedMenu ? `${styles.sidebar} ${styles.sidebarSpacious}` : styles.sidebar}>
+      {mobileNavOpen && (
+        <button
+          type="button"
+          className={styles.backdrop}
+          aria-label="Close menu"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      <aside className={sidebarClassName}>
         <div className={styles.logoRow}>
           <div className={styles.logoMark}>M</div>
           <div>
@@ -186,10 +225,20 @@ export function PortalShell({
 
       <div className={styles.main}>
         <header className={styles.topbar}>
+          <button
+            type="button"
+            className={styles.menuButton}
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            <DashboardIcon name={mobileNavOpen ? 'x' : 'menu'} size={20} />
+          </button>
+
           <div className={styles.examPicker}>
             {primaryExam ? (
               <div className={styles.examPickerButton}>
-                {primaryExam.examName}
+                <span className={styles.examPickerLabel}>{primaryExam.examName}</span>
                 <DashboardIcon name="chevron-down" size={14} />
               </div>
             ) : (
@@ -212,7 +261,7 @@ export function PortalShell({
           <div className={styles.topbarRight}>
             <div className={styles.streakBadge}>
               <DashboardIcon name="flame" size={16} />
-              {challengeTotalDays} Day Streak
+              <span className={styles.streakLabel}>{challengeTotalDays} Day Streak</span>
             </div>
             <button type="button" className={styles.bellButton} aria-label="Notifications">
               <DashboardIcon name="bell" size={18} />

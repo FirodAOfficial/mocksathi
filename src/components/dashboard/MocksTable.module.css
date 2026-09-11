@@ -34,13 +34,17 @@
 
 .row {
   display: grid;
-  grid-template-columns: 72px 1.5fr 84px 84px 84px 84px 76px 104px;
+  grid-template-columns: 72px minmax(160px, 1.5fr) 84px 84px 84px 84px 76px 104px;
   align-items: center;
   font-size: 12.5px;
   color: #334155;
   padding: 11px 0;
   border-bottom: 1px solid #f8fafc;
   gap: 8px;
+  /* A guaranteed minimum, not left to `1.5fr`'s size resolving unpredictably
+     once the row is wider than the viewport — `.table`'s `overflow-x: auto`
+     below is what actually makes a table this wide workable on a phone. */
+  min-width: 720px;
 }
 
 .row:last-child {

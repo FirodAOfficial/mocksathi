@@ -18,6 +18,15 @@
   background: #fff;
 }
 
+@media (max-width: 900px) {
+  .split {
+    /* `MarketingPanel` is hidden below 901px, so without this the whole
+       screen goes plain white and loses the brand feel it otherwise carries
+       on desktop — same gradient as `MarketingPanel.module.css`'s `.panel`. */
+    background: linear-gradient(155deg, #0b1638 0%, #0f1e46 55%, #142a5c 100%);
+  }
+}
+
 .formSide {
   flex: 1 1 42%;
   min-width: 0;
@@ -26,7 +35,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 20px;
   padding: 44px 32px;
   position: relative;
