@@ -84,7 +84,15 @@ export function snapshotWorkbook(workbook: Workbook): WorkbookSnapshot {
   return { sheets };
 }
 
-function snapshotSheet(sheet: Worksheet, workbook: Workbook): SheetSnapshot {
+/**
+ * One sheet as data.
+ *
+ * Exported because structural edits — inserting a row, sorting a range — are
+ * written as pure transforms over this shape and then rebuilt with
+ * `sheetFromSnapshot`. Rewriting `Worksheet`'s private row index, merge table
+ * and bounds cache in place would be four chances to get it wrong.
+ */
+export function snapshotSheet(sheet: Worksheet, workbook: Workbook): SheetSnapshot {
   const cells: CellSnapshot[] = [];
 
   for (const [address, cell] of sheet.entries()) {
@@ -128,33 +136,37 @@ function snapshotSheet(sheet: Worksheet, workbook: Workbook): SheetSnapshot {
  * snapshot that does not round-trip is a failure the tests can see rather than
  * a discrepancy between what was marked and what was shown.
  */
+/** Rebuilds one sheet, interning its styles into the given workbook. */
+export function sheetFromSnapshot(id: string, snapshot: SheetSnapshot, workbook: Workbook): Worksheet {
+  const sheet = new Worksheet(id, snapshot.name);
+
+  for (const cell of snapshot.cells) {
+    const styleId = cell.style ? workbook.styles.intern(cell.style) : DEFAULT_STYLE_ID;
+    const restored: Cell = {
+      value: cell.value,
+      ...(cell.formula === undefined ? {} : { formula: cell.formula }),
+      styleId,
+    };
+    sheet.setCell(cell.row, cell.col, restored);
+  }
+
+  for (const [row, props] of snapshot.rows) sheet.setRowProps(row, { ...props });
+  for (const [col, props] of snapshot.columns) sheet.setColumnProps(col, { ...props });
+  for (const merge of snapshot.merges) sheet.mergeCells(merge);
+  sheet.freeze(snapshot.frozen.rows, snapshot.frozen.columns);
+  sheet.view = { ...DEFAULT_SHEET_VIEW, ...snapshot.view };
+  sheet.printArea = snapshot.printArea
+    ? { start: { ...snapshot.printArea.start }, end: { ...snapshot.printArea.end } }
+    : null;
+
+  return sheet;
+}
+
 export function workbookFromSnapshot(snapshot: WorkbookSnapshot): Workbook {
   const workbook = new Workbook();
 
   snapshot.sheets.forEach((sheetSnapshot, index) => {
-    const sheet = new Worksheet(`sheet${index + 1}`, sheetSnapshot.name);
-
-    for (const cell of sheetSnapshot.cells) {
-      const styleId = cell.style ? workbook.styles.intern(cell.style) : DEFAULT_STYLE_ID;
-      const restored: Cell = {
-        value: cell.value,
-        ...(cell.formula === undefined ? {} : { formula: cell.formula }),
-        styleId,
-      };
-      sheet.setCell(cell.row, cell.col, restored);
-    }
-
-    for (const [row, props] of sheetSnapshot.rows) sheet.setRowProps(row, { ...props });
-    for (const [col, props] of sheetSnapshot.columns) sheet.setColumnProps(col, { ...props });
-    for (const merge of sheetSnapshot.merges) sheet.mergeCells(merge);
-    sheet.freeze(sheetSnapshot.frozen.rows, sheetSnapshot.frozen.columns);
-    // Older snapshots predate these; the defaults are what they meant.
-    sheet.view = { ...DEFAULT_SHEET_VIEW, ...sheetSnapshot.view };
-    sheet.printArea = sheetSnapshot.printArea
-      ? { start: { ...sheetSnapshot.printArea.start }, end: { ...sheetSnapshot.printArea.end } }
-      : null;
-
-    workbook.addSheet(sheet);
+    workbook.addSheet(sheetFromSnapshot(`sheet${index + 1}`, sheetSnapshot, workbook));
   });
 
   if (workbook.sheetCount === 0) workbook.addSheet(new Worksheet('sheet1', 'Sheet1'));
