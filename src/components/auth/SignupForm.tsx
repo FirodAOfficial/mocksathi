@@ -7,6 +7,8 @@ import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
+import { GoogleButton } from './GoogleButton';
+import { googleErrorMessage } from './googleErrorMessage';
 import { LegalLinks } from './LegalLinks';
 import styles from './LoginScreen.module.css';
 import { MarketingPanel } from './MarketingPanel';
@@ -20,15 +22,17 @@ export interface SignupExamOption {
 export interface SignupFormProps {
   /** Published exams to choose from — the field is hidden entirely when none exist yet. */
   exams: SignupExamOption[];
+  /** The `?error=` query param from a failed `/api/auth/google/callback` redirect, if any. */
+  googleError?: string;
 }
 
-export function SignupForm({ exams }: SignupFormProps) {
+export function SignupForm({ exams, googleError }: SignupFormProps) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [examId, setExamId] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
   const [submitting, setSubmitting] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
@@ -159,6 +163,9 @@ export function SignupForm({ exams }: SignupFormProps) {
               {submitting ? 'Creating account…' : 'Create account'}
             </button>
           </form>
+
+          <div className={cardStyles.divider}>or sign up with</div>
+          <GoogleButton disabled={!agreed} />
 
           <p className={cardStyles.footer}>
             Already have an account? <Link href="/login">Sign in</Link>

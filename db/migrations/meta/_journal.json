@@ -43,6 +43,13 @@
       "when": 1788917811780,
       "tag": "0005_harsh_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789091945483,
+      "tag": "0006_sour_jack_flag",
+      "breakpoints": true
     }
   ]
 }

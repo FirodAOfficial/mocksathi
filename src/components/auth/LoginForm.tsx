@@ -6,14 +6,21 @@ import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
+import { GoogleButton } from './GoogleButton';
+import { googleErrorMessage } from './googleErrorMessage';
 import styles from './LoginScreen.module.css';
 import { MarketingPanel } from './MarketingPanel';
 
-export function LoginForm() {
+export interface LoginFormProps {
+  /** The `?error=` query param from a failed `/api/auth/google/callback` redirect, if any. */
+  googleError?: string;
+}
+
+export function LoginForm({ googleError }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
@@ -103,6 +110,9 @@ export function LoginForm() {
               {submitting ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+
+          <div className={cardStyles.divider}>or</div>
+          <GoogleButton />
 
           <p className={cardStyles.footer}>
             Don&apos;t have an account? <Link href="/signup">Create one</Link>

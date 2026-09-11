@@ -15,8 +15,15 @@ export const userRoleEnum = pgEnum('user_role', USER_ROLES);
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text('email').notNull().unique(),
-  /** Node `crypto.scrypt`, encoded as `scrypt:N:r:p:<salt>:<hash>` — see `src/auth/password.ts`. */
-  passwordHash: text('password_hash').notNull(),
+  /**
+   * Node `crypto.scrypt`, encoded as `scrypt:N:r:p:<salt>:<hash>` — see
+   * `src/auth/password.ts`. Null for a Google-only account (`googleId` set
+   * instead) — `POST /api/auth/login` checks for that and gives a clear
+   * "sign in with Google" error rather than calling `verifyPassword` on it.
+   */
+  passwordHash: text('password_hash'),
+  /** Google's stable `sub` claim (`src/auth/google.ts`) — the join key on repeat Google sign-ins, not email. */
+  googleId: text('google_id').unique(),
   name: text('name').notNull(),
   /** `admin` can manage exams (`/dashboard/admin/*`); `support` is reserved, not enforced anywhere yet. */
   role: userRoleEnum('role').notNull().default('student'),

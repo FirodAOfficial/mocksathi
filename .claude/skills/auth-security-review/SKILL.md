@@ -72,6 +72,8 @@ all ones a signed-out visitor genuinely needs to hit:
 | `POST /api/auth/logout` | Must work even for a stale/expired cookie | Only ever deletes the session named by the caller's *own* cookie |
 | `GET /api/auth/me` | Client needs to check its own login state | Returns only the caller's own identity (or `null`), never anyone else's |
 | `GET /api/exams` | Signup's exam picker runs before there's a session | Minimal fields, published exams only — see point 7 |
+| `GET /api/auth/google` | Has to be — it's how the Google OAuth round trip starts, before there's a session | Only sets a short-lived CSRF `state` cookie and redirects to Google; touches no database table |
+| `GET /api/auth/google/callback` | Has to be — Google redirects here with no session established yet | `state` checked against the cookie set by the request above (CSRF); the account it finds/creates is looked up by Google's own verified `sub`/email, never anything client-supplied (`sdd/google-signin.md`) |
 
 `POST /api/attempts/submit` and `GET /api/document` are no longer on this list — now that the pages
 that call them (`/exam`, `/editor`) require a session, the routes were gated the same way
