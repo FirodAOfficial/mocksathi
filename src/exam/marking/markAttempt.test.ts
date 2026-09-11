@@ -10,7 +10,7 @@ import {
   setLineSpacing,
   setTextColor,
 } from '@/editor/ribbonActions';
-import { findQuestion, type Language } from '@/exam/types';
+import { findQuestion, isWordQuestion, type Language, type WordQuestion } from '@/exam/types';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import {
   PAPER,
@@ -20,7 +20,7 @@ import {
   REFERENCE_TOPPER_TIMES,
 } from '@/exam/result';
 import { QUESTION_BANK, rubricFor } from '@/server/marking/questionBank';
-import { evaluateCriterion } from './evaluate';
+import { WORD_MARKER } from './wordMarker';
 import { markAttempt, markQuestion, validateQuestionBank } from './markAttempt';
 
 /**
@@ -37,9 +37,21 @@ afterEach(() => {
   while (editors.length) editors.pop()?.destroy();
 });
 
-function open(number: number, language: Language = 'en'): Editor {
+/**
+ * The Word question with this number.
+ *
+ * `ExamQuestion` is a union now that Excel papers exist, so the passage is only
+ * reachable after narrowing. Throwing here means a paper that acquired the
+ * wrong kind of question fails loudly rather than marking everyone wrong.
+ */
+function wordQuestion(number: number): WordQuestion {
   const question = findQuestion(SEED_ATTEMPT, number);
-  if (!question) throw new Error(`no question ${number}`);
+  if (!question || !isWordQuestion(question)) throw new Error(`no Word question ${number}`);
+  return question;
+}
+
+function open(number: number, language: Language = 'en'): Editor {
+  const question = wordQuestion(number);
 
   const element = document.createElement('div');
   document.body.appendChild(element);
@@ -80,7 +92,7 @@ describe('the paper is well formed', () => {
     // jsdom cannot lay text out, so this cannot check the wrap itself. It does
     // check the half that a reworded passage would break: that the offsets
     // still land on whole words, which a shifted passage would not.
-    const question = findQuestion(SEED_ATTEMPT, 8)!;
+    const question = wordQuestion(8);
     const text = (question.passage.en.content?.[0]?.content?.[0]?.text ?? '') as string;
 
     expect(text.slice(LINE_TWO.from, LINE_TWO.to)).toBe(
@@ -288,7 +300,7 @@ describe('marking real ribbon output', () => {
 
   it('treats an untouched question as unattempted, not wrong', () => {
     const question = findQuestion(SEED_ATTEMPT, 1)!;
-    expect(markQuestion(question, rubricFor(1), undefined, evaluateCriterion, 'en').outcome).toBe(
+    expect(markQuestion(question, rubricFor(1), undefined, WORD_MARKER, 'en').outcome).toBe(
       'unattempted',
     );
   });
@@ -296,7 +308,7 @@ describe('marking real ribbon output', () => {
 
 function mark(number: number, editor: Editor, language: Language = 'en') {
   const question = findQuestion(SEED_ATTEMPT, number)!;
-  return markQuestion(question, rubricFor(number), editor.getJSON(), evaluateCriterion, language);
+  return markQuestion(question, rubricFor(number), editor.getJSON(), WORD_MARKER, language);
 }
 
 /**
@@ -339,7 +351,7 @@ describe('markAttempt', () => {
       QUESTION_BANK,
       { answers: {}, totalTimeSeconds: 0, language: 'en' },
       reference,
-      evaluateCriterion,
+      WORD_MARKER,
       paper,
     );
 
@@ -356,7 +368,7 @@ describe('markAttempt', () => {
       QUESTION_BANK,
       { answers: { 2: editor.getJSON() }, timePerQuestion: { 2: 42 }, totalTimeSeconds: 90, language: 'en' },
       reference,
-      evaluateCriterion,
+      WORD_MARKER,
       paper,
     );
 

@@ -2,7 +2,7 @@ import { Editor } from '@tiptap/core';
 import { NextRequest } from 'next/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildEditorExtensions } from '@/editor/extensions';
-import { findQuestion } from '@/exam/types';
+import { findQuestion, isWordQuestion } from '@/exam/types';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import type { ExamResult } from '@/exam/result';
 import { POST } from './route';
@@ -16,6 +16,7 @@ afterEach(() => {
 /** Answers question 1 correctly, through the same commands the ribbon uses. */
 function correctAnswerToQuestionOne() {
   const question = findQuestion(SEED_ATTEMPT, 1)!;
+  if (!isWordQuestion(question)) throw new Error('Question 1 should be a Word question.');
   const element = document.createElement('div');
   document.body.appendChild(element);
   const editor = new Editor({ element, extensions: buildEditorExtensions(), content: question.passage.en });

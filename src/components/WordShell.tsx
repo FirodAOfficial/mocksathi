@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrawerLayout } from '@/hooks/useMediaQuery';
 import { useClipboard } from '@/editor/useClipboard';
 import { useDocumentEditor } from '@/editor/useDocumentEditor';
@@ -21,6 +21,7 @@ import { WordCountDialog } from './dialogs/WordCountDialog';
 import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
 import { QuestionListPanel } from './exam/QuestionListPanel';
+import { ExamDrawerBar, ExamPanel, type DrawerSide } from './exam/ExamPanels';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
 import { ResultView } from './result/ResultView';
@@ -87,7 +88,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
    * only one is open at a time.
    */
   const isMobile = useDrawerLayout();
-  const [drawer, setDrawer] = useState<'questions' | 'summary' | null>(null);
+  const [drawer, setDrawer] = useState<DrawerSide | null>(null);
   const [pages, setPages] = useState(1);
   /**
    * Which document's notice was dismissed, rather than a plain boolean: a newly
@@ -176,6 +177,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         const marked = await submitAttempt(
           {
             answers,
+            subject: 'word',
             language,
             timePerQuestion,
             totalTimeSeconds: elapsedSeconds(startedAt),
@@ -264,9 +266,9 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
       */}
       <div className={styles.workspace}>
         {exam && !focusMode ? (
-          <Panel side="left" open={openDrawer === 'questions'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+          <ExamPanel side="left" open={openDrawer === 'questions'} isMobile={isMobile} onClose={() => setDrawer(null)}>
             <QuestionListPanel />
-          </Panel>
+          </ExamPanel>
         ) : null}
 
         <main className={styles.main}>
@@ -279,12 +281,12 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         </main>
 
         {exam && !focusMode ? (
-          <Panel side="right" open={openDrawer === 'summary'} isMobile={isMobile} onClose={() => setDrawer(null)}>
+          <ExamPanel side="right" open={openDrawer === 'summary'} isMobile={isMobile} onClose={() => setDrawer(null)}>
             <ExamSummaryPanel
               onClearAnswer={questionAnswers.clearCurrent}
               onSaveAnswer={questionAnswers.saveCurrent}
             />
-          </Panel>
+          </ExamPanel>
         ) : null}
       </div>
 
@@ -294,24 +296,10 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         panels are already on the page and a button to open them would be a lie.
       */}
       {exam && !focusMode && isMobile ? (
-        <nav className={styles.drawerBar} aria-label="Exam panels">
-          <button
-            type="button"
-            className={styles.drawerTab}
-            aria-expanded={openDrawer === 'questions'}
-            onClick={() => setDrawer((open) => (open === 'questions' ? null : 'questions'))}
-          >
-            Questions
-          </button>
-          <button
-            type="button"
-            className={styles.drawerTab}
-            aria-expanded={openDrawer === 'summary'}
-            onClick={() => setDrawer((open) => (open === 'summary' ? null : 'summary'))}
-          >
-            Progress &amp; Submit
-          </button>
-        </nav>
+        <ExamDrawerBar
+          open={openDrawer}
+          onToggle={(side) => setDrawer((current) => (current === side ? null : side))}
+        />
       ) : null}
 
       <StatusBar pages={pages} words={format.words} readOnly={readOnly || locked} />
@@ -331,106 +319,6 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
         />
       ) : null}
     </div>
-  );
-}
-
-/**
- * A side panel: a column on a wide screen, a drawer on a narrow one.
- *
- * On mobile the panel is only mounted while it is open. That is deliberate
- * rather than hiding it with CSS: a closed drawer left in the DOM keeps its
- * buttons in the tab order and its headings in the screen-reader outline, so a
- * keyboard user would tab into a panel nobody can see.
- */
-function Panel({
-  side,
-  open,
-  isMobile,
-  onClose,
-  children,
-}: {
-  side: 'left' | 'right';
-  open: boolean;
-  isMobile: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  const drawerRef = useRef<HTMLDivElement>(null);
-
-  /*
-   * Escape closes it, and focus goes in and comes back out.
-   *
-   * The focus half is not a nicety. `aria-modal="true"` tells assistive
-   * technology the rest of the page is not there; leaving focus on the button
-   * behind the drawer would strand a screen-reader or keyboard user on an
-   * element their software has just been told to ignore. Tab is kept inside
-   * for the same reason, and the trigger gets focus back on close so the way
-   * out lands where the way in started.
-   */
-  useEffect(() => {
-    if (!isMobile || !open) return;
-
-    const drawer = drawerRef.current;
-    const returnTo = document.activeElement as HTMLElement | null;
-
-    const focusable = (): HTMLElement[] =>
-      [
-        ...(drawer?.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ) ?? []),
-      ].filter((element) => element.offsetParent !== null);
-
-    focusable()[0]?.focus();
-
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        onClose();
-        return;
-      }
-
-      if (event.key !== 'Tab') return;
-
-      const items = focusable();
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (!first || !last) return;
-
-      // Wrap at both ends rather than letting Tab walk out into the page.
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      returnTo?.focus();
-    };
-  }, [isMobile, open, onClose]);
-
-  if (!isMobile) return <div className={styles.column}>{children}</div>;
-  if (!open) return null;
-
-  return (
-    <>
-      <div className={styles.scrim} onClick={onClose} aria-hidden="true" />
-      <div
-        ref={drawerRef}
-        className={`${styles.drawer} ${side === 'left' ? styles.drawerLeft : styles.drawerRight}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={side === 'left' ? 'Questions' : 'Progress and submit'}
-      >
-        <button type="button" className={styles.drawerClose} onClick={onClose}>
-          Close
-        </button>
-        <div className={styles.drawerBody}>{children}</div>
-      </div>
-    </>
   );
 }
 

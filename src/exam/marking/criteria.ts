@@ -83,10 +83,17 @@ export type Criterion = { label: string } & (
   | { kind: 'unchanged'; except: Exemption[] }
 );
 
-/** The answer key for one question. Never sent to the browser. */
-export interface QuestionRubric {
+/**
+ * The answer key for one question. Never sent to the browser.
+ *
+ * Generic in its criterion type so an Excel paper's rubrics are the same shape
+ * as a Word paper's — `validateQuestionBank` and the marking loop then work for
+ * both without knowing what a criterion is. The default keeps every existing
+ * Word rubric written as `QuestionRubric`.
+ */
+export interface QuestionRubric<C = Criterion> {
   number: number;
-  criteria: Criterion[];
+  criteria: C[];
 }
 
 export interface CriterionResult {

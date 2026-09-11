@@ -1,9 +1,14 @@
 'use client';
 
 import { create } from 'zustand';
-import type { AnswerDocument } from '@/editor/answerDocument';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
-import { allQuestions, type AnsweredSet, type ExamAttempt, type Language } from '@/exam/types';
+import {
+  allQuestions,
+  type AnswerPayload,
+  type AnsweredSet,
+  type ExamAttempt,
+  type Language,
+} from '@/exam/types';
 
 /**
  * Exam state: which question is open, what has been typed for each, and whether
@@ -30,7 +35,7 @@ interface ExamState {
    * Only questions edited away from their starting document appear here, which
    * is what makes "attempted" derivable rather than something to keep in sync.
    */
-  answers: Record<number, AnswerDocument>;
+  answers: Record<number, AnswerPayload>;
 
   submittedBy: SubmissionReason | null;
   /**
@@ -59,7 +64,14 @@ interface ExamState {
   selectQuestion: (number: number) => void;
   stepQuestion: (direction: 1 | -1) => void;
 
-  saveAnswer: (number: number, document: AnswerDocument) => void;
+  /**
+   * Stores what the candidate produced for one question.
+   *
+   * The payload is opaque here: a Word answer is a document, an Excel answer is
+   * a workbook, and nothing in this store inspects either. That is what lets
+   * one store, one palette and one timer serve both papers.
+   */
+  saveAnswer: (number: number, answer: AnswerPayload) => void;
   /** Drops the stored edit, returning the question to its starting document. */
   clearAnswer: (number: number) => void;
 
@@ -144,8 +156,8 @@ export const useExamStore = create<ExamState>((set, get) => ({
     }
   },
 
-  saveAnswer: (number, document) =>
-    set((state) => ({ answers: { ...state.answers, [number]: document } })),
+  saveAnswer: (number, answer) =>
+    set((state) => ({ answers: { ...state.answers, [number]: answer } })),
 
   clearAnswer: (number) =>
     set((state) => {
