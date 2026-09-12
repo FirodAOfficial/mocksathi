@@ -83,6 +83,8 @@ export interface GoogleUserInfo {
   email: string;
   email_verified: boolean;
   name: string;
+  /** A URL to the account's Google profile photo — absent for some accounts, never assumed present. */
+  picture?: string;
 }
 
 /** The signed-in Google account's identity — verified by Google itself, not by us parsing a token. */

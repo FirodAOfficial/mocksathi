@@ -275,7 +275,12 @@ export function PortalShell({
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
               >
-                <div className={styles.avatar}>{candidate.initials}</div>
+                {candidate.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage URL, not one `next/image` can optimize meaningfully.
+                  <img src={candidate.avatarUrl} alt="" className={styles.avatarImage} />
+                ) : (
+                  <div className={styles.avatar}>{candidate.initials}</div>
+                )}
                 <div className={styles.userText}>
                   <div className={styles.userName}>{candidate.name}</div>
                   <div className={styles.userRole}>{candidate.role}</div>

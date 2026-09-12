@@ -138,3 +138,15 @@ nav item: `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logou
 `GET /api/auth/me`. Sessions are DB-backed (a row per session, in `sessions`) rather than
 stateless JWTs, so logout is an actual delete, not just a client-side cookie clear. Passwords are
 hashed with Node's built-in `crypto.scrypt` — no extra dependency, no native module to compile.
+
+"Continue with Google" (`GET /api/auth/google`, `sdd/google-signin.md`) needs `GOOGLE_CLIENT_ID`/
+`GOOGLE_CLIENT_SECRET` in `.env`, from a Google Cloud Console OAuth Client ID with both
+`http://localhost:3000/api/auth/google/callback` and the production equivalent registered as
+Authorized redirect URIs.
+
+Profile photos (`POST /api/profile/avatar`, uploaded or captured from Google's account picture)
+live in Supabase Storage, not the database — `SUPABASE_SERVICE_ROLE_KEY` in `.env`
+(`src/utils/supabase/admin.ts`) plus a public `avatars` bucket created once in the Supabase
+dashboard (Storage -> New bucket -> "avatars", Public bucket: on). That key bypasses row-level
+security entirely, since this app's own sessions have nothing to do with Supabase Auth for
+`auth.uid()`-based policies to check — it must stay server-only, never `NEXT_PUBLIC_`.

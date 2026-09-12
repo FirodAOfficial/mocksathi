@@ -52,6 +52,14 @@ against it, and re-run the audit procedure below when asked to review or harden 
    that should vanish with the account (`sessions`, `enrollments`). `set null` for an audit-trail
    reference that should survive the user being deleted (`exams.createdBy`). Don't leave it
    unspecified.
+10. **A `service_role`/admin key for an external service (Supabase Storage, etc.) is a bypass, not a
+    credential the request carries.** `src/utils/supabase/admin.ts` uses one specifically because
+    this app's own sessions have nothing to do with Supabase Auth, so there's no `auth.uid()` for
+    Storage's usual RLS policies to check — the key bypasses that entirely. That's only safe because
+    the route calling it (`POST /api/profile/avatar`) already ran `requireUser()` first and only
+    ever acts on `user.id`, never an id taken from the request. Never let such a key reach a client
+    component, never give it a `NEXT_PUBLIC_` prefix, and never call the admin client from a route
+    that skipped its own `requireUser()`/`requireAdmin()` check.
 
 ### Deliberately public routes — the exceptions, and why each is safe
 

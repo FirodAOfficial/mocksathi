@@ -25,6 +25,14 @@ export const users = pgTable('users', {
   /** Google's stable `sub` claim (`src/auth/google.ts`) — the join key on repeat Google sign-ins, not email. */
   googleId: text('google_id').unique(),
   name: text('name').notNull(),
+  /**
+   * A public URL — either Google's own photo (`GoogleUserInfo.picture`,
+   * captured once and never overwritten by a later Google sign-in, so it
+   * can't clobber a photo the user uploaded themselves afterward) or one
+   * uploaded via `POST /api/profile/avatar` (Supabase Storage, `src/utils/
+   * supabase/admin.ts`). Null shows initials instead (`initialsFor`).
+   */
+  avatarUrl: text('avatar_url'),
   /** `admin` can manage exams (`/dashboard/admin/*`); `support` is reserved, not enforced anywhere yet. */
   role: userRoleEnum('role').notNull().default('student'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -16,6 +16,8 @@ export interface CandidateProfile {
   /** Shown in the avatar circle when there is no photo. */
   initials: string;
   role: string;
+  /** A Google photo or an upload (`POST /api/profile/avatar`) — null shows `initials` instead. */
+  avatarUrl: string | null;
 }
 
 export interface ExamEnrollment {

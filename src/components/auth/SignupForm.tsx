@@ -8,6 +8,7 @@ import { SiteFooter } from '@/components/site/SiteFooter';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
+import { highlightConsent } from './consentHighlight';
 import { GoogleButton } from './GoogleButton';
 import { googleErrorMessage } from './googleErrorMessage';
 import { LegalLinks } from './LegalLinks';
@@ -41,6 +42,16 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+
+    // The submit button is never a real `disabled` element while unchecked
+    // (see `GoogleButton`/`consentHighlight.ts` for why) — so it still fires
+    // this handler, which is what makes the nudge possible in the first
+    // place. Checked here rather than in the button's own `disabled` prop.
+    if (!agreed) {
+      highlightConsent();
+      return;
+    }
+
     setError(null);
     setStatus('submitting');
 
@@ -171,7 +182,11 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
 
               <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
 
-              <button type="submit" className={cardStyles.primary} disabled={status !== 'idle' || !agreed}>
+              <button
+                type="submit"
+                className={!agreed ? `${cardStyles.primary} ${cardStyles.primaryBlocked}` : cardStyles.primary}
+                disabled={status !== 'idle'}
+              >
                 {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Creating account…' : 'Create account'}
               </button>
             </form>

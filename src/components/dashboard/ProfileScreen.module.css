@@ -51,19 +51,6 @@
   margin-bottom: 4px;
 }
 
-.avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--db-accent-soft, #e8effe);
-  color: var(--db-accent);
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  font-weight: 700;
-  flex: none;
-}
-
 .name {
   font-size: 15px;
   font-weight: 700;

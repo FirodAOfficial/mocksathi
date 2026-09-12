@@ -56,6 +56,11 @@ implementing, same convention as `sdd/dashboard.md`/`sdd/auth.md` started with.
       `googleId` (unique, nullable) added to `users`. One unambiguous migration — `drizzle-kit
       generate` didn't need disambiguating here, unlike the `enrollments`/`subscriptions` rename in
       `sdd/subscriptions.md`.
+- [x] **Update — `users.avatarUrl`** (`db/migrations/0007_gray_whizzer.sql`): captures Google's
+      `picture` field on account creation, and on linking an existing email/password account *only
+      if it has no photo yet* — a later Google sign-in never overwrites a photo the user uploaded
+      themselves via `POST /api/profile/avatar` (`src/utils/supabase/admin.ts`, Supabase Storage).
+      Same field either way; the profile page and the topbar both just render whatever's there.
 - [x] **`src/auth/google.ts`** (`server-only`): `googleAuthorizationUrl`, `googleRedirectUri`,
       `exchangeGoogleCode`, `fetchGoogleUserInfo` — the OAuth mechanics, no Next.js- or DB-specific
       code, mirroring how `src/auth/session.ts` stays framework-free.

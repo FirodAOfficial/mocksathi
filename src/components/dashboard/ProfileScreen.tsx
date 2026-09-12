@@ -1,6 +1,7 @@
 import { LegalNavLink } from '@/components/legal/LegalNavLink';
 import type { ChallengePlan } from '@/dashboard/types';
 import { challengeProgressPct } from '@/dashboard/seedDashboard';
+import { AvatarUpload } from './AvatarUpload';
 import { ExamEnrollmentsCard, type RegisteredExam, type SelectableExam } from './ExamEnrollmentsCard';
 import styles from './ProfileScreen.module.css';
 
@@ -16,6 +17,7 @@ export interface ProfileScreenProps {
   email: string;
   initials: string;
   role: string;
+  avatarUrl: string | null;
   memberSinceLabel: string;
   enrollments: RegisteredExam[];
   availableExams: SelectableExam[];
@@ -34,6 +36,7 @@ export function ProfileScreen({
   email,
   initials,
   role,
+  avatarUrl,
   memberSinceLabel,
   enrollments,
   availableExams,
@@ -52,7 +55,7 @@ export function ProfileScreen({
         <div className={styles.card}>
           <p className={styles.cardTitle}>Account</p>
           <div className={styles.identity}>
-            <div className={styles.avatar}>{initials}</div>
+            <AvatarUpload initials={initials} avatarUrl={avatarUrl} />
             <div>
               <p className={styles.name}>{name}</p>
               <p className={styles.role}>{role}</p>
