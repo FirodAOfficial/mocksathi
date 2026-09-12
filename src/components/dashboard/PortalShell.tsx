@@ -63,6 +63,19 @@ export function PortalShell({
     setLastPathname(pathname);
     if (mobileNavOpen) setMobileNavOpen(false);
   }
+
+  // A Google-hosted photo (`candidate.avatarUrl`) is a URL this app doesn't
+  // control — if it 404s (Google changes its scheme, the link expires,
+  // whatever), the browser fires `onError` rather than rendering a blank
+  // image, and this falls back to the initials circle instead of nothing.
+  // Same render-time-reset pattern as `lastPathname` above, so a real photo
+  // change (uploading a new one) clears a stale broken-flag from the old one.
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const [lastAvatarUrl, setLastAvatarUrl] = useState(candidate.avatarUrl);
+  if (candidate.avatarUrl !== lastAvatarUrl) {
+    setLastAvatarUrl(candidate.avatarUrl);
+    if (avatarBroken) setAvatarBroken(false);
+  }
   const primaryExam = enrollments.find((enrollment) => enrollment.isPrimary) ?? enrollments[0];
   const otherExams = enrollments.filter((enrollment) => enrollment !== primaryExam);
 
@@ -275,9 +288,14 @@ export function PortalShell({
                 aria-haspopup="menu"
                 aria-expanded={userMenuOpen}
               >
-                {candidate.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage URL, not one `next/image` can optimize meaningfully.
-                  <img src={candidate.avatarUrl} alt="" className={styles.avatarImage} />
+                {candidate.avatarUrl && !avatarBroken ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage/Google URL, not one `next/image` can optimize meaningfully.
+                  <img
+                    src={candidate.avatarUrl}
+                    alt=""
+                    className={styles.avatarImage}
+                    onError={() => setAvatarBroken(true)}
+                  />
                 ) : (
                   <div className={styles.avatar}>{candidate.initials}</div>
                 )}

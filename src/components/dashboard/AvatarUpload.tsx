@@ -29,6 +29,7 @@ export function AvatarUpload({ initials, avatarUrl }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarBroken, setAvatarBroken] = useState(false);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -83,12 +84,23 @@ export function AvatarUpload({ initials, avatarUrl }: AvatarUploadProps) {
 
   const shown = preview ?? avatarUrl;
 
+  // Same reasoning as `PortalShell`'s topbar avatar: `avatarUrl` can be a
+  // Google-hosted URL this app doesn't control. Tracked against `shown`
+  // itself (not just `avatarUrl`) so a fresh local preview — created from a
+  // `File` the browser already loaded, essentially never broken — also
+  // clears any stale broken-flag left over from the photo it's replacing.
+  const [lastShown, setLastShown] = useState(shown);
+  if (shown !== lastShown) {
+    setLastShown(shown);
+    if (avatarBroken) setAvatarBroken(false);
+  }
+
   return (
     <div className={styles.wrap}>
       <div className={styles.avatarButton}>
-        {shown ? (
-          // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage URL, not one `next/image` can optimize meaningfully.
-          <img src={shown} alt="" className={styles.avatarImage} />
+        {shown && !avatarBroken ? (
+          // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage/Google URL, not one `next/image` can optimize meaningfully.
+          <img src={shown} alt="" className={styles.avatarImage} onError={() => setAvatarBroken(true)} />
         ) : (
           <div className={styles.avatarInitials}>{initials}</div>
         )}
