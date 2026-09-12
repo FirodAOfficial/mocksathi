@@ -1,4 +1,4 @@
-import { requireUser } from '@/auth/cookies';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { EXCEL_PAPER, PAPER } from '@/exam/result';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
@@ -36,7 +36,7 @@ export default async function ExamInstructionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  await requireVerifiedUser();
   const params = await searchParams;
   const raw = Array.isArray(params.lang) ? params.lang[0] : params.lang;
   const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;

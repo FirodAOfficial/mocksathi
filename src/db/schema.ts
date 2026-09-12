@@ -1,4 +1,4 @@
-import { boolean, date, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Database schema, source of truth for the migrations in `db/migrations/`.
@@ -33,6 +33,19 @@ export const users = pgTable('users', {
    * supabase/admin.ts`). Null shows initials instead (`initialsFor`).
    */
   avatarUrl: text('avatar_url'),
+  /**
+   * When the address was proved to belong to whoever holds the account.
+   *
+   * Null means unverified, and `requireVerifiedUser` sends those accounts to
+   * `/verify-email` instead of the dashboard. Set by entering the emailed code
+   * (`src/auth/emailVerification.ts`), or immediately on a Google sign-in —
+   * Google has already verified the address and the callback refuses the
+   * sign-in when it has not, so asking for a code there would be theatre.
+   *
+   * A timestamp rather than a boolean: "when" answers support questions that
+   * "whether" cannot, and it costs the same column.
+   */
+  emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   /** `admin` can manage exams (`/dashboard/admin/*`); `support` is reserved, not enforced anywhere yet. */
   role: userRoleEnum('role').notNull().default('student'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -58,6 +71,62 @@ export const sessions = pgTable('sessions', {
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+
+/**
+ * Emailed verification codes.
+ *
+ * One row per request, kept after use rather than deleted: the rows inside the
+ * last fifteen minutes are what the rate limit and the resend cooldown are
+ * counted from (`src/auth/otpPolicy.ts`), so deleting a used code would hand
+ * back an allowance the moment it was spent.
+ */
+export const emailVerificationCodes = pgTable(
+  'email_verification_codes',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * scrypt hash of the six digits, never the digits — the same
+     * `src/auth/password.ts` encoding a password uses.
+     *
+     * A plain SHA-256 would be pointless here: six digits is a million
+     * candidates, so a leaked digest is reversed in milliseconds. scrypt's work
+     * factor is what makes the stored value worth nothing on its own, and at
+     * one verification per attempt its cost is irrelevant.
+     */
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    /** Wrong guesses so far. The fifth consumes the row. */
+    attempts: integer('attempts').notNull().default(0),
+    /**
+     * Set when the code is used, when a newer code supersedes it, and when
+     * Resend refuses to send it.
+     *
+     * That last case is why a failed send leaves no usable code behind while
+     * still counting against the rate limit — a provider outage must not reset
+     * someone's allowance.
+     */
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    /**
+     * SHA-256 of the requesting IP, for the per-address limit.
+     *
+     * Hashed rather than stored, the same instinct as `sessions.id`: the limit
+     * only needs to know whether two requests came from the same place, not
+     * where that is.
+     */
+    ipHash: text('ip_hash'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Every read is "this account's codes, newest first".
+  (table) => [index('email_verification_codes_user_created_idx').on(table.userId, table.createdAt)],
+);
+
+export type EmailVerificationCode = typeof emailVerificationCodes.$inferSelect;
+export type NewEmailVerificationCode = typeof emailVerificationCodes.$inferInsert;
 
 export const EXAM_STATUSES = ['draft', 'published', 'archived'] as const;
 export type ExamStatus = (typeof EXAM_STATUSES)[number];
