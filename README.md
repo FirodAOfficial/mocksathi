@@ -69,10 +69,11 @@ npm run test:watch   # vitest, watch mode
 Postgres backs user accounts, sessions, exams, subscription plans and the papers written in Test
 Enigma (`src/db/`, migrated with [Drizzle](https://orm.drizzle.team/)). The dashboard itself still
 runs on hardcoded fixture data (`src/dashboard/seedDashboard.ts`) — it isn't wired to the database
-yet, and nor is the exam player: `/exam` still opens the sample papers in `src/exam/seedAttempt.ts`
-and `excelSeedAttempt.ts` rather than an authored one (`sdd/test-authoring.md`). The planned data
-layer is Postgres for relational/transactional data (candidates, enrollments, attempts, streaks)
-plus MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
+yet. The exam player is: `/exam` opens the oldest published test for the subject asked for, and
+marks it against a key derived from that test's own questions, falling back to the sample papers in
+`src/exam/seedAttempt.ts` when nothing has been published (`sdd/test-authoring.md`). The planned
+data layer is Postgres for relational/transactional data (candidates, enrollments, attempts,
+streaks) plus MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
 `sdd/dashboard.md` and `sdd/auth.md` for the phased plans.
 
 ### Local setup

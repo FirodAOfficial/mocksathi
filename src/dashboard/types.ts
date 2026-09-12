@@ -61,7 +61,16 @@ export interface MockCalendarDay {
   note?: string;
 }
 
-export type MockState = 'done' | 'today' | 'missed' | 'locked';
+/**
+ * `available` is a paper an admin has published that the candidate has not sat.
+ *
+ * Distinct from `today`, which carries the "sit this one now" emphasis — the
+ * chip, the highlighted row, the filled Start button. An authored test has none
+ * of that yet: there is no schedule saying which one is today's, and no
+ * `attempts` table to say whether it has been sat. It is simply a paper that
+ * exists.
+ */
+export type MockState = 'done' | 'today' | 'available' | 'missed' | 'locked';
 
 /** Which skill the mock tests — drives the "Type" column badge and the All Mocks filter pills. */
 export type MockType = 'word' | 'excel' | 'mixed';

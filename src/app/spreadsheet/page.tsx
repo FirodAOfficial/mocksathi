@@ -1,5 +1,6 @@
 import { requireUser } from '@/auth/cookies';
 import { SpreadsheetShell } from '@/components/spreadsheet/SpreadsheetShell';
+import { paperFor } from '@/db/tests';
 import { isLanguage, type Language } from '@/exam/types';
 
 export const metadata = {
@@ -10,7 +11,10 @@ export const metadata = {
  * `/spreadsheet`
  *
  * A thin server component, matching `/editor`: it reads the mode off the query
- * string and hands off to the client shell, which owns the workbook.
+ * string and hands off to the client shell, which owns the workbook. For an
+ * exam it also resolves the paper being sat, for the same reason `/editor`
+ * does — the clock starts when the shell mounts, so the questions have to be
+ * there already.
  *
  * There is no `docUrl` yet. Opening a real `.xlsx` needs the parser that is the
  * next phase of this work, and accepting the parameter now would mean either
@@ -21,7 +25,7 @@ export default async function SpreadsheetPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const params = await searchParams;
   const first = (value: string | string[] | undefined): string | null =>
     Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
@@ -33,5 +37,14 @@ export default async function SpreadsheetPage({
   // spreadsheet, which is what the dashboard's practice entry opens.
   const exam = first(params.mode) === 'exam';
 
-  return <SpreadsheetShell exam={exam} language={language} />;
+  const paper = exam ? await paperFor({ slug: first(params.test), subject: 'excel' }, user.name) : null;
+
+  return (
+    <SpreadsheetShell
+      exam={exam}
+      language={language}
+      attempt={paper?.attempt ?? null}
+      testId={paper?.testId ?? null}
+    />
+  );
 }

@@ -7,6 +7,7 @@ import {
   type QuestionDraft,
   type WordOperation,
 } from '@/exam/authoring';
+import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
 import { db } from './client';
 import { isUniqueViolation } from './pgErrors';
@@ -19,6 +20,7 @@ import {
   type NewTestQuestion,
   type Test,
   type TestQuestion,
+  type TestSubject,
   type WordContentRow,
 } from './schema';
 import { slugify } from './slug';
@@ -337,6 +339,132 @@ export function attemptFromTest(
     durationSeconds: test.durationMinutes * 60,
     questions: questions.map(draftFromRow),
   });
+}
+
+/**
+ * Every published paper, as the rows the candidate-facing tables render.
+ *
+ * The mock tables showed thirty fictional papers numbered 1–30 out of
+ * `seedDashboard.ts`. These are the real ones, in the order they were written.
+ *
+ * The score, accuracy, rank, time and date columns come back empty, and that is
+ * honest rather than unfinished: there is no `attempts` table, so nothing
+ * anywhere knows whether a candidate has sat a paper or what they scored.
+ * Inventing a number for those columns would be the one thing worse than a dash.
+ *
+ * `mockNumber` is the row's position in this list, not an id — it is what the
+ * table prints as "Mock 1" and uses as a key. Once a schedule exists it becomes
+ * the candidate's own numbering.
+ */
+export async function publishedTestRows(): Promise<MockSummary[]> {
+  const rows = await db
+    .select({
+      test: tests,
+      questionCount: count(testQuestions.id),
+      totalMarks: sum(testQuestions.marks),
+    })
+    .from(tests)
+    .innerJoin(exams, eq(tests.examId, exams.id))
+    .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
+    .where(eq(tests.status, 'published'))
+    .groupBy(tests.id)
+    .orderBy(asc(tests.createdAt));
+
+  return rows.map(({ test, questionCount, totalMarks }, index) => {
+    const questions = Number(questionCount ?? 0);
+
+    return {
+      mockNumber: index + 1,
+      paperName: `${test.name} · ${questions} Q${questions === 1 ? '' : 's'}`,
+      // Published and not yet sat. Nothing here knows any more than that.
+      state: 'available' as const,
+      maxScore: Number(totalMarks ?? 0),
+      mockType: test.subject,
+      questionCount: questions,
+      dateLabel: `${test.durationMinutes} min`,
+    };
+  });
+}
+
+/**
+ * The paper a candidate gets when they have not named one.
+ *
+ * "Today's test" is the oldest published test of the subject they asked for.
+ * Not a schedule — there is no calendar table, and the dashboard's mock
+ * calendar is still fixture data (`src/dashboard/seedDashboard.ts`) — but a
+ * deterministic stand-in for one, so every existing Start button lands on an
+ * authored paper instead of the hardcoded sample. Replacing this with a real
+ * per-candidate schedule is a `tests`-to-calendar join and touches nothing
+ * else: the rest of the player only ever sees the `ExamAttempt` that comes
+ * out of `attemptFromTest`.
+ *
+ * Oldest rather than newest on purpose: the paper a candidate is shown should
+ * not change under them because an admin wrote another one this morning.
+ *
+ * Null when no test of that subject has been published yet, which is what a
+ * fresh database looks like — `/exam` falls back to the sample paper rather
+ * than showing a candidate an error about content that does not exist.
+ */
+export async function todaysTest(subject: TestSubject): Promise<Test | null> {
+  const [test] = await db
+    .select()
+    .from(tests)
+    .where(and(eq(tests.subject, subject), eq(tests.status, 'published')))
+    .orderBy(asc(tests.createdAt))
+    .limit(1);
+
+  return test ?? null;
+}
+
+/**
+ * A paper ready to be sat: the attempt, its identity, and the id marking needs.
+ *
+ * One function because the three always travel together — the instructions
+ * screen shows the identity over the attempt, and the submit route has to mark
+ * the same paper the candidate was given, selected server-side from this id
+ * rather than from anything the browser sends.
+ */
+export interface LoadedPaper {
+  testId: string;
+  slug: string;
+  attempt: ExamAttempt;
+  questions: TestQuestion[];
+  identity: { testName: string; tagline: string; maximumMarks: number; qualifyingMarks: number };
+}
+
+export async function loadPaper(test: Test, candidateName?: string): Promise<LoadedPaper | null> {
+  const questions = await questionsForTest(test.id);
+  // A paper with no questions is not a paper. Better to fall back to the sample
+  // than to open a timed sitting with an empty question palette.
+  if (questions.length === 0) return null;
+
+  return {
+    testId: test.id,
+    slug: test.slug,
+    attempt: attemptFromTest(test, questions, candidateName),
+    questions,
+    identity: paperIdentityFor(test, questions),
+  };
+}
+
+/**
+ * The paper a request is asking for: the named one, else today's, else none.
+ *
+ * `slug` is what the URL carries, so a candidate who bookmarked a paper gets
+ * that paper. Anything unrecognised falls through to today's rather than
+ * erroring — a stale link should open something, not a 404.
+ */
+export async function paperFor(
+  { slug, subject }: { slug?: string | null; subject: TestSubject },
+  candidateName?: string,
+): Promise<LoadedPaper | null> {
+  if (slug) {
+    const named = await getTestBySlug(slug);
+    if (named) return loadPaper(named, candidateName);
+  }
+
+  const today = await todaysTest(subject);
+  return today ? loadPaper(today, candidateName) : null;
 }
 
 /** What the instructions and result screens call the paper — the `PAPER` of `src/exam/result.ts`, per test. */

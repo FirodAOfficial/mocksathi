@@ -1,5 +1,11 @@
 import type { JSONContent } from '@tiptap/core';
-import { buildWordQuestion, steps, type WordOperation, type WordScope } from './authoring';
+import {
+  buildWordQuestion,
+  steps,
+  type WordOperation,
+  type WordQuestionDraft,
+  type WordScope,
+} from './authoring';
 import type { Difficulty, ExamAttempt, Language, Localised, WordQuestion } from './types';
 
 /**
@@ -355,24 +361,33 @@ const DRAFTS: Draft[] = [
   },
 ];
 
+/**
+ * The paper as authoring drafts — the same shape a `test_questions` row becomes.
+ *
+ * Exported so the answer key can be checked against it: `rubricFromOperations`
+ * derives a key from exactly these operations, and the test asserts the key it
+ * produces marks this paper's own model answers as correct. Without the drafts
+ * in reach, that check would have to restate all fifteen questions' operations,
+ * and then it would be testing the restatement.
+ */
+export const WORD_DRAFTS: WordQuestionDraft[] = DRAFTS.map((draft, index) => ({
+  subject: 'word',
+  number: index + 1,
+  topic: draft.topic,
+  difficulty: draft.difficulty,
+  instruction: draft.instruction,
+  // One paragraph, the same text in both languages — only the instruction is
+  // translated, because the two line-scoped questions measure their offsets
+  // against this exact wording.
+  lines: { en: [draft.passage], hi: [draft.passage] },
+  scope: draft.scope,
+  operations: draft.operations,
+  solution: draft.solution,
+  marks: draft.marks,
+}));
+
 function buildQuestions(): WordQuestion[] {
-  return DRAFTS.map((draft, index) =>
-    buildWordQuestion({
-      subject: 'word',
-      number: index + 1,
-      topic: draft.topic,
-      difficulty: draft.difficulty,
-      instruction: draft.instruction,
-      // One paragraph, the same text in both languages — only the instruction
-      // is translated, because the two line-scoped questions measure their
-      // offsets against this exact wording.
-      lines: { en: [draft.passage], hi: [draft.passage] },
-      scope: draft.scope,
-      operations: draft.operations,
-      solution: draft.solution,
-      marks: draft.marks,
-    }),
-  );
+  return WORD_DRAFTS.map(buildWordQuestion);
 }
 
 export const SEED_ATTEMPT: ExamAttempt = {

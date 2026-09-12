@@ -121,21 +121,92 @@ rather than three places to keep in agreement.
 - [x] `src/exam/authoring/authoring.test.ts` (28) and `src/db/testInput.test.ts` (27).
 - [x] `tsc --noEmit`, `eslint` and `next build` clean.
 
-## Not built yet
+## Update — sitting an authored paper
 
-**Sitting an authored paper.** `/exam`, the two shells and `POST /api/attempts/submit` still load
-the fixtures; nothing reads a `tests` row into the player. The pieces that exist for it are
-`attemptFromTest` (rows → `ExamAttempt`) and `paperIdentityFor` (rows → the `PAPER` shape the
-instructions and result screens take). What remains:
+The player now reads its paper from `tests` rather than from the fixtures, and marks it against a
+key derived from the same `operations` the question was written with.
 
-1. `/exam?test=<slug>` loads the test and passes `attemptFromTest` to `InstructionsScreen`.
-2. `WordShell` / `SpreadsheetShell` take the attempt as a prop instead of defaulting to the fixture
-   in the store.
-3. `POST /api/attempts/submit` accepts a test id and selects the paper from it rather than from the
-   two-value subject enum — and needs an answer key, which means deriving `QuestionRubric` /
-   `SheetQuestionRubric` from the stored `operations`. That derivation is the substantive piece; it
-   is a server-only module, and the operation vocabulary was designed so each entry maps to its
-   positive criterion plus its exemption in the closing `unchanged`.
+### Which paper a candidate gets
 
-Deliberately left out of this pass because it is a change to the player and the marking path, not
-to authoring, and worth doing as its own piece of work rather than half-wired into this one.
+`todaysTest(subject)` is the oldest **published** test of the subject asked for. Not a schedule —
+there is no calendar table, and the dashboard's mock calendar is still fixture data — but a
+deterministic stand-in, so `/exam` opens an authored paper instead of the hardcoded sample.
+*Oldest*, not newest, so the paper a candidate is part-way through reading about does not change
+because an admin published another one this morning.
+
+`/exam?test=<slug>` names one explicitly and wins over today's. The slug is carried through the
+instructions screen into `?test=` on the editor URL, rather than each page resolving "today's"
+independently: between reading the instructions and pressing Start, a second resolution could
+return a different paper, and the candidate would sit one whose duration and marks they never saw.
+
+**With no published test of that subject, the sample paper stands in.** A fresh database has no
+`tests` rows, and `/exam` working on one is what keeps the whole app runnable before an admin has
+written anything. Which of the two it was never reaches a component: both arrive as an ordinary
+`ExamAttempt`.
+
+### The derived answer key
+
+`src/server/marking/rubricFromOperations.ts` builds a `QuestionRubric` / `SheetQuestionRubric` from
+a question's operations. Nobody is going to type a `Criterion` into an admin form, and if they
+could, nothing would keep it in step with the instruction beside it — so the same field that
+produces the model answer produces the key, and a paper cannot be marked against something other
+than what it showed.
+
+Each operation contributes its positive criterion *and* its entry in the closing `unchanged`, which
+is the rule the papers are built on: doing what was asked **and** something else is a wrong answer,
+because the question tested one named operation.
+
+Two deliberate leniencies, both copied from the hand-written banks rather than invented:
+
+- **Either of Office's two reds** (and two dark blues, two oranges) passes. Which one a candidate
+  lands on in the palette is not what the question is testing.
+- **A formula is checked by the function it calls**, not its exact text — `=sum(b2:b7)` is the same
+  answer as `=SUM(B2:B7)`. Pure arithmetic like `=B2-C2` names no function, so it is held to the
+  value it produces instead, which is what actually proves it works.
+
+`rubricFromOperations.test.ts` is the load-bearing check: for all thirty questions in both sample
+papers, the model answer the candidate is shown after the paper closes must **pass** the key those
+same operations produce, and the untouched starting document must **fail**. The second half matters
+as much as the first — a key that passed everything would satisfy the first half perfectly.
+
+That test found a real bug in `outsideBorderStyles`: it emitted four overlapping edge strips, and
+`StyleRegistry.derive` replaces `borders` wholesale rather than merging edges, so whichever strip
+reached a corner second dropped the other's edge. The worked answer for an Outside Border question
+showed A1 with a left edge and no top one. It now emits one entry per perimeter cell, carrying every
+edge that cell needs at once.
+
+### What the client may say
+
+Two things, and they are both selectors, not content: `subject`, and `testId`. The questions, the
+marks and the answer key are all re-loaded server-side from the id, so naming another paper marks
+you against *that* paper's questions rather than awarding you its marks for these answers. A
+`testId` naming a deleted paper falls back to the sample rather than 500ing mid-sitting.
+
+### The mock tables list real papers
+
+All Mocks (`/dashboard/mocks`) and the dashboard home's list are sourced from `publishedTestRows()`
+— every published row in `tests`, oldest first — rather than from the thirty fictional mocks in
+`seedDashboard.ts`. The Today's Mock card names the paper `/exam` would actually open, instead of a
+fixture mock number sat above a list of real ones.
+
+Score, accuracy, rank, time: all empty, for every row. That is honest rather than unfinished —
+there is no `attempts` table, so nothing anywhere knows whether a candidate has sat a paper or what
+they scored, and inventing a number for those columns would be the one thing worse than a dash.
+
+They are deliberately not openable. A row has no scheduled sitting behind it, so every Start button
+would open whatever `/exam` resolves to — the same paper for every row. `/dashboard/today` keeps its
+"Read the instructions" links, which is the one place a candidate reaches a paper, and
+`startHrefFor` still owns that mapping.
+
+A new `MockState`, `available`, carries this: published, not sat, and distinct from `today`, which
+means "sit this one now" and brings the chip, the highlighted row and the filled button with it.
+
+### Still to come
+
+- **Giving each mock row its own sitting.** The rows are real papers now, but every one of them
+  would open the same thing, so none of them opens anything. A schedule joining a candidate to the
+  papers they are meant to sit — and on which day — replaces `todaysTest`, and the tables get their
+  Start buttons back pointing at `?test=<slug>`. Nothing else has to change: the rest of the player
+  only ever sees the `ExamAttempt` from `attemptFromTest`.
+- **Storing attempts.** A sitting is still marked and shown, never recorded — there is no `attempts`
+  table, so the result screen is the only place a score exists.

@@ -386,6 +386,64 @@ function operationFrom(draft: OperationDraft): Record<string, unknown> {
   }
 }
 
+/**
+ * What an operation still needs before the server would accept it.
+ *
+ * A mirror of `wordOperationOf` / `excelOperationOf` in `src/db/testInput.ts`,
+ * and deliberately only that: the server stays the one that decides, because it
+ * is the one that cannot be bypassed. This exists so the gap is visible while
+ * it is being typed rather than announced as "Operation 3 is incomplete" after
+ * a failed save, by which point the admin has to work out which one that was.
+ */
+function operationProblem(draft: OperationDraft): string | null {
+  const needsRange = (): string | null =>
+    rangeFromA1(draft.rangeA1) ? null : draft.rangeA1.trim() === '' ? 'Needs a range' : 'That is not a range';
+
+  switch (draft.kind) {
+    case 'fontFamily':
+      return draft.family.trim() ? null : 'Needs a font name';
+    case 'fontSize':
+      return numberOrUndefined(draft.size) === undefined ? 'Needs a size' : null;
+    case 'lineHeight':
+      return numberOrUndefined(draft.lineHeight) === undefined ? 'Needs a spacing' : null;
+    case 'indent':
+      return numberOrUndefined(draft.levels) === undefined ? 'Needs a number of levels' : null;
+    case 'merge':
+    case 'outsideBorder':
+      return needsRange();
+    case 'style':
+      return needsRange() ?? (Object.keys(styleFrom(draft.style)).length > 0 ? null : 'Needs at least one formatting choice');
+    case 'values': {
+      const addressed = draft.cells.filter((cell) => addressFrom(cell.ref));
+      if (addressed.length === 0) return 'Needs at least one cell, written as A1';
+      return addressed.every((cell) => cell.value.trim() || cell.formula.trim())
+        ? null
+        : 'Every cell listed needs a value or a formula';
+    }
+    case 'columnWidth':
+      return labelToColumn(draft.column.trim()) === null
+        ? 'Needs a column letter'
+        : numberOrUndefined(draft.width) === undefined
+          ? 'Needs a width'
+          : null;
+    case 'freeze':
+      return numberOrUndefined(draft.freezeRows) === undefined || numberOrUndefined(draft.freezeColumns) === undefined
+        ? 'Needs a number of rows and columns'
+        : null;
+    case 'view':
+      return draft.gridlines === '' && draft.headings === '' ? 'Needs gridlines or headings to be set' : null;
+    case 'printArea':
+      return draft.clearPrintArea ? null : needsRange();
+    default:
+      return null;
+  }
+}
+
+/** Whether a grid has anything typed into it at all. */
+function gridIsEmpty(grid: string[][]): boolean {
+  return grid.every((row) => row.every((cell) => cell.trim() === ''));
+}
+
 /* -- Vocabulary shown in the pickers --------------------------------------- */
 
 const WORD_KINDS: { value: string; label: string }[] = [
@@ -500,6 +558,45 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
   const grid = language === 'en' ? values.gridEn : values.gridHi;
   const kinds = subject === 'word' ? WORD_KINDS : EXCEL_KINDS;
 
+  /*
+   * What is still missing, recomputed every render rather than captured when
+   * Save is pressed.
+   *
+   * Required-ness is a property of the form's contents, not of having tried to
+   * submit — so the gaps are marked from the moment the editor opens, and a
+   * field stops being marked the moment it is filled. Hindi is never required:
+   * an empty Hindi box means "same as English" (`parseQuestionInput`), which is
+   * a real thing an admin wants and not an omission to nag about.
+   */
+  const missing = {
+    topic: values.topic.trim() === '',
+    instruction: values.instructionEn.trim() === '',
+    marks: numberOrUndefined(values.marks) === undefined,
+    passage: subject === 'word' && values.passageEn.trim() === '',
+    sheet: subject === 'excel' && gridIsEmpty(values.gridEn),
+    noOperations: values.operations.length === 0,
+  };
+  const operationProblems = new Map(
+    values.operations.map((operation) => [operation.id, operationProblem(operation)] as const),
+  );
+
+  /** Everything outstanding, named in one place — the per-field marks can be off-screen behind the language tabs. */
+  const outstanding: string[] = [
+    missing.topic ? 'a topic' : null,
+    missing.instruction ? 'the English instruction' : null,
+    missing.marks ? 'a mark value' : null,
+    missing.passage ? 'the English passage' : null,
+    missing.sheet ? 'the English starting sheet' : null,
+    missing.noOperations ? 'at least one operation' : null,
+    ...values.operations.map((operation, index) => {
+      const problem = operationProblems.get(operation.id);
+      return problem ? `operation ${index + 1} (${problem.toLowerCase()})` : null;
+    }),
+  ].filter((entry) => entry !== null);
+
+  /** `styles.invalid` on a control, but only while the control is actually on screen. */
+  const mark = (isMissing: boolean): string => (isMissing ? ` ${styles.invalid}` : '');
+
   return (
     <form className={styles.editor} onSubmit={handleSubmit} noValidate>
       <div className={styles.editorHead}>
@@ -529,12 +626,14 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           <input
             id={`topic-${question?.id ?? 'new'}`}
             name="topic"
-            className={styles.input}
+            className={styles.input + mark(missing.topic)}
             placeholder={subject === 'word' ? 'Character Formatting' : 'Merge & Center'}
             value={values.topic}
             onChange={handleChange}
+            aria-invalid={missing.topic}
             required
           />
+          {missing.topic && <p className={styles.requiredNote}>Required</p>}
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor={`difficulty-${question?.id ?? 'new'}`}>
@@ -564,10 +663,12 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
             type="number"
             min={1}
             max={100}
-            className={styles.input}
+            className={styles.input + mark(missing.marks)}
             value={values.marks}
             onChange={handleChange}
+            aria-invalid={missing.marks}
           />
+          {missing.marks && <p className={styles.requiredNote}>Required</p>}
         </div>
       </div>
 
@@ -580,13 +681,15 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           <textarea
             id={`instruction-${language}-${question?.id ?? 'new'}`}
             name={language === 'en' ? 'instructionEn' : 'instructionHi'}
-            className={styles.textarea}
+            className={styles.textarea + mark(language === 'en' && missing.instruction)}
             placeholder={
               language === 'en' ? 'Make the paragraph bold and underline it.' : 'पैराग्राफ को बोल्ड करें, अंडरलाइन करें।'
             }
             value={language === 'en' ? values.instructionEn : values.instructionHi}
             onChange={handleChange}
+            aria-invalid={language === 'en' && missing.instruction}
           />
+          {language === 'en' && missing.instruction && <p className={styles.requiredNote}>Required</p>}
           <p className={styles.hint}>
             Shown beside the document, never inside it — so there is nothing in the answer the candidate could
             format by mistake.
@@ -620,10 +723,12 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
               <textarea
                 id={`passage-${language}-${question?.id ?? 'new'}`}
                 name={language === 'en' ? 'passageEn' : 'passageHi'}
-                className={styles.textarea}
+                className={styles.textarea + mark(language === 'en' && missing.passage)}
                 value={language === 'en' ? values.passageEn : values.passageHi}
                 onChange={handleChange}
+                aria-invalid={language === 'en' && missing.passage}
               />
+              {language === 'en' && missing.passage && <p className={styles.requiredNote}>Required</p>}
               <p className={styles.hint}>
                 The passage is the whole answer document, so everything in it is under test. Leave the Hindi box
                 empty to use the same text in both languages.
@@ -671,7 +776,11 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           </>
         ) : (
           <>
+            {language === 'en' && missing.sheet && (
+              <p className={styles.requiredNote}>Required — fill in at least one cell.</p>
+            )}
             <SheetGridEditor
+              invalid={language === 'en' && missing.sheet}
               grid={grid}
               onChange={(next) => set(language === 'en' ? 'gridEn' : 'gridHi', next)}
               onResize={(rows, columns) => {
@@ -717,11 +826,16 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
         </p>
 
         <div className={styles.operations}>
-          {values.operations.length === 0 && (
-            <p className={styles.operationEmpty}>Nothing asked for yet — add the first operation.</p>
+          {missing.noOperations && (
+            <p className={`${styles.operationEmpty} ${styles.invalid}`}>
+              Required — a question with no operation has no answer to show.
+            </p>
           )}
           {values.operations.map((operation, index) => (
-            <div className={styles.operation} key={operation.id}>
+            <div
+              className={operationProblems.get(operation.id) ? `${styles.operation} ${styles.invalid}` : styles.operation}
+              key={operation.id}
+            >
               <div className={styles.operationHead}>
                 <span className={styles.number}>{index + 1}</span>
                 <select
@@ -749,6 +863,9 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
                 operation={operation}
                 onChange={(changes) => updateOperation(operation.id, changes)}
               />
+              {operationProblems.get(operation.id) && (
+                <p className={styles.requiredNote}>{operationProblems.get(operation.id)}</p>
+              )}
             </div>
           ))}
         </div>
@@ -763,6 +880,12 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           + Add an operation
         </button>
       </div>
+
+      {outstanding.length > 0 && (
+        <p className={styles.outstanding}>
+          Still needed: {outstanding.join(', ')}.
+        </p>
+      )}
 
       {error && (
         <p className={styles.error} role="alert">
@@ -1269,17 +1392,19 @@ function SheetGridEditor({
   grid,
   onChange,
   onResize,
+  invalid = false,
 }: {
   grid: string[][];
   onChange: (grid: string[][]) => void;
   onResize: (rows: number, columns: number) => void;
+  invalid?: boolean;
 }) {
   const rows = grid.length;
   const columns = grid[0]?.length ?? 0;
 
   return (
     <>
-      <div className={styles.sheet}>
+      <div className={invalid ? `${styles.sheet} ${styles.invalid}` : styles.sheet}>
         <table className={styles.sheetTable}>
           <thead>
             <tr>

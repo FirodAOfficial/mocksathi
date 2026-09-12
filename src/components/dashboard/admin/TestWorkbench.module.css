@@ -598,3 +598,40 @@
   border-radius: 4px;
   padding: 1px 5px;
 }
+
+/* -- Missing fields -------------------------------------------------------- */
+
+/*
+ * Marked from the moment the editor opens, not after a failed save: what is
+ * missing is a property of the form's contents, so there is no moment at which
+ * it is true but not shown. Colour is never the only signal — every marked
+ * control also gets a "Required" line under it, and the summary above the
+ * buttons names all of them.
+ */
+.invalid {
+  border-color: #dc2626 !important;
+  background: #fffbfb;
+}
+
+.invalid:focus-visible {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+
+.requiredNote {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b91c1c;
+  margin: 0;
+}
+
+.outstanding {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #8a5205;
+  background: #fff8ed;
+  border: 1px solid #fde8c8;
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin: 0;
+}

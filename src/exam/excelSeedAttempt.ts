@@ -1,6 +1,12 @@
 import type { CellValue } from '@/spreadsheet/model/Cell';
 import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
-import { buildExcelQuestion, range, sheetOf, type ExcelOperation } from './authoring';
+import {
+  buildExcelQuestion,
+  range,
+  sheetOf,
+  type ExcelOperation,
+  type ExcelQuestionDraft,
+} from './authoring';
 import type {
   Difficulty,
   ExamAttempt,
@@ -551,22 +557,29 @@ const DRAFTS: Draft[] = [
   },
 ];
 
+/**
+ * The paper as authoring drafts — the same shape a `test_questions` row becomes.
+ *
+ * Exported for the same reason `WORD_DRAFTS` is: the derived answer key is
+ * checked against the paper it was derived from, and that check needs the
+ * operations rather than a second copy of them.
+ */
+export const EXCEL_DRAFTS: ExcelQuestionDraft[] = DRAFTS.map((draft, index) => ({
+  subject: 'excel',
+  number: index + 1,
+  topic: draft.topic,
+  difficulty: draft.difficulty,
+  instruction: draft.instruction,
+  // A fresh sheet per question and per language: each owns its workbook, so
+  // work on one cannot leak into another.
+  workbook: { en: draft.sheet('en'), hi: draft.sheet('hi') },
+  operations: draft.operations,
+  solution: draft.solution,
+  marks: draft.marks,
+}));
+
 function buildQuestions(): ExcelQuestion[] {
-  return DRAFTS.map((draft, index) =>
-    buildExcelQuestion({
-      subject: 'excel',
-      number: index + 1,
-      topic: draft.topic,
-      difficulty: draft.difficulty,
-      instruction: draft.instruction,
-      // A fresh sheet per question and per language: each owns its workbook,
-      // so work on one cannot leak into another.
-      workbook: { en: draft.sheet('en'), hi: draft.sheet('hi') },
-      operations: draft.operations,
-      solution: draft.solution,
-      marks: draft.marks,
-    }),
-  );
+  return EXCEL_DRAFTS.map(buildExcelQuestion);
 }
 
 export const EXCEL_SEED_ATTEMPT: ExamAttempt = {

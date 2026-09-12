@@ -207,8 +207,9 @@ export function TestQuestionsPanel({ test, questions }: TestQuestionsPanelProps)
       )}
 
       <p className={styles.footnote}>
-        Saved questions are built through the same code as the sample papers, so what you write here is what the
-        player would render. Opening an authored paper in the player is the one step still to come — see{' '}
+        A published paper is what <code>/exam</code> opens — the oldest published test of its type is served as
+        today&rsquo;s. Marking is derived from the operations above, so a question is never marked against
+        anything other than what it showed. Linking a specific mock to a specific test comes next; see{' '}
         <code>sdd/test-authoring.md</code>.
       </p>
     </div>

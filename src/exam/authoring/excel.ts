@@ -123,24 +123,44 @@ export function rowsOf(target: RangeAddress): RangeAddress[] {
 }
 
 /**
- * The four edges of a range, as separate one-cell-thick styles.
+ * The border each cell on a range's perimeter carries.
  *
  * Outside Borders is not one style applied to every cell: the top row gets a
- * top edge and the interior gets nothing. Writing it as a uniform style would
+ * top edge, the interior gets nothing. Writing it as a uniform style would
  * describe All Borders, which is the answer to a different question.
+ *
+ * One entry per cell, rather than four overlapping strips — a corner sits in
+ * two of them, and `StyleRegistry.derive` replaces `borders` wholesale rather
+ * than merging its edges, so the second strip to reach A1 would drop the edge
+ * the first one gave it. That is not a bug in `derive`: "set the borders to
+ * exactly this" is the right primitive, and it is this function's job to say
+ * what "exactly this" is for a cell that sits on two edges at once.
  */
 export function outsideBorderStyles(
   target: RangeAddress,
   color = '#000000',
 ): NonNullable<WorkbookAnswer['styles']> {
   const edge = { style: 'thin' as const, color };
+  const styles: NonNullable<WorkbookAnswer['styles']> = [];
 
-  return [
-    { range: range(target.start.row, target.start.col, target.start.row, target.end.col), style: { borders: { top: edge } } },
-    { range: range(target.end.row, target.start.col, target.end.row, target.end.col), style: { borders: { bottom: edge } } },
-    { range: range(target.start.row, target.start.col, target.end.row, target.start.col), style: { borders: { left: edge } } },
-    { range: range(target.start.row, target.end.col, target.end.row, target.end.col), style: { borders: { right: edge } } },
-  ];
+  for (let row = target.start.row; row <= target.end.row; row += 1) {
+    for (let col = target.start.col; col <= target.end.col; col += 1) {
+      const borders = {
+        ...(row === target.start.row ? { top: edge } : {}),
+        ...(row === target.end.row ? { bottom: edge } : {}),
+        ...(col === target.start.col ? { left: edge } : {}),
+        ...(col === target.end.col ? { right: edge } : {}),
+      };
+
+      // The interior gets nothing at all, which is what separates this from
+      // All Borders and is exactly what the answer key checks for.
+      if (Object.keys(borders).length > 0) {
+        styles.push({ range: range(row, col, row, col), style: { borders } });
+      }
+    }
+  }
+
+  return styles;
 }
 
 /** How the workbook looks once the question has been answered correctly. */

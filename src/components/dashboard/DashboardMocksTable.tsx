@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { startHrefFor } from '@/dashboard/mockRoutes';
 import { useMemo, useState } from 'react';
 import type { MockSummary, MockType } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -30,6 +29,7 @@ function StatusPill({ mock }: { mock: MockSummary }) {
     case 'done':
       return <span className={styles.statusDone}>Completed</span>;
     case 'today':
+    case 'available':
       return <span className={styles.statusOpen}>Not Attempted</span>;
     case 'missed':
       return <span className={styles.statusOpen}>Missed</span>;
@@ -46,12 +46,10 @@ function ActionCell({ mock }: { mock: MockSummary }) {
           View Result
         </Link>
       );
+    // Data only, same as the All Mocks table — see `src/dashboard/mockRoutes.ts`.
     case 'today':
-      return (
-        <Link href={startHrefFor(mock)} className={styles.actionFilled}>
-          Start Mock
-        </Link>
-      );
+    case 'available':
+      return <span className={styles.actionPending}>Not yet open</span>;
     default:
       return (
         <span className={styles.actionLocked}>
@@ -108,6 +106,14 @@ export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
           <span>Status</span>
           <span className={styles.right}>Action</span>
         </div>
+
+        {visible.length === 0 && (
+          <p className={styles.empty}>
+            {mocks.length === 0
+              ? 'No papers published yet.'
+              : 'No papers of that type yet.'}
+          </p>
+        )}
 
         {visible.map((mock) => {
           const type = TYPE_META[mock.mockType];

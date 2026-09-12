@@ -20,6 +20,15 @@ export interface SubmitPayload {
    * it server-side, so this cannot be used to influence a score.
    */
   subject: Subject;
+  /**
+   * Which stored paper was sat, or null for the sample one.
+   *
+   * An id, and the second and last thing the client gets to choose. The
+   * questions, the marks and the answer key are all re-loaded from it
+   * server-side, so naming a different paper marks you against that paper's
+   * questions rather than awarding you its marks for these answers.
+   */
+  testId?: string | null;
   language: Language;
   timePerQuestion: Record<number, number>;
   totalTimeSeconds: number;

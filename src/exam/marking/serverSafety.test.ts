@@ -27,6 +27,8 @@ const SERVER_ENTRIES = [
   'src/exam/marking/sheet/evaluate.ts',
   'src/exam/marking/sheet/sheetMarker.ts',
   'src/server/marking/excelQuestionBank.ts',
+  'src/server/marking/rubricFromOperations.ts',
+  'src/db/tests.ts',
 ];
 
 function resolveImport(specifier: string): string | null {

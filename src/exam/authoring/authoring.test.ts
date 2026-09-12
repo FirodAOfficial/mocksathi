@@ -170,18 +170,36 @@ describe('excelModelAnswer', () => {
     });
   });
 
-  it('gives an outside border four edges and no interior', () => {
-    const answer = excelModelAnswer([{ kind: 'outsideBorder', range: range(0, 0, 5, 3) }]);
+  describe('an outside border', () => {
     const edge = { style: 'thin', color: '#000000' };
+    const styles = excelModelAnswer([{ kind: 'outsideBorder', range: range(0, 0, 5, 3) }]).styles ?? [];
+    const at = (row: number, col: number) =>
+      styles.find((entry) => entry.range.start.row === row && entry.range.start.col === col)?.style.borders;
 
-    // All Borders is the answer to a different question, so the interior must
-    // stay clear — four one-cell-thick strips, never one uniform style.
-    expect(answer.styles).toEqual([
-      { range: range(0, 0, 0, 3), style: { borders: { top: edge } } },
-      { range: range(5, 0, 5, 3), style: { borders: { bottom: edge } } },
-      { range: range(0, 0, 5, 0), style: { borders: { left: edge } } },
-      { range: range(0, 3, 5, 3), style: { borders: { right: edge } } },
-    ]);
+    it('gives a corner both of its edges at once', () => {
+      // A corner sits on two sides, and `derive` replaces `borders` wholesale
+      // rather than merging — so one entry has to carry both, or whichever
+      // arrived second would drop the other's edge.
+      expect(at(0, 0)).toEqual({ top: edge, left: edge });
+      expect(at(5, 3)).toEqual({ bottom: edge, right: edge });
+    });
+
+    it('gives a cell along one side only that side', () => {
+      expect(at(0, 1)).toEqual({ top: edge });
+      expect(at(3, 0)).toEqual({ left: edge });
+    });
+
+    it('leaves the interior completely clear', () => {
+      // All Borders is the answer to a different question, and this is what
+      // separates the two.
+      expect(at(3, 1)).toBeUndefined();
+      expect(at(2, 2)).toBeUndefined();
+    });
+
+    it('touches only the perimeter', () => {
+      // A 6x4 range is 24 cells with a 4x2 interior, so 16 sit on the edge.
+      expect(styles).toHaveLength(16);
+    });
   });
 
   it('carries a formula and the value it works out to', () => {
