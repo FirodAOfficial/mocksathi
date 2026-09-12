@@ -85,6 +85,15 @@ export type MockType = 'word' | 'excel' | 'mixed';
  */
 export interface MockSummary {
   mockNumber: number;
+  /**
+   * The `tests` row this stands for, when it stands for one.
+   *
+   * Present on every row built by `publishedTestRows`, absent on the fixture
+   * mocks. It is what lets a row open *its own* paper (`/exam?test=<slug>`)
+   * rather than whatever `/exam` would otherwise resolve to — the reason these
+   * rows had no Start button before they were real.
+   */
+  testSlug?: string;
   paperName: string;
   state: MockState;
   mockType: MockType;

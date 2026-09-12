@@ -193,20 +193,46 @@ Score, accuracy, rank, time: all empty, for every row. That is honest rather tha
 there is no `attempts` table, so nothing anywhere knows whether a candidate has sat a paper or what
 they scored, and inventing a number for those columns would be the one thing worse than a dash.
 
-They are deliberately not openable. A row has no scheduled sitting behind it, so every Start button
-would open whatever `/exam` resolves to — the same paper for every row. `/dashboard/today` keeps its
-"Read the instructions" links, which is the one place a candidate reaches a paper, and
-`startHrefFor` still owns that mapping.
+Every row opens its own paper: `MockSummary.testSlug` carries the `tests` row it stands for, and
+`startHrefFor` turns that into `/exam?subject=<skill>&test=<slug>`. The slug is what makes a Start
+button meaningful — while the rows were fixture mocks they had nothing of their own to open, so
+every button on the page would have led to the same paper, which is why none of them did.
 
-A new `MockState`, `available`, carries this: published, not sat, and distinct from `today`, which
-means "sit this one now" and brings the chip, the highlighted row and the filled button with it.
+A new `MockState`, `available`, marks a row published-but-not-sat, distinct from `today`, which
+means "sit this one now" and brings the chip and the highlighted row with it. Nothing writes
+`today` for an authored paper yet, because nothing schedules one.
+
+**Any signed-in candidate may open any published paper.** There is no entitlement check on the exam
+routes beyond `requireUser()`, and deliberately none elsewhere: who may sit what — by plan, by
+enrolment, by schedule — is a product rule nobody has written yet, and a guess at one would be a
+rule to unpick rather than a head start.
+
+### The sample papers as data
+
+`db/seeds/sample-papers.sql` inserts the two fixtures as real `tests` rows. It is a **seed, not a
+migration**, and deliberately absent from `db/migrations/meta/_journal.json` so `db:migrate` never
+picks it up: a migration has to run on every database or the code breaks against it, while thirty
+questions of demo content is something most databases have no reason to want, and there would be no
+way to decline it without editing history.
+
+Generated from the fixtures under one check — rebuild the drafts from the generated rows, the way
+`draftFromRow` does, and assert the paper equals `SEED_ATTEMPT` / `EXCEL_SEED_ATTEMPT` question for
+question. The Excel questions had to be reversed out of built workbooks back into grids of strings,
+which is exactly the step that could have silently lost a number's type.
 
 ### Still to come
 
-- **Giving each mock row its own sitting.** The rows are real papers now, but every one of them
-  would open the same thing, so none of them opens anything. A schedule joining a candidate to the
-  papers they are meant to sit — and on which day — replaces `todaysTest`, and the tables get their
-  Start buttons back pointing at `?test=<slug>`. Nothing else has to change: the rest of the player
-  only ever sees the `ExamAttempt` from `attemptFromTest`.
+- **Scheduling, and who may sit what.** Any candidate can open any published paper today, and
+  "today's" is just the oldest one. A schedule joining a candidate to the papers they are meant to
+  sit — and on which day — replaces `todaysTest` and decides which rows are locked, which is `today`,
+  and which are out of plan. Nothing else has to change: the rest of the player only ever sees the
+  `ExamAttempt` from `attemptFromTest`.
+- **Admin deletes.** A test can be deleted from its workbench (`DeleteResource`), which cascades to
+  its questions — the confirmation counts them and makes the admin type DELETE. An exam can be
+  deleted only while nothing points at it: `enrollments.exam_id` and `tests.exam_id` both cascade, so
+  `DELETE /api/admin/exams/[id]` refuses with a 409 naming what is in the way and points at
+  Archived instead. Plans stay deactivate-only, which is the existing deliberate design
+  (`subscriptions.plan_id` is `NO ACTION` so a plan with subscribers cannot be removed from under
+  them).
 - **Storing attempts.** A sitting is still marked and shown, never recorded — there is no `attempts`
   table, so the result screen is the only place a score exists.

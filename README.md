@@ -117,6 +117,12 @@ npm run db:down         # stops both containers (data persists in their volumes;
 Migrations are checked-in SQL files under `db/migrations/`, generated from `src/db/schema.ts` —
 edit the schema, then run `db:generate`, review the generated SQL, and commit both.
 
+`db/seeds/` is the other half of that: optional SQL that **nothing runs for you**, because it is
+content rather than schema. `db/seeds/sample-papers.sql` inserts the two sample papers (Word and
+Excel, 15 questions each) as real `tests` rows, so a fresh database has something to click around
+without typing thirty questions into Test Enigma first. It is safe to re-run and safe on an empty
+database — see `db/seeds/README.md`.
+
 ### Browsing data live — Drizzle Gateway
 
 `db:up` also starts [Drizzle Gateway](https://gateway.drizzle.team) (`ghcr.io/drizzle-team/gateway`

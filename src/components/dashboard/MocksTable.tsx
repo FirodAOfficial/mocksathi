@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -36,12 +37,23 @@ function ScoreCells({ mock }: { mock: MockSummary }) {
 
 function ActionCell({ mock }: { mock: MockSummary }) {
   switch (mock.state) {
-    // No Start button: a row here has no scheduled sitting behind it yet, so
-    // there is nothing for it to open that is specific to this row. See
-    // `src/dashboard/mockRoutes.ts`.
     case 'today':
     case 'available':
-      return <span className={styles.actionPending}>Not yet open</span>;
+      // A paper with no questions cannot be sat — `loadPaper` returns null for
+      // one, and `/exam` then falls back to a *different* paper. Offering Start
+      // here would quietly open something the candidate did not choose.
+      if (mock.testSlug && mock.questionCount === 0) {
+        return <span className={styles.actionPending}>No questions yet</span>;
+      }
+      // A row that names a paper opens that paper; one that does not has
+      // nothing of its own to open. See `src/dashboard/mockRoutes.ts`.
+      return mock.testSlug ? (
+        <Link href={startHrefFor(mock)} className={styles.actionPrimary}>
+          Start
+        </Link>
+      ) : (
+        <span className={styles.actionPending}>Not yet open</span>
+      );
     case 'locked':
       return (
         <span className={styles.actionLocked}>

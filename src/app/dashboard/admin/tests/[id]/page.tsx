@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { requireAdmin } from '@/auth/cookies';
+import { DeleteResource } from '@/components/dashboard/admin/DeleteResource';
 import { TestQuestionsPanel } from '@/components/dashboard/admin/TestQuestionsPanel';
 import styles from '@/components/dashboard/admin/TestWorkbench.module.css';
 import { db } from '@/db/client';
@@ -47,6 +48,20 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
           <Link href={`/dashboard/admin/tests/${test.id}/edit`} className={styles.secondary}>
             Edit details
           </Link>
+          {/* The questions cascade, so the confirmation counts them out loud
+              and a paper with any of them has to be typed out. */}
+          <DeleteResource
+            endpoint={`/api/admin/tests/${test.id}`}
+            redirectTo="/dashboard/admin/tests"
+            label="Delete test"
+            title={`Delete “${test.name}”?`}
+            detail={
+              questions.length === 0
+                ? 'It has no questions yet, so nothing else goes with it. This cannot be undone.'
+                : `Its ${questions.length} question${questions.length === 1 ? '' : 's'} — passages, sheets, solutions and all — are deleted with it. This cannot be undone.`
+            }
+            requireTyping={questions.length > 0}
+          />
         </div>
       </div>
 

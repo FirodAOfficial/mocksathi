@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import { useMemo, useState } from 'react';
 import type { MockSummary, MockType } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -46,10 +47,22 @@ function ActionCell({ mock }: { mock: MockSummary }) {
           View Result
         </Link>
       );
-    // Data only, same as the All Mocks table — see `src/dashboard/mockRoutes.ts`.
     case 'today':
     case 'available':
-      return <span className={styles.actionPending}>Not yet open</span>;
+      // A paper with no questions cannot be sat — `loadPaper` returns null for
+      // one, and `/exam` then falls back to a *different* paper. Offering Start
+      // here would quietly open something the candidate did not choose.
+      if (mock.testSlug && mock.questionCount === 0) {
+        return <span className={styles.actionPending}>No questions yet</span>;
+      }
+      // Same rule as the All Mocks table — see `src/dashboard/mockRoutes.ts`.
+      return mock.testSlug ? (
+        <Link href={startHrefFor(mock)} className={styles.actionFilled}>
+          Start Mock
+        </Link>
+      ) : (
+        <span className={styles.actionPending}>Not yet open</span>
+      );
     default:
       return (
         <span className={styles.actionLocked}>

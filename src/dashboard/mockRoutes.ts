@@ -14,14 +14,24 @@ import type { MockSummary } from './types';
  * A mixed revision paper has no single paper to open, so it goes to the
  * Today's Mock screen, which offers both.
  *
- * **Only Today's Mock uses this now.** The mock *tables* list real published
- * papers (`publishedTestRows`) but deliberately offer no way to open them: a
- * row has no scheduled sitting behind it, so every Start button would open
- * whatever `/exam` resolves to — the same paper for every row. Buttons that
- * all do one thing are worse than none. Giving each row its own sitting is the
- * next phase; see `sdd/test-authoring.md`.
+ * A row that names a `tests` row opens **that** paper, by slug. Every other
+ * row falls back to whichever paper `/exam` resolves to for its skill, which is
+ * all a fixture mock can do — it stands for nothing in particular.
+ *
+ * **Any signed-in candidate may open any published paper.** There is no
+ * entitlement check here, and deliberately none anywhere else either: who may
+ * sit what is a product rule nobody has written yet, and a guess at one would
+ * be a rule to unpick rather than a head start. `requireUser()` on the exam
+ * routes is the whole of the access control today.
  */
-export function startHrefFor(mock: Pick<MockSummary, 'mockType'>): string {
+export function startHrefFor(mock: Pick<MockSummary, 'mockType' | 'testSlug'>): string {
+  if (mock.testSlug) {
+    // The subject rides along so a stale slug still lands on the right skill's
+    // fallback paper rather than the Word one by default.
+    const subject = mock.mockType === 'excel' ? 'excel' : 'word';
+    return `/exam?subject=${subject}&test=${encodeURIComponent(mock.testSlug)}`;
+  }
+
   switch (mock.mockType) {
     case 'word':
       return '/exam';

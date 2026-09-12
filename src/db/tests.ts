@@ -375,6 +375,7 @@ export async function publishedTestRows(): Promise<MockSummary[]> {
 
     return {
       mockNumber: index + 1,
+      testSlug: test.slug,
       paperName: `${test.name} · ${questions} Q${questions === 1 ? '' : 's'}`,
       // Published and not yet sat. Nothing here knows any more than that.
       state: 'available' as const,
