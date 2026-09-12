@@ -1,4 +1,4 @@
-import { boolean, date, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, date, integer, jsonb, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 /**
  * Database schema, source of truth for the migrations in `db/migrations/`.
@@ -208,3 +208,148 @@ export const subscriptions = pgTable('subscriptions', {
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
+
+export const TEST_SUBJECTS = ['word', 'excel'] as const;
+export type TestSubject = (typeof TEST_SUBJECTS)[number];
+export const testSubjectEnum = pgEnum('test_subject', TEST_SUBJECTS);
+
+export const QUESTION_DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const;
+export type QuestionDifficulty = (typeof QUESTION_DIFFICULTIES)[number];
+export const questionDifficultyEnum = pgEnum('question_difficulty', QUESTION_DIFFICULTIES);
+
+/**
+ * One paper a candidate sits in a sitting — the middle of `exams` > `tests` >
+ * `test_questions`.
+ *
+ * A test belongs to exactly one exam, because that is what makes it findable:
+ * a candidate prepares for SSC CGL and is shown the papers written for it. It
+ * is all Word or all Excel, never a mixture, for the same reason `ExamAttempt`
+ * carries one `subject` — the candidate sits a Word practical or a spreadsheet
+ * practical, and the shell branches once rather than per question.
+ *
+ * The fixtures in `src/exam/seedAttempt.ts` and `excelSeedAttempt.ts` are the
+ * shape this replaces. They stay for now: they are what the player renders
+ * today, and `attemptFromTest` (`src/db/tests.ts`) produces the same
+ * `ExamAttempt` from these rows, through the same builders.
+ */
+export const tests = pgTable('tests', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  examId: uuid('exam_id')
+    .notNull()
+    .references(() => exams.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  /** URL-friendly, e.g. "ssc-cgl-word-practical-1". Unique so a future `/exam?test=:slug` has a stable address. */
+  slug: text('slug').notNull().unique(),
+  subject: testSubjectEnum('subject').notNull(),
+  description: text('description'),
+  /** What the instructions screen calls the one section the paper has. */
+  sectionName: text('section_name').notNull().default('Section 1'),
+  /** Shown under the test name on the instructions screen, like `PAPER.tagline`. */
+  tagline: text('tagline'),
+  /** Minutes here, seconds on `ExamAttempt` — a form asks for minutes, the clock counts seconds. */
+  durationMinutes: integer('duration_minutes').notNull().default(15),
+  /**
+   * The pass mark. Not derived from the questions' marks: a paper can be
+   * marked out of 50 and pass at 20, and which it is, is the author's call.
+   */
+  qualifyingMarks: integer('qualifying_marks').notNull().default(0),
+  /** `draft` tests are only visible in the admin list; publishing is what offers one to a candidate. */
+  status: examStatusEnum('status').notNull().default('draft'),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Test = typeof tests.$inferSelect;
+export type NewTest = typeof tests.$inferInsert;
+
+/**
+ * One question of one test.
+ *
+ * The columns are the fields every question has whatever it is sat in — what
+ * the admin list, and any later "questions by topic" report, need to read
+ * without unpacking JSON. The two `jsonb` columns hold what differs by
+ * subject:
+ *
+ * - `content` is what the candidate starts from: a Word passage's lines, or a
+ *   spreadsheet's grid of cells.
+ * - `operations` is what the question asks them to do, in the vocabulary of
+ *   `src/exam/authoring/types.ts` — *not* the model answer it produces. The
+ *   model answer is derived on read, which is what stops a question and its
+ *   worked answer from describing different tasks, and is what an answer key
+ *   for authored papers would be derived from too.
+ *
+ * Neither is queried by the database, only by the builders, so a column each
+ * rather than a table each: normalising a passage into rows and a model answer
+ * into criteria would buy nothing but joins.
+ */
+export const testQuestions = pgTable(
+  'test_questions',
+  {
+    id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    testId: uuid('test_id')
+      .notNull()
+      .references(() => tests.id, { onDelete: 'cascade' }),
+    /** 1-based, and what the candidate sees as the question number. */
+    position: integer('position').notNull(),
+    /**
+     * Matches the test's own subject, checked on write (`src/db/tests.ts`)
+     * rather than by a constraint — Postgres has no cheap way to enforce a
+     * child column equals its parent's. Denormalised so a question row builds
+     * into an `ExamQuestion` without needing its test alongside it.
+     */
+    subject: testSubjectEnum('subject').notNull(),
+    /** What the question exercises — "Character Formatting", "Merge & Center". */
+    topic: text('topic').notNull(),
+    difficulty: questionDifficultyEnum('difficulty').notNull().default('Easy'),
+    marks: integer('marks').notNull().default(1),
+    instructionEn: text('instruction_en').notNull(),
+    instructionHi: text('instruction_hi').notNull(),
+    /** The ribbon route, one step per element. Shown after the paper closes, never during. */
+    solutionEn: text('solution_en').array().notNull().default([]),
+    solutionHi: text('solution_hi').array().notNull().default([]),
+    content: jsonb('content').$type<QuestionContentRow>().notNull(),
+    operations: jsonb('operations').$type<QuestionOperationRow[]>().notNull().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Two questions numbered 7 would put the palette, the answer key and the
+  // result screen into disagreement about which one was answered.
+  (table) => [unique('test_questions_position_unique').on(table.testId, table.position)],
+);
+
+export type TestQuestion = typeof testQuestions.$inferSelect;
+export type NewTestQuestion = typeof testQuestions.$inferInsert;
+
+/**
+ * The `jsonb` payloads, named here only so the columns above are typed.
+ *
+ * Structurally the authoring types, and deliberately declared rather than
+ * imported: `schema.ts` is read by `drizzle.config.ts`, which runs outside
+ * Next's module resolution and cannot follow a `@/` path. `src/db/tests.ts` is
+ * where the two are reconciled, and the assignment is checked there against
+ * the real types rather than asserted here.
+ */
+export interface WordContentRow {
+  subject: 'word';
+  /** One paragraph per line, per language. */
+  lines: { en: string[]; hi: string[] };
+  /** `'all'`, or the character range of the one line the question names. */
+  scope: 'all' | { from: number; to: number };
+}
+
+export interface ExcelContentRow {
+  subject: 'excel';
+  /** One array per row, one string per cell, per language. Only labels may differ. */
+  grid: { en: string[][]; hi: string[][] };
+  /** A non-default starting view, for a question whose task is to restore it. */
+  startingView?: { showGridlines?: boolean; showHeadings?: boolean };
+}
+
+export type QuestionContentRow = WordContentRow | ExcelContentRow;
+
+/** One `WordOperation` or `ExcelOperation`; see `src/exam/authoring/types.ts`. */
+export interface QuestionOperationRow {
+  kind: string;
+  [key: string]: unknown;
+}

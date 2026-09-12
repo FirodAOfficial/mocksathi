@@ -57,6 +57,13 @@
       "when": 1789203475264,
       "tag": "0007_gray_whizzer",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789205380528,
+      "tag": "0008_safe_komodo",
+      "breakpoints": true
     }
   ]
 }

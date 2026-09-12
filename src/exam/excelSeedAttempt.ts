@@ -1,14 +1,12 @@
-import type { RangeAddress } from '@/spreadsheet/model/address';
 import type { CellValue } from '@/spreadsheet/model/Cell';
-import { blankSnapshot, type WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
-import type { CellStyle } from '@/spreadsheet/model/styles';
+import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
+import { buildExcelQuestion, range, sheetOf, type ExcelOperation } from './authoring';
 import type {
   Difficulty,
   ExamAttempt,
   ExcelQuestion,
   Language,
   Localised,
-  WorkbookAnswer,
 } from './types';
 
 /**
@@ -32,30 +30,6 @@ import type {
 /* -- Building a starting sheet -------------------------------------------- */
 
 type Row = readonly CellValue[];
-
-/** A sheet from rows of values, with `null` for a cell left empty. */
-function sheetOf(rows: readonly Row[]): WorkbookSnapshot {
-  const snapshot = blankSnapshot();
-  const sheet = snapshot.sheets[0]!;
-
-  rows.forEach((row, rowIndex) => {
-    row.forEach((value, colIndex) => {
-      if (value === null || value === undefined) return;
-      sheet.cells.push({ row: rowIndex, col: colIndex, value });
-    });
-  });
-
-  return snapshot;
-}
-
-function range(startRow: number, startCol: number, endRow: number, endCol: number): RangeAddress {
-  return { start: { row: startRow, col: startCol }, end: { row: endRow, col: endCol } };
-}
-
-/** A model answer that only applies formatting to one range. */
-function formats(target: RangeAddress, style: Partial<CellStyle>): WorkbookAnswer {
-  return { styles: [{ range: target, style }] };
-}
 
 function steps(en: string[], hi: string[]): Localised<string[]> {
   return { en, hi };
@@ -134,7 +108,15 @@ interface Draft {
   solution: Localised<string[]>;
   /** The sheet the candidate starts from. Labels differ by language. */
   sheet: (language: Language) => WorkbookSnapshot;
-  modelAnswer: WorkbookAnswer;
+  /**
+   * What the question asks for, as spreadsheet operations rather than as the
+   * workbook they produce.
+   *
+   * The model answer is derived from these by `buildExcelQuestion` — the same
+   * route a paper authored in the admin form takes — so a question and its
+   * worked answer cannot describe different tasks.
+   */
+  operations: ExcelOperation[];
   marks: number;
 }
 
@@ -175,10 +157,7 @@ const DRAFTS: Draft[] = [
       ['A1:D1 श्रेणी चुनें।', 'Home टैब के Alignment समूह में Merge & Center पर क्लिक करें।'],
     ),
     sheet: (language) => sheetOf([[HEAD[language].enrollment!]]),
-    modelAnswer: {
-      merges: [TARGETS.q1Title],
-      styles: [{ range: TARGETS.q1Title, style: { horizontalAlignment: 'center' } }],
-    },
+    operations: [{ kind: 'merge', range: TARGETS.q1Title, centre: true }],
     marks: 3,
   },
   {
@@ -203,7 +182,9 @@ const DRAFTS: Draft[] = [
       ],
     ),
     sheet: (language) => sheetOf([[HEAD[language].employees!]]),
-    modelAnswer: formats(TARGETS.q2Title, { fontFamily: 'Calibri', fontSize: 20, bold: true }),
+    operations: [
+      { kind: 'style', range: TARGETS.q2Title, style: { fontFamily: 'Calibri', fontSize: 20, bold: true } },
+    ],
     marks: 3,
   },
   {
@@ -234,12 +215,13 @@ const DRAFTS: Draft[] = [
         [HEAD[language].employees!],
         [HEAD[language].name!, HEAD[language].department!, HEAD[language].salary!, HEAD[language].status!],
       ]),
-    modelAnswer: formats(TARGETS.q3Header, {
-      fontColor: '#002060',
-      fillColor: '#ffff00',
-      fontSize: 19,
-      italic: true,
-    }),
+    operations: [
+      {
+        kind: 'style',
+        range: TARGETS.q3Header,
+        style: { fontColor: '#002060', fillColor: '#ffff00', fontSize: 19, italic: true },
+      },
+    ],
     marks: 3,
   },
   {
@@ -258,16 +240,9 @@ const DRAFTS: Draft[] = [
         [HEAD[language].studentId!, HEAD[language].name!, HEAD[language].course!, HEAD[language].fee!],
         ...STUDENTS.map(([id, name, course, fee]) => [id, name, course, fee] as Row),
       ]),
-    modelAnswer: {
-      // The perimeter only: the key checks that the interior is left clear,
-      // which is what separates this from All Borders.
-      styles: [
-        { range: range(0, 0, 0, 3), style: { borders: { top: { style: 'thin', color: '#000000' } } } },
-        { range: range(5, 0, 5, 3), style: { borders: { bottom: { style: 'thin', color: '#000000' } } } },
-        { range: range(0, 0, 5, 0), style: { borders: { left: { style: 'thin', color: '#000000' } } } },
-        { range: range(0, 3, 5, 3), style: { borders: { right: { style: 'thin', color: '#000000' } } } },
-      ],
-    },
+    // The perimeter only: the key checks that the interior is left clear,
+    // which is what separates this from All Borders.
+    operations: [{ kind: 'outsideBorder', range: TARGETS.q4Table }],
     marks: 3,
   },
   {
@@ -294,7 +269,9 @@ const DRAFTS: Draft[] = [
         [HEAD[language].id!, HEAD[language].name!, HEAD[language].course!, HEAD[language].fee!],
         ...STUDENTS.map(([id, name, course, fee]) => [id, name, course, fee] as Row),
       ]),
-    modelAnswer: formats(TARGETS.q5Fees, { numberFormat: '₹#,##0', fillColor: '#e36c0a' }),
+    operations: [
+      { kind: 'style', range: TARGETS.q5Fees, style: { numberFormat: '₹#,##0', fillColor: '#e36c0a' } },
+    ],
     marks: 3,
   },
   {
@@ -316,9 +293,9 @@ const DRAFTS: Draft[] = [
     ),
     sheet: (language) =>
       sheetOf([[HEAD[language].studentId!], ...STUDENTS.map(([id]) => [id] as Row)]),
-    modelAnswer: {
-      cells: PREFIXED_IDS.map((id, index) => ({ row: index + 1, col: 0, value: id })),
-    },
+    operations: [
+      { kind: 'values', cells: PREFIXED_IDS.map((id, index) => ({ row: index + 1, col: 0, value: id })) },
+    ],
     marks: 3,
   },
   {
@@ -345,14 +322,17 @@ const DRAFTS: Draft[] = [
         [HEAD[language].id!, HEAD[language].firstName!, HEAD[language].lastName!, HEAD[language].fullName!],
         ...NAMES.map(([id, first, last]) => [id, first, last] as Row),
       ]),
-    modelAnswer: {
-      cells: FULL_NAMES.map((full, index) => ({
-        row: index + 1,
-        col: 3,
-        value: full,
-        formula: `=CONCAT(B${index + 2}," ",C${index + 2})`,
-      })),
-    },
+    operations: [
+      {
+        kind: 'values',
+        cells: FULL_NAMES.map((full, index) => ({
+          row: index + 1,
+          col: 3,
+          value: full,
+          formula: `=CONCAT(B${index + 2}," ",C${index + 2})`,
+        })),
+      },
+    ],
     marks: 4,
   },
   {
@@ -371,14 +351,17 @@ const DRAFTS: Draft[] = [
         [HEAD[language].student!, HEAD[language].totalFee!, HEAD[language].paidFee!, HEAD[language].dueFee!],
         ...FEES.map(([student, total, paid]) => [student, total, paid] as Row),
       ]),
-    modelAnswer: {
-      cells: DUE_FEES.map((due, index) => ({
-        row: index + 1,
-        col: 3,
-        value: due,
-        formula: `=B${index + 2}-C${index + 2}`,
-      })),
-    },
+    operations: [
+      {
+        kind: 'values',
+        cells: DUE_FEES.map((due, index) => ({
+          row: index + 1,
+          col: 3,
+          value: due,
+          formula: `=B${index + 2}-C${index + 2}`,
+        })),
+      },
+    ],
     marks: 4,
   },
   {
@@ -399,9 +382,9 @@ const DRAFTS: Draft[] = [
       ],
     ),
     sheet: (language) => sheetOf([[HEAD[language].month!], ['Jan']]),
-    modelAnswer: {
-      cells: MONTHS.slice(1).map((month, index) => ({ row: index + 2, col: 0, value: month })),
-    },
+    operations: [
+      { kind: 'values', cells: MONTHS.slice(1).map((month, index) => ({ row: index + 2, col: 0, value: month })) },
+    ],
     marks: 4,
   },
   {
@@ -422,9 +405,9 @@ const DRAFTS: Draft[] = [
         [],
         [HEAD[language].minimum!],
       ]),
-    modelAnswer: {
-      cells: [{ ...TARGETS.q10Minimum, value: MIN_MARK, formula: '=MIN(B2:B6)' }],
-    },
+    operations: [
+      { kind: 'values', cells: [{ ...TARGETS.q10Minimum, value: MIN_MARK, formula: '=MIN(B2:B6)' }] },
+    ],
     marks: 4,
   },
   {
@@ -445,9 +428,9 @@ const DRAFTS: Draft[] = [
         [],
         [HEAD[language].maximum!],
       ]),
-    modelAnswer: {
-      cells: [{ ...TARGETS.q11Maximum, value: MAX_MARK, formula: '=MAX(B2:B6)' }],
-    },
+    operations: [
+      { kind: 'values', cells: [{ ...TARGETS.q11Maximum, value: MAX_MARK, formula: '=MAX(B2:B6)' }] },
+    ],
     marks: 4,
   },
   {
@@ -474,9 +457,9 @@ const DRAFTS: Draft[] = [
         [HEAD[language].sales!],
         [HEAD[language].monthly!, HEAD[language].january!, HEAD[language].february!, HEAD[language].march!],
       ]),
-    modelAnswer: {
-      merges: [range(0, 0, 0, 3), range(1, 0, 1, 3)],
-    },
+    // Merge Across merges each row on its own, so A1:D2 becomes two merged
+    // cells rather than one — which is what `across` says.
+    operations: [{ kind: 'merge', range: TARGETS.q12Across, across: true }],
     marks: 3,
   },
   {
@@ -501,15 +484,14 @@ const DRAFTS: Draft[] = [
       ],
     ),
     sheet: (language) => sheetOf([[HEAD[language].employees!]]),
-    modelAnswer: {
-      merges: [TARGETS.q13Heading],
-      styles: [
-        {
-          range: TARGETS.q13Heading,
-          style: { horizontalAlignment: 'center', textEffect: 'subscript', fillColor: '#ffff00' },
-        },
-      ],
-    },
+    operations: [
+      { kind: 'merge', range: TARGETS.q13Heading, centre: true },
+      {
+        kind: 'style',
+        range: TARGETS.q13Heading,
+        style: { textEffect: 'subscript', fillColor: '#ffff00' },
+      },
+    ],
     marks: 3,
   },
   {
@@ -532,7 +514,7 @@ const DRAFTS: Draft[] = [
       snapshot.sheets[0]!.view = { showGridlines: true, showHeadings: false };
       return snapshot;
     },
-    modelAnswer: { view: { showHeadings: true } },
+    operations: [{ kind: 'view', showHeadings: true }],
     marks: 3,
   },
   {
@@ -564,26 +546,27 @@ const DRAFTS: Draft[] = [
           `STU${id}`, name, course, fee, null, MONTHS[index]!, [5000, 7000, 10000, 5000][index]!,
         ] as Row),
       ]),
-    modelAnswer: { printArea: TARGETS.q15PrintArea },
+    operations: [{ kind: 'printArea', range: TARGETS.q15PrintArea }],
     marks: 3,
   },
 ];
 
 function buildQuestions(): ExcelQuestion[] {
-  return DRAFTS.map((draft, index) => ({
-    subject: 'excel' as const,
-    number: index + 1,
-    topic: draft.topic,
-    difficulty: draft.difficulty,
-    instruction: draft.instruction,
-    // A fresh sheet per question and per language: each owns its workbook, so
-    // work on one cannot leak into another.
-    workbook: { en: draft.sheet('en'), hi: draft.sheet('hi') },
-    solution: draft.solution,
-    modelAnswer: draft.modelAnswer,
-    marks: draft.marks,
-    bookmarked: false,
-  }));
+  return DRAFTS.map((draft, index) =>
+    buildExcelQuestion({
+      subject: 'excel',
+      number: index + 1,
+      topic: draft.topic,
+      difficulty: draft.difficulty,
+      instruction: draft.instruction,
+      // A fresh sheet per question and per language: each owns its workbook,
+      // so work on one cannot leak into another.
+      workbook: { en: draft.sheet('en'), hi: draft.sheet('hi') },
+      operations: draft.operations,
+      solution: draft.solution,
+      marks: draft.marks,
+    }),
+  );
 }
 
 export const EXCEL_SEED_ATTEMPT: ExamAttempt = {

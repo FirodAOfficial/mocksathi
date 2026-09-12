@@ -41,6 +41,8 @@ Key routes:
   from its sidebar (`sdd/dashboard.md`)
 - `/dashboard/today` — start something: sit the sample exam, open a `.docx`, or a blank document
   (the app's original `/` home page, before the dashboard became the default landing page)
+- `/dashboard/admin/tests` — **Test Enigma**, admin-only: write the papers candidates sit — a test
+  per exam, and a passage or sheet plus one task per question (`sdd/test-authoring.md`)
 - `/exam` — exam instructions and player
 - `/editor` — the document editor
 - `/result` — result and solutions screens (design preview, `?outcome=qualified|not-qualified`)
@@ -64,11 +66,13 @@ npm run test:watch   # vitest, watch mode
 
 ## Database
 
-Postgres backs user accounts and sessions (`src/db/`, migrated with
-[Drizzle](https://orm.drizzle.team/)). The dashboard itself still runs on hardcoded fixture data
-(`src/dashboard/seedDashboard.ts`) — it isn't wired to the database yet. The planned data layer is
-Postgres for relational/transactional data (candidates, enrollments, attempts, streaks) plus
-MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
+Postgres backs user accounts, sessions, exams, subscription plans and the papers written in Test
+Enigma (`src/db/`, migrated with [Drizzle](https://orm.drizzle.team/)). The dashboard itself still
+runs on hardcoded fixture data (`src/dashboard/seedDashboard.ts`) — it isn't wired to the database
+yet, and nor is the exam player: `/exam` still opens the sample papers in `src/exam/seedAttempt.ts`
+and `excelSeedAttempt.ts` rather than an authored one (`sdd/test-authoring.md`). The planned data
+layer is Postgres for relational/transactional data (candidates, enrollments, attempts, streaks)
+plus MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
 `sdd/dashboard.md` and `sdd/auth.md` for the phased plans.
 
 ### Local setup

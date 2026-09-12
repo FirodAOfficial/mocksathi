@@ -422,6 +422,7 @@ export async function dashboardDataFor(
             title: 'Admin',
             items: [
               { label: 'Manage Exams', icon: 'shield' as const, href: '/dashboard/admin/exams' },
+              { label: 'Test Enigma', icon: 'list-checks' as const, href: '/dashboard/admin/tests' },
               { label: 'Subscriptions', icon: 'credit-card' as const, href: '/dashboard/admin/subscriptions' },
               { label: 'Manage Plans', icon: 'credit-card' as const, href: '/dashboard/admin/plans' },
             ],
