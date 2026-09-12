@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import { requireUser } from '@/auth/cookies';
 import { fixtureFor, type ResultOutcome } from '@/exam/result';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { ResultView } from '@/components/result/ResultView';
+
+export const metadata: Metadata = {
+  title: 'Result',
+  // Behind a login; a crawler only ever reaches the redirect to /login.
+  robots: { index: false, follow: false },
+};
 
 /**
  * Design preview for the two result screens.

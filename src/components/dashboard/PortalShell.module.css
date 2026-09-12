@@ -11,10 +11,10 @@
 
   display: flex;
   align-items: stretch;
-  /* Fixed to the viewport, not min-height: the root layout's <body> (shared
-     with the document editor, which manages its own scroll regions) sets
-     `overflow: hidden`, so without a contained height here nothing under it
-     could scroll — .content below is the one region that does. */
+  /* Fixed to the viewport, not min-height: the portal is a fixed frame whose
+     sidebar and topbar stay put while one region scrolls — .content below.
+     `<body>` no longer sets `overflow: hidden` (the site pages need the
+     document to scroll), so this shell is what contains the height now. */
   height: 100vh;
   overflow: hidden;
   background: var(--db-bg);
@@ -214,11 +214,6 @@
   font-weight: 800;
   color: var(--db-text);
   line-height: 1.1;
-}
-
-.logoBy {
-  font-size: 9.5px;
-  color: var(--db-text-faint);
 }
 
 .navSection + .navSection {
@@ -530,6 +525,16 @@ a.examPickerButton:hover {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/*
+ * The footer sits inside the scroll container, so it scrolls with the page
+ * rather than being pinned to the viewport. This cancels the content column's
+ * padding so it spans the full width, and pushes it down when the page above
+ * it is short.
+ */
+.footerSlot {
+  margin: auto -20px -20px;
 }
 
 @media (max-width: 900px) {

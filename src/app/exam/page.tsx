@@ -15,7 +15,12 @@ export async function generateMetadata({
   const params = await searchParams;
   const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;
 
-  return { title: `${subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName} · MockSathi` };
+  // Bare title: the root layout's template appends the site name. Not indexed
+  // — the paper itself is behind a login.
+  return {
+    title: subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName,
+    robots: { index: false, follow: false },
+  };
 }
 
 /**

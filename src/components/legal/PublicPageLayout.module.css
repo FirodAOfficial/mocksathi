@@ -71,11 +71,6 @@
   line-height: 1.05;
 }
 
-.logoBy {
-  font-size: 9.5px;
-  color: var(--db-text-faint);
-}
-
 .card {
   width: 100%;
   max-width: 820px;

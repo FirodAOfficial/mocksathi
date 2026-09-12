@@ -9,8 +9,11 @@ import { currentPlanForUser } from '@/db/plans';
 const inter = Inter({ subsets: ['latin'], variable: '--db-font' });
 
 export const metadata: Metadata = {
-  title: 'Dashboard · Mocksathi',
+  title: 'Dashboard',
   description: 'Track streaks, mocks, and performance for your target exam.',
+  // Everything under here needs a session; a crawler only ever sees the
+  // redirect to /login.
+  robots: { index: false, follow: false },
 };
 
 /**

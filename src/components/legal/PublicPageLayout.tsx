@@ -26,7 +26,6 @@ export function PublicPageLayout({ title, lastUpdated, children }: PublicPageLay
           <div className={styles.logoMark}>M</div>
           <div>
             <div className={styles.logoName}>Mocksathi</div>
-            <div className={styles.logoBy}>by TypingSathi</div>
           </div>
         </Link>
 
