@@ -41,6 +41,8 @@ Key routes:
   from its sidebar (`sdd/dashboard.md`)
 - `/dashboard/today` — start something: sit the sample exam, open a `.docx`, or a blank document
   (the app's original `/` home page, before the dashboard became the default landing page)
+- `/dashboard/admin/tests` — **Test Enigma**, admin-only: write the papers candidates sit — a test
+  per exam, and a passage or sheet plus one task per question (`sdd/test-authoring.md`)
 - `/exam` — exam instructions and player
 - `/editor` — the document editor
 - `/result` — result and solutions screens (design preview, `?outcome=qualified|not-qualified`)
@@ -64,11 +66,14 @@ npm run test:watch   # vitest, watch mode
 
 ## Database
 
-Postgres backs user accounts and sessions (`src/db/`, migrated with
-[Drizzle](https://orm.drizzle.team/)). The dashboard itself still runs on hardcoded fixture data
-(`src/dashboard/seedDashboard.ts`) — it isn't wired to the database yet. The planned data layer is
-Postgres for relational/transactional data (candidates, enrollments, attempts, streaks) plus
-MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
+Postgres backs user accounts, sessions, exams, subscription plans and the papers written in Test
+Enigma (`src/db/`, migrated with [Drizzle](https://orm.drizzle.team/)). The dashboard itself still
+runs on hardcoded fixture data (`src/dashboard/seedDashboard.ts`) — it isn't wired to the database
+yet. The exam player is: `/exam` opens the oldest published test for the subject asked for, and
+marks it against a key derived from that test's own questions, falling back to the sample papers in
+`src/exam/seedAttempt.ts` when nothing has been published (`sdd/test-authoring.md`). The planned
+data layer is Postgres for relational/transactional data (candidates, enrollments, attempts,
+streaks) plus MongoDB for flexible content (question bank, analysis blobs) — not finalised. See
 `sdd/dashboard.md` and `sdd/auth.md` for the phased plans.
 
 ### Local setup
@@ -111,6 +116,12 @@ npm run db:down         # stops both containers (data persists in their volumes;
 
 Migrations are checked-in SQL files under `db/migrations/`, generated from `src/db/schema.ts` —
 edit the schema, then run `db:generate`, review the generated SQL, and commit both.
+
+`db/seeds/` is the other half of that: optional SQL that **nothing runs for you**, because it is
+content rather than schema. `db/seeds/sample-papers.sql` inserts the two sample papers (Word and
+Excel, 15 questions each) as real `tests` rows, so a fresh database has something to click around
+without typing thirty questions into Test Enigma first. It is safe to re-run and safe on an empty
+database — see `db/seeds/README.md`.
 
 ### Browsing data live — Drizzle Gateway
 

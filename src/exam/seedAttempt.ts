@@ -1,13 +1,12 @@
 import type { JSONContent } from '@tiptap/core';
-import { INDENT_STEP_PX } from '@/utils/indent';
-import type {
-  Difficulty,
-  ExamAttempt,
-  Language,
-  Localised,
-  ModelAnswer,
-  WordQuestion,
-} from './types';
+import {
+  buildWordQuestion,
+  steps,
+  type WordOperation,
+  type WordQuestionDraft,
+  type WordScope,
+} from './authoring';
+import type { Difficulty, ExamAttempt, Language, Localised, WordQuestion } from './types';
 
 /**
  * The demo paper: Word-operation tasks, in Hindi and English.
@@ -25,17 +24,6 @@ import type {
  * once questions come from a real source. The answer key lives separately, and
  * server-side, in `src/server/marking/questionBank.ts`.
  */
-
-/** Builds a passage from one paragraph per line. */
-function passage(...lines: string[]): JSONContent {
-  return {
-    type: 'doc',
-    content: lines.map((line) => ({
-      type: 'paragraph',
-      content: line === '' ? [] : [{ type: 'text', text: line }],
-    })),
-  };
-}
 
 /*
  * The passages. Several questions reuse one, which is deliberate: the same text
@@ -89,22 +77,20 @@ interface Draft {
   passage: string;
   /** The ribbon route, step by step, shown on the solutions screen. */
   solution: Localised<string[]>;
-  modelAnswer: ModelAnswer;
+  /**
+   * What the question asks for, as ribbon operations rather than as the
+   * formatting they produce.
+   *
+   * The model answer is derived from these by `buildWordQuestion`, which is
+   * the same route a paper authored in the admin form takes. Stating the
+   * operation and deriving the answer is what stops a question that says
+   * "make it bold" from shipping a worked answer that italicises it.
+   */
+  operations: WordOperation[];
+  /** Whole paragraph unless the question names one line — questions 8 and 13. */
+  scope: WordScope;
   marks: number;
 }
-
-/** Formatting applied to the whole paragraph, which is most of the paper. */
-const whole = (marks: ModelAnswer['marks'], attrs?: ModelAnswer['attrs']): ModelAnswer => ({
-  scope: 'all',
-  ...(marks ? { marks } : {}),
-  ...(attrs ? { attrs } : {}),
-});
-
-/** Formatting applied to the one wrapped line questions 8 and 13 name. */
-const lineTwo = (marks: ModelAnswer['marks']): ModelAnswer => ({
-  scope: { ...BOAT_LINE_TWO },
-  marks,
-});
 
 /**
  * Every question starts by choosing what to format, so every solution starts
@@ -120,14 +106,6 @@ const SELECT_LINE_TWO: Localised<string> = {
   hi: 'पैराग्राफ की दूसरी लाइन पर ड्रैग करें — वह लाइन जो “had used it” से शुरू होती है।',
 };
 
-/** Builds a solution: the selection step, then the ribbon steps. */
-function steps(first: Localised<string>, ...rest: Localised<string>[]): Localised<string[]> {
-  return {
-    en: [first.en, ...rest.map((step) => step.en)],
-    hi: [first.hi, ...rest.map((step) => step.hi)],
-  };
-}
-
 const DRAFTS: Draft[] = [
   {
     topic: "Character Formatting",
@@ -142,7 +120,8 @@ const DRAFTS: Draft[] = [
       { en: "On the Home tab, in the Font group, click Bold (B).", hi: "Home टैब के Font ग्रुप में Bold (B) पर क्लिक करें।" },
       { en: "Click Underline (U) in the same group.", hi: "उसी ग्रुप में Underline (U) पर क्लिक करें।" },
     ),
-    modelAnswer: whole([{ type: 'bold' }, { type: 'underline' }]),
+    operations: [{ kind: 'bold' }, { kind: 'underline' }],
+    scope: 'all',
     marks: 4,
   },
   {
@@ -158,7 +137,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Font group, open the arrow beside Text Highlight Colour.", hi: "Font ग्रुप में Text Highlight Colour के बगल वाले तीर को खोलें।" },
       { en: "Pick the bright green swatch — the second colour in the top row.", hi: "चमकीला हरा स्वैच चुनें — ऊपर की पंक्ति का दूसरा रंग।" },
     ),
-    modelAnswer: whole([{ type: 'highlight', attrs: { color: '#00ff00' } }]),
+    operations: [{ kind: 'highlight', color: '#00ff00' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -174,7 +154,8 @@ const DRAFTS: Draft[] = [
       { en: "Open the Font name box in the Font group.", hi: "Font ग्रुप में Font name बॉक्स खोलें।" },
       { en: "Choose Times New Roman from the list.", hi: "सूची में से Times New Roman चुनें।" },
     ),
-    modelAnswer: whole([{ type: 'textStyle', attrs: { fontFamily: 'Times New Roman' } }]),
+    operations: [{ kind: 'fontFamily', family: 'Times New Roman' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -190,7 +171,8 @@ const DRAFTS: Draft[] = [
       { en: "Click inside the Font Size box in the Font group.", hi: "Font ग्रुप के Font Size बॉक्स में क्लिक करें।" },
       { en: "Type 15 and press Enter. 15 is not on the drop-down list, so it has to be typed.", hi: "15 टाइप करके Enter दबाएँ। 15 ड्रॉप-डाउन सूची में नहीं है, इसलिए इसे टाइप करना ज़रूरी है।" },
     ),
-    modelAnswer: whole([{ type: 'textStyle', attrs: { fontSize: '15pt' } }]),
+    operations: [{ kind: 'fontSize', size: 15 }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -205,7 +187,8 @@ const DRAFTS: Draft[] = [
       SELECT_ALL,
       { en: "On the Home tab, in the Paragraph group, click Center.", hi: "Home टैब के Paragraph ग्रुप में Center पर क्लिक करें।" },
     ),
-    modelAnswer: whole(undefined, { textAlign: 'center' }),
+    operations: [{ kind: 'align', align: 'center' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -221,7 +204,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Paragraph group, open the Line Spacing menu.", hi: "Paragraph ग्रुप में Line Spacing मेन्यू खोलें।" },
       { en: "Choose 2.0.", hi: "2.0 चुनें।" },
     ),
-    modelAnswer: whole(undefined, { lineHeight: 2 }),
+    operations: [{ kind: 'lineHeight', value: 2 }],
+    scope: 'all',
     marks: 4,
   },
   {
@@ -237,7 +221,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Paragraph group, click Increase Indent once.", hi: "Paragraph ग्रुप में Increase Indent पर एक बार क्लिक करें।" },
       { en: "One click is one level; a second click indents too far.", hi: "एक क्लिक एक लेवल है; दूसरा क्लिक ज़्यादा इंडेंट कर देगा।" },
     ),
-    modelAnswer: whole(undefined, { indentLeft: INDENT_STEP_PX }),
+    operations: [{ kind: 'indent', levels: 1 }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -253,7 +238,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Font group, click Underline (U).", hi: "Font ग्रुप में Underline (U) पर क्लिक करें।" },
       { en: "Leave the rest of the passage untouched.", hi: "बाकी पैराग्राफ को वैसा ही छोड़ दें।" },
     ),
-    modelAnswer: lineTwo([{ type: 'underline' }]),
+    operations: [{ kind: 'underline' }],
+    scope: BOAT_LINE_TWO,
     marks: 4,
   },
   {
@@ -268,7 +254,8 @@ const DRAFTS: Draft[] = [
       SELECT_ALL,
       { en: "Open the Font Size box in the Font group and choose 8.", hi: "Font ग्रुप में Font Size बॉक्स खोलकर 8 चुनें।" },
     ),
-    modelAnswer: whole([{ type: 'textStyle', attrs: { fontSize: '8pt' } }]),
+    operations: [{ kind: 'fontSize', size: 8 }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -283,7 +270,8 @@ const DRAFTS: Draft[] = [
       SELECT_ALL,
       { en: "On the Home tab, in the Paragraph group, click Justify.", hi: "Home टैब के Paragraph ग्रुप में Justify पर क्लिक करें।" },
     ),
-    modelAnswer: whole(undefined, { textAlign: 'justify' }),
+    operations: [{ kind: 'align', align: 'justify' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -299,7 +287,8 @@ const DRAFTS: Draft[] = [
       { en: "Open the Font name box in the Font group.", hi: "Font ग्रुप में Font name बॉक्स खोलें।" },
       { en: "Choose Calibri. It has to be chosen, not left as the default.", hi: "Calibri चुनें। इसे चुनना ज़रूरी है, डिफ़ॉल्ट पर छोड़ना काफी नहीं है।" },
     ),
-    modelAnswer: whole([{ type: 'textStyle', attrs: { fontFamily: 'Calibri' } }]),
+    operations: [{ kind: 'fontFamily', family: 'Calibri' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -315,7 +304,8 @@ const DRAFTS: Draft[] = [
       { en: "On the Home tab, in the Font group, click Bold (B).", hi: "Home टैब के Font ग्रुप में Bold (B) पर क्लिक करें।" },
       { en: "Click Italic (I) in the same group.", hi: "उसी ग्रुप में Italic (I) पर क्लिक करें।" },
     ),
-    modelAnswer: whole([{ type: 'bold' }, { type: 'italic' }]),
+    operations: [{ kind: 'bold' }, { kind: 'italic' }],
+    scope: 'all',
     marks: 4,
   },
   {
@@ -331,7 +321,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Font group, open the arrow beside Text Highlight Colour.", hi: "Font ग्रुप में Text Highlight Colour के बगल वाले तीर को खोलें।" },
       { en: "Pick red — the first colour in the second row.", hi: "लाल चुनें — दूसरी पंक्ति का पहला रंग।" },
     ),
-    modelAnswer: lineTwo([{ type: 'highlight', attrs: { color: '#ff0000' } }]),
+    operations: [{ kind: 'highlight', color: '#ff0000' }],
+    scope: BOAT_LINE_TWO,
     marks: 4,
   },
   {
@@ -347,7 +338,8 @@ const DRAFTS: Draft[] = [
       { en: "In the Font group, open the arrow beside Font Colour.", hi: "Font ग्रुप में Font Colour के बगल वाले तीर को खोलें।" },
       { en: "Pick red from the palette.", hi: "पैलेट में से लाल चुनें।" },
     ),
-    modelAnswer: whole([{ type: 'textStyle', attrs: { color: '#ff0000' } }]),
+    operations: [{ kind: 'fontColor', color: '#ff0000' }],
+    scope: 'all',
     marks: 3,
   },
   {
@@ -363,26 +355,39 @@ const DRAFTS: Draft[] = [
       { en: "On the Home tab, in the Font group, click Bold (B).", hi: "Home टैब के Font ग्रुप में Bold (B) पर क्लिक करें।" },
       { en: "Apply nothing else — bold is the whole question.", hi: "और कुछ न लगाएँ — सवाल सिर्फ bold का है।" },
     ),
-    modelAnswer: whole([{ type: 'bold' }]),
+    operations: [{ kind: 'bold' }],
+    scope: 'all',
     marks: 3,
   },
 ];
 
+/**
+ * The paper as authoring drafts — the same shape a `test_questions` row becomes.
+ *
+ * Exported so the answer key can be checked against it: `rubricFromOperations`
+ * derives a key from exactly these operations, and the test asserts the key it
+ * produces marks this paper's own model answers as correct. Without the drafts
+ * in reach, that check would have to restate all fifteen questions' operations,
+ * and then it would be testing the restatement.
+ */
+export const WORD_DRAFTS: WordQuestionDraft[] = DRAFTS.map((draft, index) => ({
+  subject: 'word',
+  number: index + 1,
+  topic: draft.topic,
+  difficulty: draft.difficulty,
+  instruction: draft.instruction,
+  // One paragraph, the same text in both languages — only the instruction is
+  // translated, because the two line-scoped questions measure their offsets
+  // against this exact wording.
+  lines: { en: [draft.passage], hi: [draft.passage] },
+  scope: draft.scope,
+  operations: draft.operations,
+  solution: draft.solution,
+  marks: draft.marks,
+}));
+
 function buildQuestions(): WordQuestion[] {
-  return DRAFTS.map((draft, index) => ({
-    subject: 'word' as const,
-    number: index + 1,
-    topic: draft.topic,
-    difficulty: draft.difficulty,
-    instruction: draft.instruction,
-    passage: { en: passage(draft.passage), hi: passage(draft.passage) },
-    solution: draft.solution,
-    modelAnswer: draft.modelAnswer,
-    marks: draft.marks,
-    // Every question starts untouched: nothing is flagged for review until the
-    // candidate flags it.
-    bookmarked: false,
-  }));
+  return WORD_DRAFTS.map(buildWordQuestion);
 }
 
 export const SEED_ATTEMPT: ExamAttempt = {

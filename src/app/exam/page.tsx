@@ -1,10 +1,15 @@
 import { requireVerifiedUser } from '@/auth/cookies';
+import { paperFor } from '@/db/tests';
 import { EXCEL_PAPER, PAPER } from '@/exam/result';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
-import { isLanguage } from '@/exam/types';
+import { isLanguage, type ExamAttempt } from '@/exam/types';
 import { InstructionsScreen } from '@/components/exam/InstructionsScreen';
 import type { Metadata } from 'next';
+
+function first(value: string | string[] | undefined): string | null {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
 
 /** The tab says which paper is about to be sat, not just "Editor". */
 export async function generateMetadata({
@@ -13,12 +18,15 @@ export async function generateMetadata({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;
+  const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
+  const paper = await paperFor({ slug: first(params.test), subject });
 
   // Bare title: the root layout's template appends the site name. Not indexed
-  // — the paper itself is behind a login.
+  // — the paper itself is behind a login. The authored paper's own name when
+  // there is one, so the tab says which paper is about to be sat rather than
+  // naming the sample it fell back to.
   return {
-    title: subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName,
+    title: paper?.identity.testName ?? (subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName),
     robots: { index: false, follow: false },
   };
 }
@@ -30,29 +38,41 @@ export async function generateMetadata({
  * shell only ever renders a paper that is already under way — it has a running
  * clock and an auto-submit, neither of which should start while someone is
  * still reading the rules.
+ *
+ * **Where the paper comes from.** `?test=<slug>` names one; otherwise it is
+ * today's, which is the oldest published test of the requested subject
+ * (`todaysTest`). If neither exists — a fresh database with nothing authored —
+ * the sample paper in `src/exam/seedAttempt.ts` stands in, so this page works
+ * before an admin has written anything. Which of the two it was does not reach
+ * any component below: both arrive as an ordinary `ExamAttempt`.
  */
 export default async function ExamInstructionsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireVerifiedUser();
+  const user = await requireVerifiedUser();
   const params = await searchParams;
-  const raw = Array.isArray(params.lang) ? params.lang[0] : params.lang;
-  const subject = Array.isArray(params.subject) ? params.subject[0] : params.subject;
+  const raw = first(params.lang);
 
   // Anything other than `excel` is the Word paper, which is what a bare `/exam`
   // has always meant and what every existing link points at.
-  const excel = subject === 'excel';
-  const attempt = excel ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;
-  const paper = excel ? EXCEL_PAPER : PAPER;
+  const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
+
+  const paper = await paperFor({ slug: first(params.test), subject }, user.name);
+
+  const fallbackAttempt: ExamAttempt = subject === 'excel' ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;
+  const fallbackIdentity = subject === 'excel' ? EXCEL_PAPER : PAPER;
 
   return (
     <InstructionsScreen
-      attempt={attempt}
-      testName={paper.testName}
-      maximumMarks={paper.maximumMarks}
-      qualifyingMarks={paper.qualifyingMarks}
+      attempt={paper?.attempt ?? fallbackAttempt}
+      testName={paper?.identity.testName ?? fallbackIdentity.testName}
+      maximumMarks={paper?.identity.maximumMarks ?? fallbackIdentity.maximumMarks}
+      qualifyingMarks={paper?.identity.qualifyingMarks ?? fallbackIdentity.qualifyingMarks}
+      // Carried onward so the shell opens the same paper these figures describe,
+      // rather than resolving "today's" a second time and possibly differently.
+      testSlug={paper?.slug ?? null}
       initialLanguage={isLanguage(raw) ? raw : 'en'}
     />
   );

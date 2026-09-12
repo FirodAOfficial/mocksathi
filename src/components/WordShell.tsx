@@ -10,7 +10,7 @@ import type { ExamResult } from '@/exam/result';
 import { SubmissionError, submitAttempt } from '@/exam/submitAttempt';
 import { elapsedSeconds, selectIsLocked, useExamStore } from '@/state/examStore';
 import type { DocumentMetadata } from '@/services/document/types';
-import type { Language } from '@/exam/types';
+import type { ExamAttempt, Language } from '@/exam/types';
 import { useUiStore } from '@/state/uiStore';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
@@ -41,6 +41,24 @@ export interface WordShellProps {
   exam?: boolean;
   /** The language the paper is sat in. Ignored outside an exam. */
   language?: Language;
+  /**
+   * The authored paper to sit, or null for the sample one.
+   *
+   * Resolved on the server and passed in, rather than fetched here: the store
+   * defaults to the fixture, and a paper that arrived a tick after the clock
+   * started would mean the candidate's first seconds were spent on a question
+   * that then vanished.
+   */
+  attempt?: ExamAttempt | null;
+  /**
+   * Which stored test this is, sent with the submission so the server marks
+   * the paper the candidate was actually given.
+   *
+   * An id, not the paper: the questions, the marks and the answer key are all
+   * re-loaded server-side from it, so this cannot be used to influence a score
+   * — the same reason `subject` is the only other thing the client gets to say.
+   */
+  testId?: string | null;
 }
 
 type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | null;
@@ -52,7 +70,13 @@ type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | null;
  * the small amount of state that genuinely spans them — which dialog is open,
  * the page estimate, and whether the formatting notice has been dismissed.
  */
-export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' }: WordShellProps) {
+export function WordShell({
+  docUrl,
+  exam = false,
+  language: examLanguage = 'en',
+  attempt: paper = null,
+  testId = null,
+}: WordShellProps) {
   const { editor, status, error, metadata, retry } = useDocumentEditor(docUrl);
   const format = useFormatState(editor);
   const clipboard = useClipboard(editor);
@@ -135,8 +159,13 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
    * instead of a blank paper.
    */
   useEffect(() => {
-    if (exam) startAttempt(examLanguage);
-  }, [exam, startAttempt, examLanguage]);
+    if (!exam) return;
+    // The authored paper first, so the clock `startAttempt` starts is running
+    // on the questions the candidate is about to be shown. With none, the
+    // store's own default — the sample paper — stands.
+    if (paper) setAttempt(paper);
+    startAttempt(examLanguage);
+  }, [exam, paper, setAttempt, startAttempt, examLanguage]);
 
   /*
    * The panel shows "Candidate" (the `SEED_ATTEMPT` fixture's default) until
@@ -178,6 +207,7 @@ export function WordShell({ docUrl, exam = false, language: examLanguage = 'en' 
           {
             answers,
             subject: 'word',
+            testId,
             language,
             timePerQuestion,
             totalTimeSeconds: elapsedSeconds(startedAt),

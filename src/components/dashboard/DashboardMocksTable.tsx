@@ -30,6 +30,7 @@ function StatusPill({ mock }: { mock: MockSummary }) {
     case 'done':
       return <span className={styles.statusDone}>Completed</span>;
     case 'today':
+    case 'available':
       return <span className={styles.statusOpen}>Not Attempted</span>;
     case 'missed':
       return <span className={styles.statusOpen}>Missed</span>;
@@ -47,10 +48,20 @@ function ActionCell({ mock }: { mock: MockSummary }) {
         </Link>
       );
     case 'today':
-      return (
+    case 'available':
+      // A paper with no questions cannot be sat — `loadPaper` returns null for
+      // one, and `/exam` then falls back to a *different* paper. Offering Start
+      // here would quietly open something the candidate did not choose.
+      if (mock.testSlug && mock.questionCount === 0) {
+        return <span className={styles.actionPending}>No questions yet</span>;
+      }
+      // Same rule as the All Mocks table — see `src/dashboard/mockRoutes.ts`.
+      return mock.testSlug ? (
         <Link href={startHrefFor(mock)} className={styles.actionFilled}>
           Start Mock
         </Link>
+      ) : (
+        <span className={styles.actionPending}>Not yet open</span>
       );
     default:
       return (
@@ -108,6 +119,14 @@ export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
           <span>Status</span>
           <span className={styles.right}>Action</span>
         </div>
+
+        {visible.length === 0 && (
+          <p className={styles.empty}>
+            {mocks.length === 0
+              ? 'No papers published yet.'
+              : 'No papers of that type yet.'}
+          </p>
+        )}
 
         {visible.map((mock) => {
           const type = TYPE_META[mock.mockType];

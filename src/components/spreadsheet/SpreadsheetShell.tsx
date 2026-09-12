@@ -10,7 +10,7 @@ import { ResultView } from '@/components/result/ResultView';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import type { ExamResult } from '@/exam/result';
 import { SubmissionError, submitAttempt } from '@/exam/submitAttempt';
-import type { Language } from '@/exam/types';
+import type { ExamAttempt, Language } from '@/exam/types';
 import { useDrawerLayout } from '@/hooks/useMediaQuery';
 import { WorkbookStore } from '@/spreadsheet/WorkbookStore';
 import { useQuestionWorkbooks } from '@/spreadsheet/useQuestionWorkbooks';
@@ -47,9 +47,32 @@ export interface SpreadsheetShellProps {
   exam?: boolean;
   /** The language the paper is sat in. Ignored outside an exam. */
   language?: Language;
+  /**
+   * The authored paper to sit, or null for the sample one.
+   *
+   * Resolved on the server and passed in, rather than fetched here: the store
+   * defaults to the fixture, and a paper that arrived a tick after the clock
+   * started would mean the candidate's first seconds were spent on a question
+   * that then vanished.
+   */
+  attempt?: ExamAttempt | null;
+  /**
+   * Which stored test this is, sent with the submission so the server marks
+   * the paper the candidate was actually given.
+   *
+   * An id, not the paper: the questions, the marks and the answer key are all
+   * re-loaded server-side from it, so this cannot be used to influence a score
+   * — the same reason `subject` is the only other thing the client gets to say.
+   */
+  testId?: string | null;
 }
 
-export function SpreadsheetShell({ exam = false, language = 'en' }: SpreadsheetShellProps) {
+export function SpreadsheetShell({
+  exam = false,
+  language = 'en',
+  attempt: paper = null,
+  testId = null,
+}: SpreadsheetShellProps) {
   // Created once, and never put in state: the store is mutable and owns a
   // workbook of Maps. Passing it through `useState`'s initialiser is how it
   // survives re-renders without React trying to diff it.
@@ -57,12 +80,22 @@ export function SpreadsheetShell({ exam = false, language = 'en' }: SpreadsheetS
 
   return (
     <WorkbookProvider value={store}>
-      <ShellBody exam={exam} examLanguage={language} />
+      <ShellBody exam={exam} examLanguage={language} paper={paper} testId={testId} />
     </WorkbookProvider>
   );
 }
 
-function ShellBody({ exam, examLanguage }: { exam: boolean; examLanguage: Language }) {
+function ShellBody({
+  exam,
+  examLanguage,
+  paper,
+  testId,
+}: {
+  exam: boolean;
+  examLanguage: Language;
+  paper: ExamAttempt | null;
+  testId: string | null;
+}) {
   const store = useWorkbookStore();
   useWorkbookVersion();
 
@@ -100,9 +133,10 @@ function ShellBody({ exam, examLanguage }: { exam: boolean; examLanguage: Langua
    */
   useEffect(() => {
     if (!exam) return;
-    setAttempt(EXCEL_SEED_ATTEMPT);
+    // The authored paper, or the sample one when nothing has been published.
+    setAttempt(paper ?? EXCEL_SEED_ATTEMPT);
     startAttempt(examLanguage);
-  }, [exam, setAttempt, startAttempt, examLanguage]);
+  }, [exam, paper, setAttempt, startAttempt, examLanguage]);
 
   /*
    * The candidate's own name on the panel, once the session check resolves.
@@ -144,6 +178,7 @@ function ShellBody({ exam, examLanguage }: { exam: boolean; examLanguage: Langua
           {
             answers,
             subject: 'excel',
+            testId,
             language,
             timePerQuestion,
             totalTimeSeconds: elapsedSeconds(startedAt),

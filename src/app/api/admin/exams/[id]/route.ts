@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/auth/cookies';
 import { db } from '@/db/client';
-import { exams } from '@/db/schema';
+import { enrollments, exams, tests } from '@/db/schema';
 import { parseExamInput, type ExamInput } from '@/db/examInput';
 import { isUniqueViolation } from '@/db/pgErrors';
 import { slugify } from '@/db/slug';
@@ -59,4 +59,51 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
     throw error;
   }
+}
+
+
+/**
+ * Deletes an exam listing — but only one nothing depends on.
+ *
+ * `enrollments.exam_id` and `tests.exam_id` both cascade, so an unguarded
+ * `DELETE` here would silently take every candidate's registration and every
+ * paper written for the exam with it. The database would do exactly as asked
+ * and nobody would find out until a candidate opened their dashboard.
+ *
+ * So this refuses while anything points at it, and says what. An exam that has
+ * run is meant to be **archived**, not deleted: `status = 'archived'` is what
+ * that state is for, it keeps the registrations intact, and it is reversible.
+ * Deleting is for a listing added by mistake.
+ */
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+  await requireAdmin();
+  const { id } = await params;
+
+  const [existing] = await db.select().from(exams).where(eq(exams.id, id)).limit(1);
+  if (!existing) return NextResponse.json({ code: 'NOT_FOUND', detail: 'No such exam.' }, { status: 404 });
+
+  const [[papers], [registrations]] = await Promise.all([
+    db.select({ total: count() }).from(tests).where(eq(tests.examId, id)),
+    db.select({ total: count() }).from(enrollments).where(eq(enrollments.examId, id)),
+  ]);
+
+  const blocking = [
+    (papers?.total ?? 0) > 0 ? `${papers!.total} test${papers!.total === 1 ? '' : 's'}` : null,
+    (registrations?.total ?? 0) > 0
+      ? `${registrations!.total} candidate registration${registrations!.total === 1 ? '' : 's'}`
+      : null,
+  ].filter((entry) => entry !== null);
+
+  if (blocking.length > 0) {
+    return NextResponse.json(
+      {
+        code: 'EXAM_IN_USE',
+        detail: `This exam still has ${blocking.join(' and ')}, which would be deleted with it. Delete its tests first, or set its status to Archived instead — that hides the listing and keeps everything.`,
+      },
+      { status: 409 },
+    );
+  }
+
+  await db.delete(exams).where(eq(exams.id, id));
+  return NextResponse.json({ deleted: true }, { headers: { 'cache-control': 'no-store' } });
 }

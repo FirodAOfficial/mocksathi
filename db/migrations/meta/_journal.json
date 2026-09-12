@@ -61,8 +61,15 @@
     {
       "idx": 8,
       "version": "7",
+      "when": 1789205380528,
+      "tag": "0008_safe_komodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
       "when": 1789224639057,
-      "tag": "0008_gray_wilson_fisk",
+      "tag": "0009_gray_wilson_fisk",
       "breakpoints": true
     }
   ]

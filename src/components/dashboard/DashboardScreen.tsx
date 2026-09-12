@@ -1,5 +1,5 @@
 import type { CurrentPlan } from '@/db/plans';
-import type { DashboardData } from '@/dashboard/types';
+import type { DashboardData, MockSummary } from '@/dashboard/types';
 import { fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
 import { DashboardMocksTable } from './DashboardMocksTable';
 import styles from './DashboardScreen.module.css';
@@ -10,6 +10,15 @@ export interface DashboardScreenProps {
   data: DashboardData;
   /** Null before any default plan is configured — the performance card just omits the plan name then. */
   currentPlan: CurrentPlan | null;
+  /**
+   * The published papers, from `tests`.
+   *
+   * Passed in rather than read off `data`, which is still the fixture: the
+   * mocks list is the one part of this screen that is real now, and mixing the
+   * two sources inside `dashboardDataFor` would make it impossible to tell at a
+   * glance which of the numbers on this page are true.
+   */
+  mocks: MockSummary[];
 }
 
 /**
@@ -22,7 +31,7 @@ export interface DashboardScreenProps {
  * at `/dashboard/calendar` — nothing was deleted, just moved off the page
  * that was trying to show everything at once.
  */
-export function DashboardScreen({ data, currentPlan }: DashboardScreenProps) {
+export function DashboardScreen({ data, currentPlan, mocks }: DashboardScreenProps) {
   const firstName = data.candidate.name.split(' ')[0];
   const completedMocks = fixtureMocksUsedCount(data);
 
@@ -39,7 +48,7 @@ export function DashboardScreen({ data, currentPlan }: DashboardScreenProps) {
         planName={currentPlan?.plan.name ?? null}
       />
 
-      <DashboardMocksTable mocks={data.allMocks} />
+      <DashboardMocksTable mocks={mocks} />
 
       {currentPlan && !currentPlan.isSubscribed && (
         <PremiumBanner mocksUsed={completedMocks} mockLimit={currentPlan.plan.mockLimit} />

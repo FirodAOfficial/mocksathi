@@ -22,6 +22,15 @@ export interface InstructionsScreenProps {
   testName: string;
   maximumMarks: number;
   qualifyingMarks: number;
+  /**
+   * The authored paper these figures describe, or null for the sample one.
+   *
+   * Passed on to the editor so it opens the same paper, rather than resolving
+   * "today's" a second time — between reading the instructions and pressing
+   * Start, an admin publishing a test could otherwise change the answer, and
+   * the candidate would sit a paper whose duration and marks they never saw.
+   */
+  testSlug?: string | null;
   /** Which language the instructions themselves open in. */
   initialLanguage?: Language;
 }
@@ -42,6 +51,7 @@ export function InstructionsScreen({
   testName,
   maximumMarks,
   qualifyingMarks,
+  testSlug = null,
   initialLanguage = 'en',
 }: InstructionsScreenProps) {
   const router = useRouter();
@@ -215,7 +225,11 @@ export function InstructionsScreen({
             type="button"
             className={styles.primaryButton}
             disabled={!agreed}
-            onClick={() => router.push(`${isExcel ? '/spreadsheet' : '/editor'}?mode=exam&lang=${sittingIn}`)}
+            onClick={() => {
+              const editor = isExcel ? '/spreadsheet' : '/editor';
+              const test = testSlug ? `&test=${encodeURIComponent(testSlug)}` : '';
+              router.push(`${editor}?mode=exam&lang=${sittingIn}${test}`);
+            }}
           >
             {say('start')} <span aria-hidden="true">→</span>
           </button>

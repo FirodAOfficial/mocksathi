@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { ReactNode } from 'react';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -11,6 +11,8 @@ export interface MocksTableProps {
   mocks: MockSummary[];
   /** e.g. a "View all" link on the dashboard-home preview. Omitted on the full list. */
   headerRight?: ReactNode;
+  /** Shown instead of rows when there are none — an empty table reads as a broken one. */
+  emptyNote?: string;
 }
 
 function ScoreCells({ mock }: { mock: MockSummary }) {
@@ -36,10 +38,21 @@ function ScoreCells({ mock }: { mock: MockSummary }) {
 function ActionCell({ mock }: { mock: MockSummary }) {
   switch (mock.state) {
     case 'today':
-      return (
+    case 'available':
+      // A paper with no questions cannot be sat — `loadPaper` returns null for
+      // one, and `/exam` then falls back to a *different* paper. Offering Start
+      // here would quietly open something the candidate did not choose.
+      if (mock.testSlug && mock.questionCount === 0) {
+        return <span className={styles.actionPending}>No questions yet</span>;
+      }
+      // A row that names a paper opens that paper; one that does not has
+      // nothing of its own to open. See `src/dashboard/mockRoutes.ts`.
+      return mock.testSlug ? (
         <Link href={startHrefFor(mock)} className={styles.actionPrimary}>
           Start
         </Link>
+      ) : (
+        <span className={styles.actionPending}>Not yet open</span>
       );
     case 'locked':
       return (
@@ -81,8 +94,15 @@ function MockRow({ mock }: { mock: MockSummary }) {
   );
 }
 
-/** A list of `MockSummary` rows — the dashboard-home "Recent mocks" preview and the full "All Mocks" page both render through this. */
-export function MocksTable({ heading, mocks, headerRight }: MocksTableProps) {
+/**
+ * A list of `MockSummary` rows — the full "All Mocks" page renders through this.
+ *
+ * The rows are published `tests` now, not the thirty fixture mocks this used to
+ * show. The score, accuracy, rank and time columns come back empty for all of
+ * them, which is honest rather than unfinished: there is no `attempts` table,
+ * so nothing knows whether a paper has been sat.
+ */
+export function MocksTable({ heading, mocks, headerRight, emptyNote }: MocksTableProps) {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -105,6 +125,10 @@ export function MocksTable({ heading, mocks, headerRight }: MocksTableProps) {
         {mocks.map((mock) => (
           <MockRow key={mock.mockNumber} mock={mock} />
         ))}
+      </div>
+
+      <div>
+        {mocks.length === 0 && emptyNote && <p className={styles.empty}>{emptyNote}</p>}
       </div>
     </div>
   );

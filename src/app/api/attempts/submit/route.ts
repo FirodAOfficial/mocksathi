@@ -17,6 +17,8 @@ import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { isLanguage, type AnswerPayload, type ExamAttempt, type Subject } from '@/exam/types';
 import { QUESTION_BANK } from '@/server/marking/questionBank';
 import { EXCEL_QUESTION_BANK } from '@/server/marking/excelQuestionBank';
+import { rubricsFor } from '@/server/marking/rubricFromOperations';
+import { attemptFromTest, draftFromRow, getTestById, paperIdentityFor, questionsForTest } from '@/db/tests';
 
 /**
  * Marks a submitted paper.
@@ -38,6 +40,8 @@ const MAX_BODY_BYTES = 2 * 1024 * 1024;
 interface SubmitBody {
   answers: Record<string, AnswerPayload>;
   subject?: string;
+  /** The authored paper that was sat, if any. See `paperForTest`. */
+  testId?: string;
   language?: string;
   timePerQuestion?: Record<string, number>;
   totalTimeSeconds?: number;
@@ -57,6 +61,37 @@ interface Paper {
   rubrics: QuestionRubric<never>[];
   marker: SubjectMarker<unknown, never>;
   identity: { testName: string; tagline: string; maximumMarks: number; qualifyingMarks: number };
+}
+
+/**
+ * The authored paper with that id, marked against a key derived from it.
+ *
+ * The rubrics are *not* stored: they are built from the same `operations` the
+ * questions were written with (`rubricsFor`), so a paper cannot be marked
+ * against something other than what it showed the candidate. Everything else
+ * here is the same rule the fixture path follows — the questions, the marks and
+ * the key are all loaded server-side, and the request contributes only an id.
+ *
+ * Null when the id names nothing, or names a paper with no questions; the
+ * caller then falls back to the sample paper rather than 500ing on a test an
+ * admin deleted mid-sitting.
+ */
+async function paperForTest(testId: string): Promise<Paper | null> {
+  const test = await getTestById(testId);
+  if (!test) return null;
+
+  const questions = await questionsForTest(test.id);
+  if (questions.length === 0) return null;
+
+  const identity = paperIdentityFor(test, questions);
+  const excel = test.subject === 'excel';
+
+  return {
+    attempt: attemptFromTest(test, questions),
+    rubrics: rubricsFor(questions.map(draftFromRow)) as unknown as QuestionRubric<never>[],
+    marker: (excel ? SHEET_MARKER : WORD_MARKER) as unknown as SubjectMarker<unknown, never>,
+    identity,
+  };
 }
 
 function paperFor(subject: Subject): Paper {
@@ -112,9 +147,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return badRequest('The submission has no answers.');
   }
 
-  // An unknown subject falls back to the Word paper rather than 400ing, which
-  // keeps every submission from before this field existed working.
-  const paper = paperFor(isSubject(body.subject) ? body.subject : 'word');
+  // An authored paper when one was sat, the sample paper otherwise — which is
+  // also what a submission from before `testId` existed gets, and what a paper
+  // deleted mid-sitting falls back to. An unknown subject means the Word paper,
+  // which is what a bare `/exam` has always been.
+  const subject: Subject = isSubject(body.subject) ? body.subject : 'word';
+  const paper = (typeof body.testId === 'string' ? await paperForTest(body.testId) : null) ?? paperFor(subject);
 
   // A mis-authored paper would mark everyone wrongly and silently; fail loudly.
   const problems = validateQuestionBank(paper.attempt, paper.rubrics, paper.identity.maximumMarks);
