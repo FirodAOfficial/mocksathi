@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
-import { SiteFooter } from '@/components/site/SiteFooter';
+import { SiteFooterCompact } from '@/components/site/SiteFooter';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
 import { GoogleButton } from './GoogleButton';
@@ -77,7 +77,6 @@ export function LoginForm({ googleError }: LoginFormProps) {
               <div className={cardStyles.logoMark}>M</div>
               <div>
                 <div className={cardStyles.logoName}>Mocksathi</div>
-                <div className={cardStyles.logoBy}>by TypingSathi</div>
               </div>
             </div>
 
@@ -141,7 +140,7 @@ export function LoginForm({ googleError }: LoginFormProps) {
             </div>
           </div>
 
-          <SiteFooter />
+          <SiteFooterCompact />
         </div>
 
         <p className={styles.bottomTagline}>

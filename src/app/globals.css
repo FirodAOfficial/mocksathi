@@ -38,18 +38,34 @@
   box-sizing: border-box;
 }
 
+/*
+ * `min-height`, not `height`: a fixed viewport height stops an ordinary page —
+ * About, the policies — from growing past the fold, and the page then cannot
+ * scroll. Every full-viewport shell (`WordShell`, `SpreadsheetShell`,
+ * `PortalShell`) sets its own `100dvh` and clips itself, so none of them
+ * depends on this.
+ */
 html, body {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
 }
 
+/*
+ * The document deliberately scrolls.
+ *
+ * This used to be `overflow: hidden`, which belonged to the editor: its shell
+ * is a fixed viewport that must never show a page scrollbar. But the rule sat
+ * on `body`, so it applied to every route — and the site pages, which are long
+ * documents meant to be read top to bottom, could not be scrolled at all. The
+ * editors already set `overflow: hidden` on their own shells, which is where
+ * that decision belongs.
+ */
 body {
   font-family: var(--ui-font);
   color: var(--text);
   background: var(--canvas-bg);
   font-size: 12px;
-  overflow: hidden;
 }
 
 button {

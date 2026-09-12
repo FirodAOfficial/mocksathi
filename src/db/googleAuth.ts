@@ -41,6 +41,14 @@ export async function findOrCreateUserByGoogle(profile: GoogleUserInfo): Promise
       .update(users)
       .set({
         googleId: profile.sub,
+        /*
+         * Google has already verified this address — the callback refuses the
+         * sign-in when `email_verified` is false — so stamping it here is a
+         * record of that, not a claim of our own. Asking a Google user for a
+         * code we emailed to an address Google just vouched for would be
+         * theatre, and would lock them out of a dashboard they can reach.
+         */
+        emailVerifiedAt: byEmail.emailVerifiedAt ?? new Date(),
         // Only fills in a *missing* photo — never overwrites one the user
         // already has, which could be a photo they uploaded themselves after
         // signing up with email/password (`POST /api/profile/avatar`).
@@ -60,6 +68,8 @@ export async function findOrCreateUserByGoogle(profile: GoogleUserInfo): Promise
         name: profile.name,
         googleId: profile.sub,
         passwordHash: null,
+        // Verified by Google; see the comment on the linking branch above.
+        emailVerifiedAt: new Date(),
         avatarUrl: profile.picture ?? null,
       })
       .returning();

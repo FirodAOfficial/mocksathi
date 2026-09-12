@@ -1,3 +1,4 @@
+import { CONTACT } from '@/site/contact';
 import styles from './LegalContent.module.css';
 
 /**
@@ -76,7 +77,7 @@ export function RefundPolicyContent() {
       <h2>4. How to Request a Refund</h2>
       <ol>
         <li>
-          Email us at <strong>help@typingsathi.com</strong> within <strong>7 Days</strong> of the
+          Email us at <strong>{CONTACT.email}</strong> within <strong>7 Days</strong> of the
           transaction date, using the subject line &quot;Refund Request.&quot;
         </li>
         <li>
@@ -85,7 +86,7 @@ export function RefundPolicyContent() {
         </li>
         <li>
           Our team will review your request and respond within{' '}
-          <strong>[2–3 business days]</strong> confirming whether the request is approved, along with
+          <strong>2–3 business days</strong> confirming whether the request is approved, along with
           next steps.
         </li>
       </ol>
@@ -97,7 +98,7 @@ export function RefundPolicyContent() {
           card, UPI ID, or bank account used for the purchase).
         </li>
         <li>
-          Processing typically takes <strong>[7–14] working days</strong> from the date of approval,
+          Processing typically takes <strong>7–14 working days</strong> from the date of approval,
           though actual credit to your account may take a few additional days depending on your
           bank or payment provider&apos;s processing time.
         </li>
@@ -134,7 +135,7 @@ export function RefundPolicyContent() {
         </li>
         <li>
           If the amount is not reversed within this window, contact us at{' '}
-          <strong>help@typingsathi.com</strong> with your bank statement/transaction reference, and
+          <strong>{CONTACT.email}</strong> with your bank statement/transaction reference, and
           we will investigate with our payment gateway partner.
         </li>
       </ul>
@@ -150,8 +151,8 @@ export function RefundPolicyContent() {
       <h2>10. Contact Us</h2>
       <p>For any refund or cancellation-related queries, reach out to:</p>
       <ul>
-        <li><strong>Email:</strong> help@typingsathi.com</li>
-        <li><strong>Phone:</strong> +91 7690990908</li>
+        <li><strong>Email:</strong> {CONTACT.email}</li>
+        <li><strong>Phone:</strong> {CONTACT.phone}</li>
       </ul>
 
       <hr />

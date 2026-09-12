@@ -1,4 +1,4 @@
-import { getCurrentUser, requireUser } from '@/auth/cookies';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { paperFor } from '@/db/tests';
 import { EXCEL_PAPER, PAPER } from '@/exam/result';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
@@ -21,7 +21,14 @@ export async function generateMetadata({
   const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
   const paper = await paperFor({ slug: first(params.test), subject });
 
-  return { title: `${paper?.identity.testName ?? (subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName)} · MockSathi` };
+  // Bare title: the root layout's template appends the site name. Not indexed
+  // — the paper itself is behind a login. The authored paper's own name when
+  // there is one, so the tab says which paper is about to be sat rather than
+  // naming the sample it fell back to.
+  return {
+    title: paper?.identity.testName ?? (subject === 'excel' ? EXCEL_PAPER.testName : PAPER.testName),
+    robots: { index: false, follow: false },
+  };
 }
 
 /**
@@ -44,7 +51,7 @@ export default async function ExamInstructionsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  const user = await requireVerifiedUser();
   const params = await searchParams;
   const raw = first(params.lang);
 
@@ -52,8 +59,7 @@ export default async function ExamInstructionsPage({
   // has always meant and what every existing link points at.
   const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
 
-  const user = await getCurrentUser();
-  const paper = await paperFor({ slug: first(params.test), subject }, user?.name);
+  const paper = await paperFor({ slug: first(params.test), subject }, user.name);
 
   const fallbackAttempt: ExamAttempt = subject === 'excel' ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;
   const fallbackIdentity = subject === 'excel' ? EXCEL_PAPER : PAPER;

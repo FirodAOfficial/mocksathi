@@ -29,6 +29,11 @@ const SERVER_ENTRIES = [
   'src/server/marking/excelQuestionBank.ts',
   'src/server/marking/rubricFromOperations.ts',
   'src/db/tests.ts',
+  // The Resend API key is a send-on-your-behalf credential; this proves no
+  // client module is reachable from the module that reads it.
+  'src/email/resend.ts',
+  'src/email/sendOtpEmail.ts',
+  'src/auth/emailVerification.ts',
 ];
 
 function resolveImport(specifier: string): string | null {

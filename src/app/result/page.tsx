@@ -1,7 +1,14 @@
-import { requireUser } from '@/auth/cookies';
+import type { Metadata } from 'next';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { fixtureFor, type ResultOutcome } from '@/exam/result';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { ResultView } from '@/components/result/ResultView';
+
+export const metadata: Metadata = {
+  title: 'Result',
+  // Behind a login; a crawler only ever reaches the redirect to /login.
+  robots: { index: false, follow: false },
+};
 
 /**
  * Design preview for the two result screens.
@@ -16,7 +23,7 @@ export default async function ResultPreviewPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  await requireVerifiedUser();
   const params = await searchParams;
   const raw = Array.isArray(params.outcome) ? params.outcome[0] : params.outcome;
   const outcome: ResultOutcome = raw === 'not-qualified' ? 'not-qualified' : 'qualified';

@@ -1,7 +1,14 @@
-import { requireUser } from '@/auth/cookies';
+import type { Metadata } from 'next';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { WordShell } from '@/components/WordShell';
 import { paperFor } from '@/db/tests';
 import { isLanguage, type Language } from '@/exam/types';
+
+export const metadata: Metadata = {
+  title: 'Document Editor',
+  // Behind a login; a crawler only ever reaches the redirect to /login.
+  robots: { index: false, follow: false },
+};
 
 /**
  * `/editor?docUrl=...`
@@ -21,7 +28,7 @@ export default async function EditorPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const params = await searchParams;
   const first = (value: string | string[] | undefined): string | null =>
     Array.isArray(value) ? (value[0] ?? null) : (value ?? null);

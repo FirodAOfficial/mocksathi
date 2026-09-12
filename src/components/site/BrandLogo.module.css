@@ -1,0 +1,54 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--mark-size) * 0.26);
+  line-height: 1;
+}
+
+.mark {
+  width: var(--mark-size);
+  height: var(--mark-size);
+  flex: none;
+  display: block;
+}
+
+.wordmark {
+  font-size: calc(var(--mark-size) * 0.52);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* On a dark background: white plate, navy glyph, white wordmark. */
+.light .markPlate {
+  fill: #fff;
+}
+
+.light .markGlyph {
+  fill: #0b1638;
+}
+
+.light .wordmark {
+  color: #fff;
+}
+
+.light .wordmarkAccent {
+  color: #7ba9ff;
+}
+
+/* On a light background: the brand blue plate, white glyph. */
+.dark .markPlate {
+  fill: #1c6ef2;
+}
+
+.dark .markGlyph {
+  fill: #fff;
+}
+
+.dark .wordmark {
+  color: #0b1638;
+}
+
+.dark .wordmarkAccent {
+  color: #1c6ef2;
+}

@@ -1,10 +1,16 @@
+import { CONTACT } from '@/site/contact';
 import styles from './LegalContent.module.css';
 
 /**
- * Content mirrors `MockSathi_Terms_and_Conditions.md` verbatim (converted to
- * JSX) — including its bracketed placeholders (`[City, State]`) that the
- * source document itself left for the business to fill in. Not this
- * component's call to invent values for those.
+ * Content follows `MockSathi_Terms_and_Conditions.md`, with two departures the
+ * source document left open:
+ *
+ * - The support address and phone come from `CONTACT` rather than the draft's
+ *   `help@typingsathi.com`, so all three policies quote one mailbox.
+ * - The draft named the seat of jurisdiction as `[City, State]`. A bracketed
+ *   placeholder on a live page is worse than a general clause, and inventing a
+ *   city is not this component's call, so it reads "the competent courts in
+ *   India" until a seat is chosen.
  */
 export function TermsContent() {
   return (
@@ -118,10 +124,10 @@ export function TermsContent() {
           Refund requests, where applicable (e.g., duplicate payment, failed activation despite
           successful payment, or technical error attributable to MockSathi), will be reviewed on a
           case-by-case basis and, if approved, processed to the original mode of payment within
-          <strong> [7–14] working days</strong>.
+          <strong>7–14 working days</strong>.
         </li>
         <li>
-          To request a refund, contact us at <strong>help@typingsathi.com</strong> within 7 Days of
+          To request a refund, contact us at <strong>{CONTACT.email}</strong> within 7 Days of
           the transaction, along with your order/transaction ID.
         </li>
         <li>Subscription renewals, if auto-enabled, can be cancelled at any time from your account settings before the next billing cycle to avoid future charges.</li>
@@ -211,7 +217,7 @@ export function TermsContent() {
       <p>
         These Terms shall be governed by and construed in accordance with the laws of India. Any
         disputes arising out of or in connection with these Terms shall be subject to the exclusive
-        jurisdiction of the courts at <strong>[City, State]</strong>, India.
+        jurisdiction of the competent courts in India.
       </p>
 
       <h2>19. Changes to These Terms</h2>
@@ -225,8 +231,8 @@ export function TermsContent() {
       <h2>20. Contact Us</h2>
       <p>If you have any questions about these Terms, please reach out to us at:</p>
       <ul>
-        <li><strong>help@typingsathi.com</strong></li>
-        <li><strong>+91 7690990908</strong></li>
+        <li><strong>{CONTACT.email}</strong></li>
+        <li><strong>{CONTACT.phone}</strong></li>
       </ul>
     </div>
   );

@@ -1,10 +1,12 @@
-import { requireUser } from '@/auth/cookies';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { SpreadsheetShell } from '@/components/spreadsheet/SpreadsheetShell';
 import { paperFor } from '@/db/tests';
 import { isLanguage, type Language } from '@/exam/types';
 
 export const metadata = {
-  title: 'Spreadsheet Editor · MockSathi',
+  // Bare: the root layout's title template appends the site name.
+  title: 'Spreadsheet Editor',
+  robots: { index: false, follow: false },
 };
 
 /**
@@ -25,7 +27,7 @@ export default async function SpreadsheetPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const params = await searchParams;
   const first = (value: string | string[] | undefined): string | null =>
     Array.isArray(value) ? (value[0] ?? null) : (value ?? null);

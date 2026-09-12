@@ -1,3 +1,4 @@
+import { CONTACT } from '@/site/contact';
 import styles from './LegalContent.module.css';
 
 /** Content mirrors `MockSathi_Privacy_Policy.md` verbatim (converted to JSX). */
@@ -105,7 +106,7 @@ export function PrivacyContent() {
         <li><strong>Object to or restrict</strong> certain processing activities, where applicable.</li>
       </ul>
       <p>
-        To exercise any of these rights, contact us at <strong>help@typingsathi.com</strong>. We will
+        To exercise any of these rights, contact us at <strong>{CONTACT.email}</strong>. We will
         respond within a reasonable timeframe as required by applicable law.
       </p>
 
@@ -134,8 +135,8 @@ export function PrivacyContent() {
       <h2>12. Contact Us</h2>
       <p>If you have questions about this Privacy Policy or how your data is handled, please reach out to:</p>
       <ul>
-        <li><strong>Email:</strong> help@typingsathi.com</li>
-        <li><strong>Phone:</strong> +91 7690990908</li>
+        <li><strong>Email:</strong> {CONTACT.email}</li>
+        <li><strong>Phone:</strong> {CONTACT.phone}</li>
       </ul>
     </div>
   );

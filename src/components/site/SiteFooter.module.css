@@ -1,40 +1,211 @@
+/* ---------------------------------------------------------------------- *
+ * The full footer: public pages and the candidate portal.
+ * ---------------------------------------------------------------------- */
+
 .footer {
-  width: 100%;
-  max-width: 480px;
-  background: var(--db-surface);
-  border: 1px solid var(--db-border);
-  border-radius: 12px;
-  padding: 16px 18px;
-  text-align: center;
-  /* Deliberately its own opaque card, not inherited from whatever's behind
-     it: this renders both on the auth pages' plain-white desktop background
-     and their dark-gradient mobile one (`LoginScreen.module.css`) — one text
-     color couldn't read on both, so it carries its own background instead. */
+  /* The brand navy from `MarketingPanel.module.css`. The footer is the one
+     band of brand colour on an otherwise white page, which is what stops it
+     reading as leftover content rather than the end of the page. */
+  background: linear-gradient(160deg, #0b1638 0%, #101f48 100%);
+  color: #b9c7e6;
+  font-size: 13.5px;
+  line-height: 1.65;
+  padding: 40px 24px 18px;
 }
 
-.links {
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  /* The brand column takes the slack so the two link columns stay a readable
+     width instead of stretching across a wide screen. */
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.blurb {
+  margin: 0;
+  max-width: 34ch;
+  color: #93a6d6;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.columnTitle {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6f85ba;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #c7d3ee;
+  text-decoration: none;
+  border-radius: 4px;
+  /* The underline is drawn rather than switched on, so the row does not shift
+     by a pixel when the link is hovered. */
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: color 0.15s ease, background-size 0.2s ease;
+}
+
+.link:hover {
+  color: #fff;
+  background-size: 100% 1px;
+}
+
+.link svg {
+  flex: none;
+  color: #6f85ba;
+  transition: color 0.15s ease;
+}
+
+.link:hover svg {
+  color: #7ba9ff;
+}
+
+.socials {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.socialButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #c7d3ee;
+  background: #ffffff0f;
+  border: 1px solid #ffffff1f;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.socialButton:hover {
+  color: #fff;
+  background: #1c6ef2;
+  border-color: #1c6ef2;
+  transform: translateY(-1px);
+}
+
+.baseline {
+  max-width: 1120px;
+  margin: 32px auto 0;
+  padding-top: 16px;
+  border-top: 1px solid #ffffff14;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #6f85ba;
+}
+
+.copyright,
+.madeFor {
+  margin: 0;
+}
+
+.link:focus-visible,
+.socialButton:focus-visible,
+.compactLink:focus-visible,
+.compactMail:focus-visible {
+  outline: 2px solid #4d8dff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .baseline {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------------------------------------------------------------------- *
+ * The compact card: sign-in and sign-up.
+ * ---------------------------------------------------------------------- */
+
+.compact {
+  width: 100%;
+  max-width: 480px;
+  background: var(--db-surface, #fff);
+  border: 1px solid var(--db-border, #e8edf5);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 2px #0b16380a;
+}
+
+.compactTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--db-border, #e8edf5);
+}
+
+.compactMail {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--db-text-muted, #64748b);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.compactMail:hover {
+  color: var(--db-accent, #1c6ef2);
+}
+
+.compactLinks {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   column-gap: 16px;
   row-gap: 6px;
   margin-bottom: 10px;
 }
 
-.link {
+.compactLink {
   font-size: 12px;
   font-weight: 600;
-  color: var(--db-text-muted);
+  color: var(--db-text-muted, #64748b);
   text-decoration: none;
+  border-radius: 3px;
 }
 
-.link:hover {
-  color: var(--db-accent);
+.compactLink:hover {
+  color: var(--db-accent, #1c6ef2);
   text-decoration: underline;
 }
 
-.copyright {
-  font-size: 11px;
-  color: var(--db-text-faint);
+.compactCopyright {
   margin: 0;
+  font-size: 11px;
+  color: var(--db-text-faint, #94a3b8);
 }

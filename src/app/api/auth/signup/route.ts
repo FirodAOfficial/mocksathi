@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { setSessionCookie } from '@/auth/cookies';
+import { hashIp, issueVerificationCode } from '@/auth/emailVerification';
 import { hashPassword } from '@/auth/password';
 import { createSession } from '@/auth/session';
 import { isValidEmail, normalizeEmail, MIN_PASSWORD_LENGTH } from '@/auth/validation';
@@ -28,6 +29,12 @@ interface SignupBody {
 
 function badRequest(code: string, detail: string): NextResponse {
   return NextResponse.json({ code, detail }, { status: 400 });
+}
+
+/** The requester's address, for the per-address code limit. See the verify-email route. */
+function clientIp(request: Request): string | null {
+  const forwarded = request.headers.get('x-forwarded-for');
+  return forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? null;
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -70,6 +77,18 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const session = await createSession(user.id);
   await setSessionCookie(session);
+
+  /*
+   * Send the first verification code now, so the candidate lands on
+   * /verify-email with a code already in their inbox rather than being asked
+   * to request one.
+   *
+   * A send failure must not fail the signup: the account exists, the session
+   * is valid, and /verify-email can resend. Turning a provider outage into a
+   * 500 here would lose the account the user just created — and the 201 below
+   * is unchanged either way, so no existing client contract moves.
+   */
+  await issueVerificationCode(user, hashIp(clientIp(request)));
 
   return NextResponse.json(
     { user: { id: user.id, email: user.email, name: user.name } },
