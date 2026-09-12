@@ -484,7 +484,6 @@ export interface QuestionEditorProps {
 
 export function QuestionEditor({ testId, subject, question, onSaved, onCancel }: QuestionEditorProps) {
   const [values, setValues] = useState<EditorState>(() => (question ? stateFromQuestion(question) : blankState(subject)));
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -497,10 +496,19 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
     setValues((current) => ({ ...current, [name]: value }));
   }
 
-  function updateOperation(id: string, changes: Partial<OperationDraft>) {
+  /** The two sheets must stay the same shape, so a resize applies to both. */
+  function resizeSheets(rows: number, columns: number) {
+    setValues((current) => ({
+      ...current,
+      gridEn: gridForEditing(current.gridEn, rows, columns),
+      gridHi: gridForEditing(current.gridHi, rows, columns),
+    }));
+  }
+
+  function updateOperation(operationId: string, changes: Partial<OperationDraft>) {
     set(
       'operations',
-      values.operations.map((operation) => (operation.id === id ? { ...operation, ...changes } : operation)),
+      values.operations.map((operation) => (operation.id === operationId ? { ...operation, ...changes } : operation)),
     );
   }
 
@@ -555,8 +563,8 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
     }
   }
 
-  const grid = language === 'en' ? values.gridEn : values.gridHi;
   const kinds = subject === 'word' ? WORD_KINDS : EXCEL_KINDS;
+  const id = (field: string): string => `${field}-${question?.id ?? 'new'}`;
 
   /*
    * What is still missing, recomputed every render rather than captured when
@@ -603,28 +611,19 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
         <h3 className={styles.editorTitle}>
           {question ? `Question ${question.position}` : 'New question'}
         </h3>
-        <div className={styles.checkRow}>
-          {(['en', 'hi'] as const).map((code) => (
-            <label className={styles.check} key={code}>
-              <input
-                type="radio"
-                name={`language-${question?.id ?? 'new'}`}
-                checked={language === code}
-                onChange={() => setLanguage(code)}
-              />
-              {code === 'en' ? 'English' : 'हिन्दी'}
-            </label>
-          ))}
-        </div>
+        {/* Both languages are on screen together rather than behind a toggle:
+            a question carries both, they have to say the same thing, and you
+            cannot check that against something you cannot see. */}
+        <p className={styles.hint}>English and हिन्दी together — Hindi is optional.</p>
       </div>
 
       <div className={styles.grid3}>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor={`topic-${question?.id ?? 'new'}`}>
+          <label className={styles.label} htmlFor={id('topic')}>
             Topic
           </label>
           <input
-            id={`topic-${question?.id ?? 'new'}`}
+            id={id('topic')}
             name="topic"
             className={styles.input + mark(missing.topic)}
             placeholder={subject === 'word' ? 'Character Formatting' : 'Merge & Center'}
@@ -636,11 +635,11 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           {missing.topic && <p className={styles.requiredNote}>Required</p>}
         </div>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor={`difficulty-${question?.id ?? 'new'}`}>
+          <label className={styles.label} htmlFor={id('difficulty')}>
             Difficulty
           </label>
           <select
-            id={`difficulty-${question?.id ?? 'new'}`}
+            id={id('difficulty')}
             name="difficulty"
             className={styles.select}
             value={values.difficulty}
@@ -654,11 +653,11 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           </select>
         </div>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor={`marks-${question?.id ?? 'new'}`}>
+          <label className={styles.label} htmlFor={id('marks')}>
             Marks
           </label>
           <input
-            id={`marks-${question?.id ?? 'new'}`}
+            id={id('marks')}
             name="marks"
             type="number"
             min={1}
@@ -674,66 +673,112 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
 
       <div className={styles.group}>
         <p className={styles.groupTitle}>What the candidate is asked</p>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={`instruction-${language}-${question?.id ?? 'new'}`}>
-            Instruction {language === 'hi' && <span className={styles.optional}>(blank uses the English one)</span>}
-          </label>
-          <textarea
-            id={`instruction-${language}-${question?.id ?? 'new'}`}
-            name={language === 'en' ? 'instructionEn' : 'instructionHi'}
-            className={styles.textarea + mark(language === 'en' && missing.instruction)}
-            placeholder={
-              language === 'en' ? 'Make the paragraph bold and underline it.' : 'पैराग्राफ को बोल्ड करें, अंडरलाइन करें।'
-            }
-            value={language === 'en' ? values.instructionEn : values.instructionHi}
-            onChange={handleChange}
-            aria-invalid={language === 'en' && missing.instruction}
-          />
-          {language === 'en' && missing.instruction && <p className={styles.requiredNote}>Required</p>}
-          <p className={styles.hint}>
-            Shown beside the document, never inside it — so there is nothing in the answer the candidate could
-            format by mistake.
-          </p>
-        </div>
+        <div className={styles.grid2}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('instructionEn')}>
+              Instruction <span className={styles.optional}>· English</span>
+            </label>
+            <textarea
+              id={id('instructionEn')}
+              name="instructionEn"
+              className={styles.textarea + mark(missing.instruction)}
+              placeholder="Make the paragraph bold and underline it."
+              value={values.instructionEn}
+              onChange={handleChange}
+              aria-invalid={missing.instruction}
+            />
+            {missing.instruction && <p className={styles.requiredNote}>Required</p>}
+          </div>
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor={`solution-${language}-${question?.id ?? 'new'}`}>
-            Solution steps <span className={styles.optional}>(one per line)</span>
-          </label>
-          <textarea
-            id={`solution-${language}-${question?.id ?? 'new'}`}
-            name={language === 'en' ? 'solutionEn' : 'solutionHi'}
-            className={styles.textarea}
-            placeholder={'Select the whole paragraph.\nOn the Home tab, click Bold.'}
-            value={language === 'en' ? values.solutionEn : values.solutionHi}
-            onChange={handleChange}
-          />
-          <p className={styles.hint}>The ribbon route, shown only after the paper closes.</p>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('instructionHi')}>
+              Instruction <span className={styles.optional}>· हिन्दी, blank reuses the English</span>
+            </label>
+            <textarea
+              id={id('instructionHi')}
+              name="instructionHi"
+              className={styles.textarea}
+              placeholder="पैराग्राफ को बोल्ड करें, अंडरलाइन करें।"
+              value={values.instructionHi}
+              onChange={handleChange}
+            />
+          </div>
         </div>
+        <p className={styles.hint}>
+          Shown beside the document, never inside it — so there is nothing in the answer the candidate could
+          format by mistake.
+        </p>
+
+        <div className={styles.grid2}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('solutionEn')}>
+              Solution steps <span className={styles.optional}>· English, one per line</span>
+            </label>
+            <textarea
+              id={id('solutionEn')}
+              name="solutionEn"
+              className={styles.textarea}
+              placeholder={'Select the whole paragraph.\nOn the Home tab, click Bold.'}
+              value={values.solutionEn}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('solutionHi')}>
+              Solution steps <span className={styles.optional}>· हिन्दी, blank reuses the English</span>
+            </label>
+            <textarea
+              id={id('solutionHi')}
+              name="solutionHi"
+              className={styles.textarea}
+              placeholder={'पूरे पैराग्राफ को सेलेक्ट करें।\nHome टैब में Bold पर क्लिक करें।'}
+              value={values.solutionHi}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+        <p className={styles.hint}>The ribbon route, shown only after the paper closes.</p>
       </div>
 
       <div className={styles.group}>
         <p className={styles.groupTitle}>What they start from</p>
         {subject === 'word' ? (
           <>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={`passage-${language}-${question?.id ?? 'new'}`}>
-                Passage <span className={styles.optional}>(one paragraph per line)</span>
-              </label>
-              <textarea
-                id={`passage-${language}-${question?.id ?? 'new'}`}
-                name={language === 'en' ? 'passageEn' : 'passageHi'}
-                className={styles.textarea + mark(language === 'en' && missing.passage)}
-                value={language === 'en' ? values.passageEn : values.passageHi}
-                onChange={handleChange}
-                aria-invalid={language === 'en' && missing.passage}
-              />
-              {language === 'en' && missing.passage && <p className={styles.requiredNote}>Required</p>}
-              <p className={styles.hint}>
-                The passage is the whole answer document, so everything in it is under test. Leave the Hindi box
-                empty to use the same text in both languages.
-              </p>
+            <div className={styles.grid2}>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={id('passageEn')}>
+                  Passage <span className={styles.optional}>· English, one paragraph per line</span>
+                </label>
+                <textarea
+                  id={id('passageEn')}
+                  name="passageEn"
+                  className={styles.textarea + mark(missing.passage)}
+                  value={values.passageEn}
+                  onChange={handleChange}
+                  aria-invalid={missing.passage}
+                />
+                {missing.passage && <p className={styles.requiredNote}>Required</p>}
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={id('passageHi')}>
+                  Passage <span className={styles.optional}>· हिन्दी, blank reuses the English</span>
+                </label>
+                <textarea
+                  id={id('passageHi')}
+                  name="passageHi"
+                  className={styles.textarea}
+                  value={values.passageHi}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
+            <p className={styles.hint}>
+              The passage is the whole answer document, so everything in it is under test. A question that names a
+              line by character range must read identically in both languages — the offsets are measured against
+              the rendered page.
+            </p>
 
             <div className={styles.grid2}>
               <div className={styles.field}>
@@ -776,25 +821,25 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           </>
         ) : (
           <>
-            {language === 'en' && missing.sheet && (
-              <p className={styles.requiredNote}>Required — fill in at least one cell.</p>
-            )}
+            {/* Stacked rather than side by side: a sheet is already as wide as
+                the panel, and two of them abreast would put both behind a
+                horizontal scrollbar. Resizing either resizes both, since the
+                two have to describe the same layout. */}
+            <p className={styles.label}>Starting sheet · English</p>
+            {missing.sheet && <p className={styles.requiredNote}>Required — fill in at least one cell.</p>}
             <SheetGridEditor
-              invalid={language === 'en' && missing.sheet}
-              grid={grid}
-              onChange={(next) => set(language === 'en' ? 'gridEn' : 'gridHi', next)}
-              onResize={(rows, columns) => {
-                setValues((current) => ({
-                  ...current,
-                  gridEn: gridForEditing(current.gridEn, rows, columns),
-                  gridHi: gridForEditing(current.gridHi, rows, columns),
-                }));
-              }}
+              invalid={missing.sheet}
+              grid={values.gridEn}
+              onChange={(next) => set('gridEn', next)}
+              onResize={resizeSheets}
             />
+
+            <p className={styles.label}>Starting sheet · हिन्दी — blank reuses the English</p>
+            <SheetGridEditor grid={values.gridHi} onChange={(next) => set('gridHi', next)} onResize={resizeSheets} />
+
             <p className={styles.hint}>
-              Only the labels may differ between languages — the numbers, the layout and every cell address must
-              not, because one answer key has to be right for both. Leave the Hindi sheet empty to reuse the
-              English one.
+              Only the labels may differ between the two — the numbers, the layout and every cell address must
+              not, because one answer key has to be right for both.
             </p>
             <div className={styles.checkRow}>
               <label className={styles.check}>
