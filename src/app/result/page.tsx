@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { requireUser } from '@/auth/cookies';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { fixtureFor, type ResultOutcome } from '@/exam/result';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { ResultView } from '@/components/result/ResultView';
@@ -23,7 +23,7 @@ export default async function ResultPreviewPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  await requireVerifiedUser();
   const params = await searchParams;
   const raw = Array.isArray(params.outcome) ? params.outcome[0] : params.outcome;
   const outcome: ResultOutcome = raw === 'not-qualified' ? 'not-qualified' : 'qualified';

@@ -1,4 +1,4 @@
-import { requireUser } from '@/auth/cookies';
+import { requireVerifiedUser } from '@/auth/cookies';
 import { SpreadsheetShell } from '@/components/spreadsheet/SpreadsheetShell';
 import { isLanguage, type Language } from '@/exam/types';
 
@@ -23,7 +23,7 @@ export default async function SpreadsheetPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireUser();
+  await requireVerifiedUser();
   const params = await searchParams;
   const first = (value: string | string[] | undefined): string | null =>
     Array.isArray(value) ? (value[0] ?? null) : (value ?? null);

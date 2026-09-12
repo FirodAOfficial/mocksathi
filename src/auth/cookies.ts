@@ -74,6 +74,24 @@ export async function requireUser(): Promise<User> {
 }
 
 /**
+ * Like `requireUser`, but also insists the email address has been verified.
+ *
+ * An unverified account is sent to `/verify-email`, where the emailed code is
+ * entered. Applied at the page chokepoints — `/dashboard`'s layout covers every
+ * route beneath it — rather than inside `requireUser`, because the two
+ * verification routes and `/api/auth/me` have to remain reachable to an
+ * unverified session or there is no way out of the gate.
+ *
+ * Accounts that predate verification were backfilled as verified by migration
+ * `0008`; without that, this would lock out every existing user at once.
+ */
+export async function requireVerifiedUser(): Promise<User> {
+  const user = await requireUser();
+  if (!user.emailVerifiedAt) redirect('/verify-email');
+  return user;
+}
+
+/**
  * Like `requireUser`, but for admin-only pages and routes: a signed-in
  * non-admin gets a 404, not a redirect — that says "this doesn't exist"
  * rather than "you're not allowed", which leaks less about what's here.
@@ -81,7 +99,7 @@ export async function requireUser(): Promise<User> {
  * a page-level check alone doesn't stop someone hitting the API directly.
  */
 export async function requireAdmin(): Promise<User> {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   if (user.role !== 'admin') notFound();
   return user;
 }
