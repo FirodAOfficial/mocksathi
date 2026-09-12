@@ -1,0 +1,40 @@
+.footer {
+  width: 100%;
+  max-width: 480px;
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  text-align: center;
+  /* Deliberately its own opaque card, not inherited from whatever's behind
+     it: this renders both on the auth pages' plain-white desktop background
+     and their dark-gradient mobile one (`LoginScreen.module.css`) — one text
+     color couldn't read on both, so it carries its own background instead. */
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 16px;
+  row-gap: 6px;
+  margin-bottom: 10px;
+}
+
+.link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--db-accent);
+  text-decoration: underline;
+}
+
+.copyright {
+  font-size: 11px;
+  color: var(--db-text-faint);
+  margin: 0;
+}

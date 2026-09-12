@@ -1,7 +1,15 @@
+import { LegalNavLink } from '@/components/legal/LegalNavLink';
 import type { ChallengePlan } from '@/dashboard/types';
 import { challengeProgressPct } from '@/dashboard/seedDashboard';
 import { ExamEnrollmentsCard, type RegisteredExam, type SelectableExam } from './ExamEnrollmentsCard';
 import styles from './ProfileScreen.module.css';
+
+const LEGAL_LINKS = [
+  { href: '/about', label: 'About Us' },
+  { href: '/legal/terms', label: 'Terms & Conditions' },
+  { href: '/legal/privacy', label: 'Privacy Policy' },
+  { href: '/legal/refund-policy', label: 'Refund & Cancellation Policy' },
+];
 
 export interface ProfileScreenProps {
   name: string;
@@ -83,6 +91,17 @@ export function ProfileScreen({
         <p className={styles.preferencesNote}>
           Language, font, notification and subscription preferences are planned here.
         </p>
+      </div>
+
+      <div className={styles.card}>
+        <p className={styles.cardTitle}>Legal &amp; Company</p>
+        <div className={styles.legalLinks}>
+          {LEGAL_LINKS.map((link) => (
+            <LegalNavLink key={link.href} href={link.href} className={styles.legalLink}>
+              {link.label}
+            </LegalNavLink>
+          ))}
+        </div>
       </div>
     </>
   );

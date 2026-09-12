@@ -6,15 +6,6 @@
  */
 .card {
   width: min(400px, 100%);
-  /* Auto top/bottom margins, not the parent's `justify-content: center`:
-     centering an overflowing flex item with `justify-content` clips it at
-     the *start* with no way to scroll back to it — a real bug, not a
-     theoretical one, on the taller signup form. Auto margins center it the
-     same way when there's room, but collapse to 0 (top-aligned, scrollable)
-     the moment content overflows, which is what actually lets `.formSide`'s
-     `overflow-y: auto` reach the whole card on a short viewport. */
-  margin: auto 0;
-  flex: none;
   background: var(--db-surface);
   border: 1px solid var(--db-border);
   border-radius: 14px;

@@ -106,6 +106,23 @@
   margin: 0;
 }
 
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+.legalLink {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-accent);
+  text-decoration: none;
+}
+
+.legalLink:hover {
+  text-decoration: underline;
+}
+
 .planRow {
   display: flex;
   justify-content: space-between;

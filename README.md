@@ -81,10 +81,14 @@ npm run db:migrate          # applies db/migrations/ to it
 
 `DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `1`)
 controls how long a session lasts before its cookie/DB row expires and the holder is redirected to
-`/login` — every page requires a session except `/login`/`/signup`. The three legal documents
-(Terms, Privacy, Refund & Cancellation Policy — `src/components/legal/`) aren't pages; they open in
-a modal from wherever they're linked (login/signup show Terms + Privacy, the subscription page
-shows all three). Other
+`/login`; `MAX_CONCURRENT_SESSIONS` (default `5`) caps how many devices/browsers one user can be
+signed into at once — signing in past the cap quietly signs the oldest one out. Every page requires
+a session except `/login`, `/signup`, `/about`, and the three legal documents (Terms, Privacy,
+Refund & Cancellation Policy — `/legal/terms`, `/legal/privacy`, `/legal/refund-policy`), all linked
+from `SiteFooter` (`src/components/site/`) on the auth pages. The same legal content also opens as a
+modal inline during signup/subscription (`src/components/legal/LegalDocumentLink` — login/signup
+show Terms + Privacy that way, the subscription page shows all three) — both read from the same
+`*Content.tsx` components as the standalone pages. Other
 database scripts:
 
 > **Hosted Postgres (Supabase, etc.) — two connection strings, not one.** `DATABASE_URL` is what

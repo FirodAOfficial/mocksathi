@@ -40,6 +40,26 @@
   position: relative;
 }
 
+.centerColumn {
+  /* Auto top/bottom margins, not the parent's `justify-content: center`:
+     centering an overflowing flex item with `justify-content` clips it at
+     the *start* with no way to scroll back to it — a real bug, not a
+     theoretical one, on the taller signup form. Auto margins center it the
+     same way when there's room, but collapse to 0 (top-aligned, scrollable)
+     the moment content overflows, which is what actually lets `.formSide`'s
+     `overflow-y: auto` reach the whole thing on a short viewport. Applied to
+     this wrapper (the card + `SiteFooter` together), not the card alone, so
+     the footer centers as part of the same group instead of trailing off
+     wherever the card's own auto margins happen to land it. */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin: auto 0;
+  flex: none;
+}
+
 @media (min-width: 901px) {
   .formSide {
     clip-path: polygon(56px 0, 100% 0, 100% 100%, 0 100%);
