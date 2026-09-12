@@ -99,9 +99,17 @@ database scripts:
 > `db.<project-ref>.supabase.co`), since DDL and the advisory lock `drizzle-kit migrate` takes need
 > session state the transaction pooler doesn't carry. Using the direct connection for `DATABASE_URL`
 > works locally but fails on Vercel with `getaddrinfo ENOTFOUND db.<ref>.supabase.co` — that host
-> resolves IPv6-only, and Vercel's serverless functions are IPv4-only. Set both `DATABASE_URL` (to
-> the pooler string) and, if you ever migrate against Supabase from Vercel's build step,
-> `MIGRATION_DATABASE_URL` (to the direct string) in the Vercel project's environment variables.
+> resolves IPv6-only, and Vercel is IPv4-only.
+>
+> **From Vercel's build step, use the session pooler, not the direct connection.**
+> `npm run build` applies pending migrations when `MIGRATION_DATABASE_URL` is set
+> (`scripts/migrateBeforeBuild.mjs`), and the direct host is unreachable from there for the same
+> IPv6 reason. The session pooler — same host and username as the transaction pooler, port `5432`
+> instead of `6543` — is the only mode that is both IPv4-reachable and session-stateful enough for
+> the advisory lock. So: `DATABASE_URL` to the transaction pooler (`6543`), and
+> `MIGRATION_DATABASE_URL` to the session pooler (`5432`), set in the Vercel project's
+> **Production** environment only — previews inherit the production `DATABASE_URL`, so a
+> preview-scoped migration variable would let a branch migrate production.
 
 ```bash
 npm run db:generate   # after changing src/db/schema.ts, writes a new file into db/migrations/
