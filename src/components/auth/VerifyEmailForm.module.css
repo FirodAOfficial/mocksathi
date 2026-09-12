@@ -1,0 +1,46 @@
+/* A code, not prose: wide tracking and a monospaced stack so six digits are
+   countable at a glance and 0/O cannot be confused. */
+.codeInput {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--db-border);
+  border-radius: 9px;
+  background: var(--db-surface);
+  color: var(--db-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-align: center;
+}
+
+.codeInput:focus-visible {
+  outline: 2px solid var(--db-accent);
+  outline-offset: 1px;
+  border-color: var(--db-accent);
+}
+
+.notice {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #15803d;
+}
+
+.resend {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--db-accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.resend:disabled {
+  color: var(--db-text-faint);
+  cursor: default;
+  text-decoration: none;
+}
