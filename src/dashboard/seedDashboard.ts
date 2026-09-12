@@ -152,6 +152,7 @@ export const SEED_DASHBOARD: DashboardData = {
     name: 'Aman Verma',
     initials: 'AV',
     role: 'Student',
+    avatarUrl: null,
   },
   enrollments: [
     { examId: 'ssc-cgl-2025', examName: 'SSC CGL 2025', isPrimary: true },
@@ -410,7 +411,9 @@ export function fixtureMocksUsedCount(data: Pick<DashboardData, 'calendarDays'>)
  * `DashboardData` that genuinely comes from the database for every caller,
  * rather than being fixture with the odd real field overlaid.
  */
-export async function dashboardDataFor(identity: { id: string; name: string; role: string }): Promise<DashboardData> {
+export async function dashboardDataFor(
+  identity: { id: string; name: string; role: string; avatarUrl?: string | null },
+): Promise<DashboardData> {
   const navSections: NavSection[] =
     identity.role === 'admin'
       ? [
@@ -435,7 +438,12 @@ export async function dashboardDataFor(identity: { id: string; name: string; rol
 
   return {
     ...SEED_DASHBOARD,
-    candidate: { ...SEED_DASHBOARD.candidate, name: identity.name, initials: initialsFor(identity.name) },
+    candidate: {
+      ...SEED_DASHBOARD.candidate,
+      name: identity.name,
+      initials: initialsFor(identity.name),
+      avatarUrl: identity.avatarUrl ?? null,
+    },
     navSections,
     enrollments,
   };

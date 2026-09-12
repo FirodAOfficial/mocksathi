@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import { SiteFooter } from '@/components/site/SiteFooter';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
 import { GoogleButton } from './GoogleButton';
@@ -16,36 +17,49 @@ export interface LoginFormProps {
   googleError?: string;
 }
 
+type Status = 'idle' | 'submitting' | 'redirecting';
+
 export function LoginForm({ googleError }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
-  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSubmitting(true);
+    setStatus('submitting');
 
+    let response: Response;
     try {
-      const response = await fetch('/api/auth/login', {
+      response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-        setError(body?.detail ?? 'Something went wrong. Try again.');
-        return;
-      }
-
-      router.push('/dashboard');
-      router.refresh();
-    } finally {
-      setSubmitting(false);
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('idle');
+      return;
     }
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      setError(body?.detail ?? 'Something went wrong. Try again.');
+      setStatus('idle');
+      return;
+    }
+
+    // Deliberately never resets to 'idle' on success: `router.push` returns
+    // as soon as the navigation *starts*, not once `/dashboard` has actually
+    // rendered (it still has its own DB queries to run). Resetting here in a
+    // `finally` — the previous shape of this function — re-enabled the
+    // button for that whole gap, which read as the click having done
+    // nothing right up until the page suddenly swapped in.
+    setStatus('redirecting');
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -57,73 +71,77 @@ export function LoginForm({ googleError }: LoginFormProps) {
           Same exams. <em>Higher chances.</em>
         </p>
 
-        <div className={cardStyles.card}>
-          <div className={cardStyles.logoRow}>
-            <div className={cardStyles.logoMark}>M</div>
-            <div>
-              <div className={cardStyles.logoName}>Mocksathi</div>
-              <div className={cardStyles.logoBy}>by TypingSathi</div>
+        <div className={styles.centerColumn}>
+          <div className={cardStyles.card}>
+            <div className={cardStyles.logoRow}>
+              <div className={cardStyles.logoMark}>M</div>
+              <div>
+                <div className={cardStyles.logoName}>Mocksathi</div>
+                <div className={cardStyles.logoBy}>by TypingSathi</div>
+              </div>
+            </div>
+
+            <h1 className={cardStyles.title}>Welcome back</h1>
+            <p className={cardStyles.subtitle}>Sign in to continue your preparation.</p>
+
+            <form className={cardStyles.form} onSubmit={handleSubmit} noValidate>
+              <div className={cardStyles.field}>
+                <label className={cardStyles.label} htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className={cardStyles.input}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
+
+              <div className={cardStyles.field}>
+                <label className={cardStyles.label} htmlFor="password">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className={cardStyles.input}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </div>
+
+              {error && (
+                <p className={cardStyles.error} role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button type="submit" className={cardStyles.primary} disabled={status !== 'idle'}>
+                {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Signing in…' : 'Sign in'}
+              </button>
+            </form>
+
+            <div className={cardStyles.divider}>or</div>
+            <GoogleButton />
+
+            <p className={cardStyles.footer}>
+              Don&apos;t have an account? <Link href="/signup">Create one</Link>
+            </p>
+
+            <div className={cardStyles.trustNote}>
+              <DashboardIcon name="shield" size={16} />
+              <span>
+                <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
+              </span>
             </div>
           </div>
 
-          <h1 className={cardStyles.title}>Welcome back</h1>
-          <p className={cardStyles.subtitle}>Sign in to continue your preparation.</p>
-
-          <form className={cardStyles.form} onSubmit={handleSubmit} noValidate>
-            <div className={cardStyles.field}>
-              <label className={cardStyles.label} htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                className={cardStyles.input}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-
-            <div className={cardStyles.field}>
-              <label className={cardStyles.label} htmlFor="password">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className={cardStyles.input}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-
-            {error && (
-              <p className={cardStyles.error} role="alert">
-                {error}
-              </p>
-            )}
-
-            <button type="submit" className={cardStyles.primary} disabled={submitting}>
-              {submitting ? 'Signing in…' : 'Sign in'}
-            </button>
-          </form>
-
-          <div className={cardStyles.divider}>or</div>
-          <GoogleButton />
-
-          <p className={cardStyles.footer}>
-            Don&apos;t have an account? <Link href="/signup">Create one</Link>
-          </p>
-
-          <div className={cardStyles.trustNote}>
-            <DashboardIcon name="shield" size={16} />
-            <span>
-              <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
-            </span>
-          </div>
+          <SiteFooter />
         </div>
 
         <p className={styles.bottomTagline}>

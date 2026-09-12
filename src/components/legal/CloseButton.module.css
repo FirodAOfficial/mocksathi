@@ -1,0 +1,18 @@
+.close {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  background: var(--db-surface);
+  color: var(--db-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: #f1f5f9;
+  color: var(--db-text);
+}

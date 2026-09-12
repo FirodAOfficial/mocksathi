@@ -51,19 +51,6 @@
   margin-bottom: 4px;
 }
 
-.avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--db-accent-soft, #e8effe);
-  color: var(--db-accent);
-  display: grid;
-  place-items: center;
-  font-size: 17px;
-  font-weight: 700;
-  flex: none;
-}
-
 .name {
   font-size: 15px;
   font-weight: 700;
@@ -104,6 +91,23 @@
   color: var(--db-text-muted);
   line-height: 1.55;
   margin: 0;
+}
+
+.legalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+.legalLink {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-accent);
+  text-decoration: none;
+}
+
+.legalLink:hover {
+  text-decoration: underline;
 }
 
 .planRow {

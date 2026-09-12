@@ -39,7 +39,14 @@ export async function findOrCreateUserByGoogle(profile: GoogleUserInfo): Promise
   if (byEmail) {
     const [linked] = await db
       .update(users)
-      .set({ googleId: profile.sub, updatedAt: new Date() })
+      .set({
+        googleId: profile.sub,
+        // Only fills in a *missing* photo — never overwrites one the user
+        // already has, which could be a photo they uploaded themselves after
+        // signing up with email/password (`POST /api/profile/avatar`).
+        ...(byEmail.avatarUrl ? {} : { avatarUrl: profile.picture ?? null }),
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, byEmail.id))
       .returning();
     return { user: linked ?? byEmail, isNewUser: false };
@@ -48,7 +55,13 @@ export async function findOrCreateUserByGoogle(profile: GoogleUserInfo): Promise
   try {
     const [created] = await db
       .insert(users)
-      .values({ email, name: profile.name, googleId: profile.sub, passwordHash: null })
+      .values({
+        email,
+        name: profile.name,
+        googleId: profile.sub,
+        passwordHash: null,
+        avatarUrl: profile.picture ?? null,
+      })
       .returning();
     if (!created) throw new Error('Could not create the account.');
     return { user: created, isNewUser: true };
@@ -67,7 +80,11 @@ export async function findOrCreateUserByGoogle(profile: GoogleUserInfo): Promise
     if (nowByEmail) {
       const [linked] = await db
         .update(users)
-        .set({ googleId: profile.sub, updatedAt: new Date() })
+        .set({
+          googleId: profile.sub,
+          ...(nowByEmail.avatarUrl ? {} : { avatarUrl: profile.picture ?? null }),
+          updatedAt: new Date(),
+        })
         .where(eq(users.id, nowByEmail.id))
         .returning();
       return { user: linked ?? nowByEmail, isNewUser: false };

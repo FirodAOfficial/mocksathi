@@ -81,10 +81,14 @@ npm run db:migrate          # applies db/migrations/ to it
 
 `DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `1`)
 controls how long a session lasts before its cookie/DB row expires and the holder is redirected to
-`/login` — every page requires a session except `/login`/`/signup`. The three legal documents
-(Terms, Privacy, Refund & Cancellation Policy — `src/components/legal/`) aren't pages; they open in
-a modal from wherever they're linked (login/signup show Terms + Privacy, the subscription page
-shows all three). Other
+`/login`; `MAX_CONCURRENT_SESSIONS` (default `5`) caps how many devices/browsers one user can be
+signed into at once — signing in past the cap quietly signs the oldest one out. Every page requires
+a session except `/login`, `/signup`, `/about`, and the three legal documents (Terms, Privacy,
+Refund & Cancellation Policy — `/legal/terms`, `/legal/privacy`, `/legal/refund-policy`), all linked
+from `SiteFooter` (`src/components/site/`) on the auth pages. The same legal content also opens as a
+modal inline during signup/subscription (`src/components/legal/LegalDocumentLink` — login/signup
+show Terms + Privacy that way, the subscription page shows all three) — both read from the same
+`*Content.tsx` components as the standalone pages. Other
 database scripts:
 
 > **Hosted Postgres (Supabase, etc.) — two connection strings, not one.** `DATABASE_URL` is what
@@ -134,3 +138,15 @@ nav item: `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logou
 `GET /api/auth/me`. Sessions are DB-backed (a row per session, in `sessions`) rather than
 stateless JWTs, so logout is an actual delete, not just a client-side cookie clear. Passwords are
 hashed with Node's built-in `crypto.scrypt` — no extra dependency, no native module to compile.
+
+"Continue with Google" (`GET /api/auth/google`, `sdd/google-signin.md`) needs `GOOGLE_CLIENT_ID`/
+`GOOGLE_CLIENT_SECRET` in `.env`, from a Google Cloud Console OAuth Client ID with both
+`http://localhost:3000/api/auth/google/callback` and the production equivalent registered as
+Authorized redirect URIs.
+
+Profile photos (`POST /api/profile/avatar`, uploaded or captured from Google's account picture)
+live in Supabase Storage, not the database — `SUPABASE_SERVICE_ROLE_KEY` in `.env`
+(`src/utils/supabase/admin.ts`) plus a public `avatars` bucket created once in the Supabase
+dashboard (Storage -> New bucket -> "avatars", Public bucket: on). That key bypasses row-level
+security entirely, since this app's own sessions have nothing to do with Supabase Auth for
+`auth.uid()`-based policies to check — it must stay server-only, never `NEXT_PUBLIC_`.

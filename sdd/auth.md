@@ -100,6 +100,13 @@ work — see the backlog at the bottom.
       user → duplicate signup 409s → logout → `/api/auth/me` returns `null` → wrong password 401s →
       correct login issues a new session. Confirmed via `psql` that logout actually deletes the
       session row, not just the cookie.
+- [x] **Update — concurrent-session cap**, `MAX_CONCURRENT_SESSIONS` in `.env`
+      (`src/auth/session.ts::maxConcurrentSessions`), default **5**. Enforced inside
+      `createSession` itself (in a transaction with the insert), not a separate cleanup job: counts
+      the user's *live* sessions (`expiresAt` in the future — an already-expired row doesn't occupy
+      a slot), and if adding one more would exceed the cap, evicts the oldest live session(s) first
+      so the total never grows past it. A sixth login (default cap) quietly signs the oldest device
+      out rather than refusing the new login or letting the table grow without bound.
 - [x] `tsc --noEmit` and `eslint` clean on everything touched.
 
 ## Not done / deferred
@@ -122,6 +129,8 @@ work — see the backlog at the bottom.
 - Phone + OTP sign-in and "Continue with Google", matching mockup screen `1m`, as additional
   methods alongside email/password rather than a replacement for it. Google sign-in has its own
   plan now — see `sdd/google-signin.md`.
-- Session listing / "sign out of all devices" (trivial once wanted — it's just `DELETE FROM
-  sessions WHERE user_id = ...`).
+- Session listing / "sign out of all devices" as a user-facing feature — the cap now silently
+  evicts the oldest session once there are too many, but there's still no UI for someone to see
+  which devices are signed in or end one on purpose. Trivial once wanted, same reasoning as
+  before: it's just `DELETE FROM sessions WHERE user_id = ...`, targeted instead of automatic.
 - Roles/permissions, once there's more than one kind of account.

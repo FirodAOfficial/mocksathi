@@ -1,7 +1,8 @@
+import { highlightConsent } from './consentHighlight';
 import styles from './AuthCard.module.css';
 
 export interface GoogleButtonProps {
-  /** Signup requires the Terms/Privacy checkbox before *any* account gets created, Google included — this renders an inert button instead of a navigable link until that's checked. Login has no such gate, so it's omitted there. */
+  /** Signup requires the Terms/Privacy checkbox before *any* account gets created, Google included — clicking this while it's true doesn't navigate, it nudges the reader at the checkbox instead (`consentHighlight.ts`). Login has no such gate, so it's omitted there. */
   disabled?: boolean;
 }
 
@@ -24,22 +25,28 @@ const GOOGLE_LOGO = (
 );
 
 /**
- * A plain navigation to `GET /api/auth/google`, not a fetch — the whole point
- * is a full-page redirect to Google's consent screen, so the enabled state is
- * an `<a>`, not a button with an `onClick` handler.
+ * A plain navigation to `GET /api/auth/google` when allowed — not a fetch,
+ * the whole point is a full-page redirect to Google's consent screen.
+ *
+ * Deliberately never a real HTML `disabled` element, even while blocked: a
+ * disabled element never fires `click` at all, so a hover-only `title`
+ * tooltip was the *only* feedback that existed before this — invisible on
+ * mobile, and easy to miss even on desktop, which is exactly what prompted
+ * this. Blocked, it still looks visually inert (`.googleButtonBlocked`) but
+ * stays a real clickable control, so clicking it anyway can respond.
  */
 export function GoogleButton({ disabled = false }: GoogleButtonProps) {
-  if (disabled) {
-    return (
-      <button type="button" className={styles.googleButton} disabled title="Agree to the Terms and Privacy Policy first">
-        {GOOGLE_LOGO}
-        Continue with Google
-      </button>
-    );
-  }
-
   return (
-    <a href="/api/auth/google" className={styles.googleButton}>
+    <a
+      href="/api/auth/google"
+      className={disabled ? `${styles.googleButton} ${styles.googleButtonBlocked}` : styles.googleButton}
+      aria-disabled={disabled}
+      onClick={(event) => {
+        if (!disabled) return;
+        event.preventDefault();
+        highlightConsent();
+      }}
+    >
       {GOOGLE_LOGO}
       Continue with Google
     </a>

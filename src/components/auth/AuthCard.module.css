@@ -6,15 +6,6 @@
  */
 .card {
   width: min(400px, 100%);
-  /* Auto top/bottom margins, not the parent's `justify-content: center`:
-     centering an overflowing flex item with `justify-content` clips it at
-     the *start* with no way to scroll back to it — a real bug, not a
-     theoretical one, on the taller signup form. Auto margins center it the
-     same way when there's room, but collapse to 0 (top-aligned, scrollable)
-     the moment content overflows, which is what actually lets `.formSide`'s
-     `overflow-y: auto` reach the whole card on a short viewport. */
-  margin: auto 0;
-  flex: none;
   background: var(--db-surface);
   border: 1px solid var(--db-border);
   border-radius: 14px;
@@ -149,6 +140,17 @@
   opacity: 0.65;
 }
 
+/* Looks inert like `:disabled` above, but — unlike an actually-disabled
+   submit button, which would never fire `onSubmit` at all — stays clickable
+   so `SignupForm.handleSubmit` can respond with `highlightConsent()`. */
+.primaryBlocked:not(:disabled) {
+  opacity: 0.65;
+}
+
+.primaryBlocked:not(:disabled):hover {
+  background: var(--db-accent);
+}
+
 .error {
   color: #b91c1c;
   background: #fef2f2;
@@ -206,7 +208,46 @@
   align-items: flex-start;
   gap: 9px;
   margin: 16px 0 0;
+  padding: 6px 8px;
+  margin-left: -8px;
+  border-radius: 8px;
   cursor: pointer;
+}
+
+/* Re-triggered on every attempt to submit/continue with Google while
+   unchecked (`consentHighlight.ts`) — a shake plus a brief colour pulse, so
+   trying anyway visibly points at what's missing instead of nothing
+   happening at all. */
+.consentShakeActive {
+  animation: consentShake 0.4s ease, consentPulse 1.1s ease;
+}
+
+@keyframes consentShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes consentPulse {
+  0% {
+    background: rgba(220, 38, 38, 0.12);
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 .consentCheckbox {
@@ -251,12 +292,14 @@
   background: #f8fafc;
 }
 
-.googleButton:disabled {
-  cursor: default;
+/* Looks inert, but stays a real, clickable `<a>` — see `GoogleButton.tsx` for
+   why: a genuinely disabled element can't respond to being clicked at all. */
+.googleButtonBlocked {
   opacity: 0.6;
+  cursor: pointer;
 }
 
-.googleButton:disabled:hover {
+.googleButtonBlocked:hover {
   background: var(--db-surface);
 }
 

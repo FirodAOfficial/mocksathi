@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import { SiteFooter } from '@/components/site/SiteFooter';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
+import { highlightConsent } from './consentHighlight';
 import { GoogleButton } from './GoogleButton';
 import { googleErrorMessage } from './googleErrorMessage';
 import { LegalLinks } from './LegalLinks';
@@ -26,6 +28,8 @@ export interface SignupFormProps {
   googleError?: string;
 }
 
+type Status = 'idle' | 'submitting' | 'redirecting';
+
 export function SignupForm({ exams, googleError }: SignupFormProps) {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -33,32 +37,50 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
   const [password, setPassword] = useState('');
   const [examId, setExamId] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
-  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<Status>('idle');
   const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSubmitting(true);
 
+    // The submit button is never a real `disabled` element while unchecked
+    // (see `GoogleButton`/`consentHighlight.ts` for why) — so it still fires
+    // this handler, which is what makes the nudge possible in the first
+    // place. Checked here rather than in the button's own `disabled` prop.
+    if (!agreed) {
+      highlightConsent();
+      return;
+    }
+
+    setError(null);
+    setStatus('submitting');
+
+    let response: Response;
     try {
-      const response = await fetch('/api/auth/signup', {
+      response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name, email, password, examId: examId || undefined }),
       });
-
-      if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-        setError(body?.detail ?? 'Something went wrong. Try again.');
-        return;
-      }
-
-      router.push('/dashboard');
-      router.refresh();
-    } finally {
-      setSubmitting(false);
+    } catch {
+      setError('Something went wrong. Try again.');
+      setStatus('idle');
+      return;
     }
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { detail?: string } | null;
+      setError(body?.detail ?? 'Something went wrong. Try again.');
+      setStatus('idle');
+      return;
+    }
+
+    // See the identical comment in `LoginForm` — deliberately never resets to
+    // 'idle' on success, or the button flashes back to normal for however
+    // long `/dashboard` takes to actually render before the page swaps in.
+    setStatus('redirecting');
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -70,113 +92,121 @@ export function SignupForm({ exams, googleError }: SignupFormProps) {
           Same exams. <em>Higher chances.</em>
         </p>
 
-        <div className={cardStyles.card}>
-          <div className={cardStyles.logoRow}>
-            <div className={cardStyles.logoMark}>M</div>
-            <div>
-              <div className={cardStyles.logoName}>Mocksathi</div>
-              <div className={cardStyles.logoBy}>by TypingSathi</div>
-            </div>
-          </div>
-
-          <h1 className={cardStyles.title}>Create your account</h1>
-          <p className={cardStyles.subtitle}>Track your mocks, streaks and analysis in one place.</p>
-
-          <form className={cardStyles.form} onSubmit={handleSubmit} noValidate>
-            <div className={cardStyles.field}>
-              <label className={cardStyles.label} htmlFor="name">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                autoComplete="name"
-                required
-                className={cardStyles.input}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </div>
-
-            <div className={cardStyles.field}>
-              <label className={cardStyles.label} htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                className={cardStyles.input}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-
-            <div className={cardStyles.field}>
-              <label className={cardStyles.label} htmlFor="password">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={MIN_PASSWORD_LENGTH}
-                className={cardStyles.input}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-
-            {exams.length > 0 && (
-              <div className={cardStyles.field}>
-                <label className={cardStyles.label} htmlFor="examId">
-                  Target exam <span className={cardStyles.optional}>(optional)</span>
-                </label>
-                <select
-                  id="examId"
-                  className={cardStyles.input}
-                  value={examId}
-                  onChange={(event) => setExamId(event.target.value)}
-                >
-                  <option value="">Choose later</option>
-                  {exams.map((exam) => (
-                    <option key={exam.id} value={exam.id}>
-                      {exam.name}
-                      {exam.category ? ` · ${exam.category}` : ''}
-                    </option>
-                  ))}
-                </select>
+        <div className={styles.centerColumn}>
+          <div className={cardStyles.card}>
+            <div className={cardStyles.logoRow}>
+              <div className={cardStyles.logoMark}>M</div>
+              <div>
+                <div className={cardStyles.logoName}>Mocksathi</div>
+                <div className={cardStyles.logoBy}>by TypingSathi</div>
               </div>
-            )}
+            </div>
 
-            {error && (
-              <p className={cardStyles.error} role="alert">
-                {error}
-              </p>
-            )}
+            <h1 className={cardStyles.title}>Create your account</h1>
+            <p className={cardStyles.subtitle}>Track your mocks, streaks and analysis in one place.</p>
 
-            <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
+            <form className={cardStyles.form} onSubmit={handleSubmit} noValidate>
+              <div className={cardStyles.field}>
+                <label className={cardStyles.label} htmlFor="name">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  className={cardStyles.input}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </div>
 
-            <button type="submit" className={cardStyles.primary} disabled={submitting || !agreed}>
-              {submitting ? 'Creating account…' : 'Create account'}
-            </button>
-          </form>
+              <div className={cardStyles.field}>
+                <label className={cardStyles.label} htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className={cardStyles.input}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
 
-          <div className={cardStyles.divider}>or sign up with</div>
-          <GoogleButton disabled={!agreed} />
+              <div className={cardStyles.field}>
+                <label className={cardStyles.label} htmlFor="password">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={MIN_PASSWORD_LENGTH}
+                  className={cardStyles.input}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              </div>
 
-          <p className={cardStyles.footer}>
-            Already have an account? <Link href="/login">Sign in</Link>
-          </p>
+              {exams.length > 0 && (
+                <div className={cardStyles.field}>
+                  <label className={cardStyles.label} htmlFor="examId">
+                    Target exam <span className={cardStyles.optional}>(optional)</span>
+                  </label>
+                  <select
+                    id="examId"
+                    className={cardStyles.input}
+                    value={examId}
+                    onChange={(event) => setExamId(event.target.value)}
+                  >
+                    <option value="">Choose later</option>
+                    {exams.map((exam) => (
+                      <option key={exam.id} value={exam.id}>
+                        {exam.name}
+                        {exam.category ? ` · ${exam.category}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-          <div className={cardStyles.trustNote}>
-            <DashboardIcon name="shield" size={16} />
-            <span>
-              <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
-            </span>
+              {error && (
+                <p className={cardStyles.error} role="alert">
+                  {error}
+                </p>
+              )}
+
+              <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
+
+              <button
+                type="submit"
+                className={!agreed ? `${cardStyles.primary} ${cardStyles.primaryBlocked}` : cardStyles.primary}
+                disabled={status !== 'idle'}
+              >
+                {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Creating account…' : 'Create account'}
+              </button>
+            </form>
+
+            <div className={cardStyles.divider}>or sign up with</div>
+            <GoogleButton disabled={!agreed} />
+
+            <p className={cardStyles.footer}>
+              Already have an account? <Link href="/login">Sign in</Link>
+            </p>
+
+            <div className={cardStyles.trustNote}>
+              <DashboardIcon name="shield" size={16} />
+              <span>
+                <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
+              </span>
+            </div>
           </div>
+
+          <SiteFooter />
         </div>
 
         <p className={styles.bottomTagline}>
