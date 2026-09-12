@@ -42,6 +42,37 @@ export const EXAM_INSTRUCTIONS: Localised<string[]> = {
 };
 
 /**
+ * The Excel paper's rules.
+ *
+ * The same eight points, reworded for a spreadsheet: a workbook rather than a
+ * document, and the ribbon rule stated in Excel's terms. Held separately rather
+ * than generated from the Word set by substitution, because these are the words
+ * a candidate is held to — they should be written, not derived.
+ */
+export const EXCEL_INSTRUCTIONS: Localised<string[]> = {
+  en: [
+    'You have 15 minutes to complete the test.',
+    'The time remaining is shown in the panel on the right and counts down until it reaches zero.',
+    'The test is submitted automatically when the time runs out. You do not have to submit it yourself.',
+    'Your result is shown immediately after submission, with worked solutions for every question.',
+    'Move between questions with Previous and Next, or by picking a number from the palette on the right.',
+    'Each question has its own workbook. Your work is kept as you move between questions, so nothing has to be saved.',
+    'Every formatting action must be performed from the ribbon. Keyboard shortcuts such as Ctrl+B do not apply formatting in this test.',
+    'Do only what the question asks for. Any extra formatting, or a change to a cell the question did not mention, makes the answer wrong.',
+  ],
+  hi: [
+    'टेस्ट पूरा करने के लिए आपके पास 15 मिनट हैं।',
+    'बचा हुआ समय दाईं ओर के पैनल में दिखता है और शून्य तक घटता रहता है।',
+    'समय समाप्त होते ही टेस्ट अपने आप सबमिट हो जाएगा। आपको स्वयं सबमिट करने की आवश्यकता नहीं है।',
+    'सबमिट होते ही आपका परिणाम दिखाया जाएगा, साथ में हर प्रश्न का हल भी।',
+    'प्रश्नों के बीच जाने के लिए Previous और Next का उपयोग करें, या दाईं ओर पैलेट से कोई नंबर चुनें।',
+    'हर प्रश्न की अपनी अलग वर्कबुक है। प्रश्न बदलने पर आपका काम सुरक्षित रहता है, इसलिए कुछ भी सेव करने की ज़रूरत नहीं है।',
+    'हर फॉर्मेटिंग रिबन से ही करनी है। इस टेस्ट में Ctrl+B जैसे कीबोर्ड शॉर्टकट फॉर्मेटिंग नहीं करते।',
+    'केवल वही करें जो प्रश्न में पूछा गया है। कोई भी अतिरिक्त फॉर्मेटिंग, या किसी ऐसे सेल में बदलाव जिसका प्रश्न में ज़िक्र नहीं है, उत्तर को गलत बना देता है।',
+  ],
+};
+
+/**
  * The palette's four states.
  *
  * There is deliberately no "not visited": whether a question counts as
@@ -83,6 +114,37 @@ export const PALETTE_KEY: PaletteKey[] = [
   },
 ];
 
+/**
+ * The same four states, for a paper sat in the spreadsheet.
+ *
+ * Only the two rows that name the artefact differ; the review rows are already
+ * subject-neutral and are reused rather than restated, so a change to how
+ * flagging works cannot be fixed in one list and missed in the other.
+ */
+export const EXCEL_PALETTE_KEY: PaletteKey[] = PALETTE_KEY.map((entry) => {
+  if (entry.state === 'unattempted') {
+    return {
+      ...entry,
+      meaning: {
+        en: 'The workbook for this question has not been changed. Opening a question is not enough.',
+        hi: 'इस प्रश्न की वर्कबुक नहीं बदली गई है। केवल प्रश्न खोलना पर्याप्त नहीं है।',
+      },
+    };
+  }
+
+  if (entry.state === 'attempted') {
+    return {
+      ...entry,
+      meaning: {
+        en: 'You have changed this question’s workbook. It will be marked.',
+        hi: 'आपने इस प्रश्न की वर्कबुक बदली है। इसकी जाँच की जाएगी।',
+      },
+    };
+  }
+
+  return entry;
+});
+
 export const TERMS: Localised<string[]> = {
   en: [
     'You will attempt this test on your own and will not use any unfair means.',
@@ -96,6 +158,20 @@ export const TERMS: Localised<string[]> = {
     'टाइमर शून्य होते ही टेस्ट अपने आप सबमिट हो जाएगा।',
     'सबमिट होने के बाद आपका परिणाम और प्रश्नवार समीक्षा उपलब्ध होगी।',
   ],
+};
+
+/**
+ * The same terms for the Excel paper, which runs to fifteen minutes.
+ *
+ * The duration is written into the sentence rather than derived from
+ * `attempt.durationSeconds`, which is how the Word set already reads. Two
+ * papers is where that starts to bite, so this is the point at which a
+ * mismatch would show — hence a separate list rather than a shared one with a
+ * number that is wrong for one of them.
+ */
+export const EXCEL_TERMS: Localised<string[]> = {
+  en: TERMS.en.map((term) => term.replace('10 minutes', '15 minutes')),
+  hi: TERMS.hi.map((term) => term.replace('10 मिनट', '15 मिनट')),
 };
 
 /** Everything the screen says, in one place, so the page is presentation only. */
@@ -118,6 +194,10 @@ export const INSTRUCTION_COPY = {
   paletteNote: {
     en: 'There is no separate “not visited” state. A question counts as attempted only once its document has been changed.',
     hi: '“नहीं देखा गया” जैसी कोई अलग स्थिति नहीं है। प्रश्न तभी प्रयास किया गया माना जाता है जब उसका डॉक्यूमेंट बदला गया हो।',
+  },
+  paletteNoteExcel: {
+    en: 'There is no separate “not visited” state. A question counts as attempted only once its workbook has been changed.',
+    hi: '“नहीं देखा गया” जैसी कोई अलग स्थिति नहीं है। प्रश्न तभी प्रयास किया गया माना जाता है जब उसकी वर्कबुक बदली गई हो।',
   },
   languageTitle: { en: 'Select Your Test Language', hi: 'अपनी टेस्ट भाषा चुनें' },
   languageBody: {

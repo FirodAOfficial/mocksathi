@@ -1,0 +1,64 @@
+.bar {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 3px 6px;
+  background: linear-gradient(to bottom, #f7fafd, #e9f0f7);
+  border-bottom: 1px solid var(--ribbon-border, #a5bcd4);
+}
+
+.nameBox {
+  width: 120px;
+  min-width: 70px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--control-border, #a3b9d0);
+  background: #fff;
+}
+
+.buttons {
+  display: flex;
+  gap: 2px;
+}
+
+.iconButton {
+  width: 22px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #2c4a68;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.iconButton em {
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.iconButton:hover:not(:disabled) {
+  border-color: var(--control-hover-border, #e0b64f);
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.iconButton:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.formula {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  font-family: Calibri, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  border: 1px solid var(--control-border, #a3b9d0);
+  background: #fff;
+}
+
+@media (width <= 640px) {
+  .nameBox {
+    width: 76px;
+  }
+}

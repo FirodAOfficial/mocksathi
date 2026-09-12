@@ -1,18 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import type { JSONContent } from '@tiptap/core';
 import { requireUser } from '@/auth/cookies';
-import { evaluateCriterion } from '@/exam/marking/evaluate';
-import { markAttempt, validateQuestionBank } from '@/exam/marking/markAttempt';
+import { WORD_MARKER } from '@/exam/marking/wordMarker';
+import { SHEET_MARKER } from '@/exam/marking/sheet/sheetMarker';
+import { markAttempt, validateQuestionBank, type SubjectMarker } from '@/exam/marking/markAttempt';
+import type { QuestionRubric } from '@/exam/marking/criteria';
 import {
+  EXCEL_PAPER,
   PAPER,
   REFERENCE_AVERAGE,
   REFERENCE_AVERAGE_TIMES,
   REFERENCE_TOPPER,
   REFERENCE_TOPPER_TIMES,
 } from '@/exam/result';
+import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
-import { isLanguage } from '@/exam/types';
+import { isLanguage, type AnswerPayload, type ExamAttempt, type Subject } from '@/exam/types';
 import { QUESTION_BANK } from '@/server/marking/questionBank';
+import { EXCEL_QUESTION_BANK } from '@/server/marking/excelQuestionBank';
 
 /**
  * Marks a submitted paper.
@@ -32,10 +36,49 @@ export const dynamic = 'force-dynamic';
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 interface SubmitBody {
-  answers: Record<string, JSONContent>;
+  answers: Record<string, AnswerPayload>;
+  subject?: string;
   language?: string;
   timePerQuestion?: Record<string, number>;
   totalTimeSeconds?: number;
+}
+
+/**
+ * Everything one paper needs to be marked.
+ *
+ * Selected here from a two-value enum, never taken from the request. The client
+ * says *which* paper it sat; it does not get to supply the questions, the marks
+ * or the key.
+ */
+interface Paper {
+  attempt: ExamAttempt;
+  // The rubric and projection types differ per subject and are checked inside
+  // the marker, so this pair is deliberately opaque at the selection point.
+  rubrics: QuestionRubric<never>[];
+  marker: SubjectMarker<unknown, never>;
+  identity: { testName: string; tagline: string; maximumMarks: number; qualifyingMarks: number };
+}
+
+function paperFor(subject: Subject): Paper {
+  if (subject === 'excel') {
+    return {
+      attempt: EXCEL_SEED_ATTEMPT,
+      rubrics: EXCEL_QUESTION_BANK as unknown as QuestionRubric<never>[],
+      marker: SHEET_MARKER as unknown as SubjectMarker<unknown, never>,
+      identity: EXCEL_PAPER,
+    };
+  }
+
+  return {
+    attempt: SEED_ATTEMPT,
+    rubrics: QUESTION_BANK as unknown as QuestionRubric<never>[],
+    marker: WORD_MARKER as unknown as SubjectMarker<unknown, never>,
+    identity: PAPER,
+  };
+}
+
+function isSubject(value: unknown): value is Subject {
+  return value === 'word' || value === 'excel';
 }
 
 function badRequest(detail: string): NextResponse {
@@ -69,8 +112,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return badRequest('The submission has no answers.');
   }
 
+  // An unknown subject falls back to the Word paper rather than 400ing, which
+  // keeps every submission from before this field existed working.
+  const paper = paperFor(isSubject(body.subject) ? body.subject : 'word');
+
   // A mis-authored paper would mark everyone wrongly and silently; fail loudly.
-  const problems = validateQuestionBank(SEED_ATTEMPT, QUESTION_BANK, PAPER.maximumMarks);
+  const problems = validateQuestionBank(paper.attempt, paper.rubrics, paper.identity.maximumMarks);
   if (problems.length > 0) {
     return NextResponse.json(
       { code: 'PAPER_INVALID', detail: problems.join(' ') },
@@ -79,14 +126,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const { result } = markAttempt(
-    SEED_ATTEMPT,
-    QUESTION_BANK,
+    paper.attempt,
+    paper.rubrics,
     {
-      answers: numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, JSONContent>,
+      answers: numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, AnswerPayload>,
       timePerQuestion: numericKeys(body.timePerQuestion) as unknown as Record<number, number>,
       totalTimeSeconds: Number.isFinite(body.totalTimeSeconds) ? Number(body.totalTimeSeconds) : 0,
-      // The passage differs by language, so marking must start from the one the
-      // candidate actually saw.
+      // The starting passage or workbook differs by language, so marking must
+      // begin from the one the candidate actually saw.
       language: isLanguage(body.language) ? body.language : 'en',
     },
     {
@@ -95,8 +142,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       topperTimePerQuestion: [...REFERENCE_TOPPER_TIMES],
       averageTimePerQuestion: [...REFERENCE_AVERAGE_TIMES],
     },
-    evaluateCriterion,
-    { testName: PAPER.testName, tagline: PAPER.tagline, qualifyingMarks: PAPER.qualifyingMarks },
+    paper.marker,
+    {
+      testName: paper.identity.testName,
+      tagline: paper.identity.tagline,
+      qualifyingMarks: paper.identity.qualifyingMarks,
+    },
   );
 
   // Only the result crosses back — never the criteria, which would leak the key.

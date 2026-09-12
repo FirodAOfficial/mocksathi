@@ -1,0 +1,229 @@
+/*
+ * Layout: a two-by-two frame. Corner and headers do not scroll; the cell
+ * scroller does, and the headers follow it with a transform.
+ *
+ * `minmax(0, 1fr)`, never a bare `1fr`. A `1fr` track is `minmax(auto, 1fr)`,
+ * and that `auto` minimum refuses to shrink below the track's content — so the
+ * scroller grew to the full height of the sheet, `clientHeight` reported the
+ * whole extent, and the grid rendered every row in it instead of the visible
+ * ones. Virtualization silently did nothing. The zero minimum is what makes
+ * the scroller a viewport rather than a container.
+ */
+.frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-rows: 20px minmax(0, 1fr);
+  /* Fills the shell's sheet row. Without an explicit height the frame is
+     auto-sized, and `1fr` then resolves against its own content — which is the
+     whole sheet, so the scroller stops being a viewport. */
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+.frame[data-headings='off'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.corner {
+  grid-column: 1;
+  grid-row: 1;
+  background: linear-gradient(to bottom, #f3f7fb, #dfe9f3);
+  border-right: 1px solid #9db3c8;
+  border-bottom: 1px solid #9db3c8;
+}
+
+.columnHeaders {
+  grid-column: 2;
+  grid-row: 1;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #f3f7fb, #dfe9f3);
+  border-bottom: 1px solid #9db3c8;
+}
+
+.rowHeaders {
+  grid-column: 1;
+  grid-row: 2;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #f3f7fb, #dfe9f3);
+  border-right: 1px solid #9db3c8;
+}
+
+.headerLayer {
+  position: relative;
+}
+
+.columnHeader,
+.rowHeader {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 11px;
+  color: #2c4a68;
+  user-select: none;
+  cursor: cell;
+}
+
+.columnHeader {
+  top: 0;
+  border-right: 1px solid #b9c9d9;
+}
+
+.rowHeader {
+  left: 0;
+  border-bottom: 1px solid #b9c9d9;
+}
+
+.headerSelected {
+  background: linear-gradient(to bottom, #cfe2f5, #a9c9ec);
+  font-weight: 700;
+}
+
+.columnGrip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.rowGrip {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  cursor: row-resize;
+}
+
+.scroller {
+  grid-column: 2;
+  grid-row: 2;
+  overflow: auto;
+  outline: none;
+  background: #fff;
+  /* The cursor a spreadsheet uses over its cells. */
+  cursor: cell;
+}
+
+.frame[data-headings='off'] .scroller {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.content {
+  position: relative;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+}
+
+.gridlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/*
+ * One element per visible line — about fifty for a full screen — rather than
+ * a border on every cell, which would need an element per cell.
+ */
+.hLine {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  background: #d4d4d4;
+}
+
+.vLine {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  background: #d4d4d4;
+}
+
+.printArea {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed #6b7280;
+  pointer-events: none;
+}
+
+.selectionLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.selectionRange {
+  position: absolute;
+  background: rgb(33 115 70 / 12%);
+  border: 1px solid #217346;
+}
+
+.cursor {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid #217346;
+}
+
+/* Excel's fill handle: the square at the corner of the selection. */
+.fillHandle {
+  position: absolute;
+  z-index: 2;
+  width: 6px;
+  height: 6px;
+  background: #217346;
+  border: 1px solid #fff;
+  cursor: crosshair;
+}
+
+.fillPreview {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 1px dashed #217346;
+  background: rgb(33 115 70 / 6%);
+  pointer-events: none;
+}
+
+.cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 3px;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.15;
+  color: #000;
+}
+
+.cellText {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+  text-align: inherit;
+}
+
+.editor {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  padding: 0 2px;
+  border: 2px solid #217346;
+  outline: none;
+  font-family: Calibri, 'Segoe UI', sans-serif;
+  font-size: 11pt;
+  background: #fff;
+}

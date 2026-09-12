@@ -53,6 +53,18 @@ export function QuestionListPanel() {
   }, [selectedNumber]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    // Home and End jump to the ends of the list, which the listbox pattern
+    // asks for and which a 15-question paper makes worth having: without them
+    // the only way back to question 1 is fourteen presses of ArrowUp.
+    if (event.key === 'Home' || event.key === 'End') {
+      const target = event.key === 'Home' ? questions.at(0) : questions.at(-1);
+      if (!target) return;
+
+      event.preventDefault();
+      selectQuestion(target.number);
+      return;
+    }
+
     const direction = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0;
     if (direction === 0) return;
 

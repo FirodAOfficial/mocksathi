@@ -20,6 +20,36 @@ function withMockMeta(mock: RawMock): MockSummary {
 }
 
 /**
+ * Opens the next unattempted Word paper and the next unattempted Excel paper.
+ *
+ * The product rule is that a candidate always has exactly one of each skill
+ * available: finishing today's Word paper does not gate the Excel one, because
+ * they exercise different software and are practised independently.
+ *
+ * Derived here rather than hand-authored on each row so the two cannot drift
+ * apart — with `state` written per row, unlocking Excel meant remembering to
+ * lock the row after it, and the fixture silently accumulated two open Excel
+ * papers the first time someone edited it.
+ *
+ * `mixed` revision papers are deliberately not opened by this: they need both
+ * skills, so they stay behind the papers that teach them.
+ */
+export function openNextPerSkill(mocks: readonly MockSummary[]): MockSummary[] {
+  const opened = new Set<MockSummary['mockType']>();
+
+  return mocks.map((mock) => {
+    if (mock.state === 'done' || mock.mockType === 'mixed' || opened.has(mock.mockType)) {
+      return mock;
+    }
+
+    opened.add(mock.mockType);
+    // The note explains a lock; an open paper must not carry one.
+    const { unlockNote: _unlockNote, ...open } = mock;
+    return { ...open, state: 'today' as const };
+  });
+}
+
+/**
  * The dashboard's fixture data.
  *
  * Lifted from the approved mockup (`design/Quiz website UI mockups.zip`,
@@ -152,7 +182,9 @@ export const SEED_DASHBOARD: DashboardData = {
     { day: 22, status: 'attempted', mockLabel: 'M17', note: '153' },
     { day: 23, status: 'attempted', mockLabel: 'M18', note: '151' },
     { day: 24, status: 'today', mockLabel: 'M19', note: '60 min' },
-    { day: 25, status: 'locked', mockLabel: 'M20' },
+    // Not 'locked': M20 is the open Excel paper, and a grey Locked chip here
+    // would contradict the Start Mock button the mocks table shows for it.
+    { day: 25, status: 'upcoming', mockLabel: 'M20' },
     { day: 26, status: 'locked', mockLabel: 'M21' },
     { day: 27, status: 'locked', mockLabel: 'M22' },
     { day: 28, status: 'locked', mockLabel: 'M23' },
@@ -166,10 +198,10 @@ export const SEED_DASHBOARD: DashboardData = {
     dateLabel: '24 Sep',
     timeSpentSeconds: 60 * 60,
   }),
-  recentMocks: RAW_RECENT_MOCKS.map(withMockMeta),
+  recentMocks: openNextPerSkill(RAW_RECENT_MOCKS.map(withMockMeta)),
   // Every mock 1–30. 19 Sep has no row: that's the missed day on the
   // calendar, so mock numbering resumes at 15 on 20 Sep rather than 14b.
-  allMocks: RAW_ALL_MOCKS.map(withMockMeta),
+  allMocks: openNextPerSkill(RAW_ALL_MOCKS.map(withMockMeta)),
   performance: {
     averageScore: 148.3,
     maxScore: 200,

@@ -3,10 +3,10 @@ import { INDENT_STEP_PX } from '@/utils/indent';
 import type {
   Difficulty,
   ExamAttempt,
-  ExamQuestion,
   Language,
   Localised,
   ModelAnswer,
+  WordQuestion,
 } from './types';
 
 /**
@@ -368,8 +368,9 @@ const DRAFTS: Draft[] = [
   },
 ];
 
-function buildQuestions(): ExamQuestion[] {
+function buildQuestions(): WordQuestion[] {
   return DRAFTS.map((draft, index) => ({
+    subject: 'word' as const,
     number: index + 1,
     topic: draft.topic,
     difficulty: draft.difficulty,
@@ -389,6 +390,7 @@ export const SEED_ATTEMPT: ExamAttempt = {
   // (`WordShell`, via `/api/auth/me`) — this is only what shows for a guest,
   // or before that check resolves.
   candidateName: 'Candidate',
+  subject: 'word',
   durationSeconds: 10 * 60,
   sections: [{ name: 'Word Processing', questions: buildQuestions() }],
 };
@@ -400,7 +402,7 @@ export const SEED_ATTEMPT: ExamAttempt = {
  * from, rather than by storing a second copy of the text: the worked answer
  * then cannot show different words from the question.
  */
-export function modelAnswerDocument(question: ExamQuestion, language: Language): JSONContent {
+export function modelAnswerDocument(question: WordQuestion, language: Language): JSONContent {
   const { modelAnswer } = question;
   const source = question.passage[language];
   const [first, ...rest] = source.content ?? [];

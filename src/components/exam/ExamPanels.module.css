@@ -1,0 +1,141 @@
+/*
+ * The exam panels, as columns on a wide screen and drawers below one.
+ *
+ * Lifted out of `WordShell.module.css` when the spreadsheet paper needed the
+ * same behaviour. Shared rather than copied: the focus trap, the scrim and the
+ * 44px thumb targets are accessibility decisions, and two copies of them would
+ * drift the moment one was fixed.
+ */
+.column {
+  flex: none;
+  min-height: 0;
+  display: flex;
+}
+
+/* ---------------------------------------------------------------------- *
+ * Below 768px the columns cannot coexist — the page alone is 816px wide —
+ * so the panels become drawers over the document and the document keeps the
+ * whole width to itself.
+ * ---------------------------------------------------------------------- */
+
+.drawerBar {
+  background: linear-gradient(180deg, var(--status-top), var(--status-bottom));
+  border-top: 1px solid var(--frame-border);
+  flex: none;
+  gap: 8px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  display: none;
+}
+
+.drawerTab {
+  color: #17365d;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  flex: 1;
+  /* 44px: the smallest target a thumb hits reliably. */
+  min-height: 44px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.drawerTab[aria-expanded='true'] {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.scrim {
+  z-index: 40;
+  background: #14284166;
+  position: fixed;
+  inset: 0;
+}
+
+.drawer {
+  z-index: 41;
+  background: #fff;
+  flex-direction: column;
+  width: min(86vw, 22rem);
+  display: flex;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  box-shadow: 0 0 32px #0f233c66;
+  animation: drawerIn 0.18s ease-out;
+  overflow: hidden;
+}
+
+.drawerLeft {
+  left: 0;
+}
+
+.drawerRight {
+  right: 0;
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(var(--drawer-from, -100%));
+  }
+}
+
+.drawerLeft {
+  --drawer-from: -100%;
+}
+
+.drawerRight {
+  --drawer-from: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: none;
+  }
+}
+
+.drawerClose {
+  color: #17365d;
+  cursor: pointer;
+  background: #f2f6fb;
+  border: 0;
+  border-bottom: 1px solid var(--frame-border);
+  flex: none;
+  min-height: 44px;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* The panel inside a drawer fills it, whatever width it asks for as a column. */
+.drawerBody {
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  /*
+   * The panels were built as fixed-width columns. Inside a drawer they are
+   * told to fill it, and anything that still refuses to shrink scrolls here
+   * rather than spilling past the drawer and off the side of the screen.
+   */
+  overflow: auto;
+}
+
+.drawerBody > * {
+  border: 0;
+  flex: 1;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0;
+}
+
+
+/* Drawers appear wherever the columns do not fit — tablets included. */
+@media (max-width: 1279px) {
+  .drawerBar {
+    display: flex;
+  }
+}

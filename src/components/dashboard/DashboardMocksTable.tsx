@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { startHrefFor } from '@/dashboard/mockRoutes';
 import { useMemo, useState } from 'react';
 import type { MockSummary, MockType } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -47,7 +48,7 @@ function ActionCell({ mock }: { mock: MockSummary }) {
       );
     case 'today':
       return (
-        <Link href="/dashboard/today" className={styles.actionFilled}>
+        <Link href={startHrefFor(mock)} className={styles.actionFilled}>
           Start Mock
         </Link>
       );
