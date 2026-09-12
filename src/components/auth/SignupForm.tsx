@@ -8,6 +8,7 @@ import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
 import styles from './LoginScreen.module.css';
+import { SiteLinksBar } from '@/components/site/SiteFooter';
 import { MarketingPanel } from './MarketingPanel';
 
 export interface SignupExamOption {
@@ -69,7 +70,6 @@ export function SignupForm({ exams }: SignupFormProps) {
             <div className={cardStyles.logoMark}>M</div>
             <div>
               <div className={cardStyles.logoName}>Mocksathi</div>
-              <div className={cardStyles.logoBy}>by TypingSathi</div>
             </div>
           </div>
 
@@ -173,6 +173,8 @@ export function SignupForm({ exams }: SignupFormProps) {
           <br />
           Sahi Saathi ke Saath.
         </p>
+
+        <SiteLinksBar />
       </div>
     </div>
   );

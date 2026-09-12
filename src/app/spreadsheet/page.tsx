@@ -3,7 +3,9 @@ import { SpreadsheetShell } from '@/components/spreadsheet/SpreadsheetShell';
 import { isLanguage, type Language } from '@/exam/types';
 
 export const metadata = {
-  title: 'Spreadsheet Editor · MockSathi',
+  // Bare: the root layout's title template appends the site name.
+  title: 'Spreadsheet Editor',
+  robots: { index: false, follow: false },
 };
 
 /**

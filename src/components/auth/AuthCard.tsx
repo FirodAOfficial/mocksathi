@@ -18,7 +18,6 @@ export function AuthCard({ title, subtitle, footer, children }: AuthCardProps) {
           <div className={styles.logoMark}>M</div>
           <div>
             <div className={styles.logoName}>Mocksathi</div>
-            <div className={styles.logoBy}>by TypingSathi</div>
           </div>
         </div>
 

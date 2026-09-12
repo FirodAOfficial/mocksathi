@@ -57,11 +57,6 @@
   line-height: 1.05;
 }
 
-.logoBy {
-  font-size: 9.5px;
-  color: var(--db-text-faint);
-}
-
 .title {
   font-size: 21px;
   font-weight: 700;

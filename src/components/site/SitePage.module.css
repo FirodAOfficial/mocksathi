@@ -1,0 +1,169 @@
+.masthead {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #0b1638;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #0b1638;
+  flex: none;
+}
+
+.logoName {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.signIn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: #1c6ef2;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signIn:hover {
+  background: #155ad0;
+}
+
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 16px 24px 64px;
+  color: #1f2937;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e9f2;
+  margin-bottom: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0b1638;
+  line-height: 1.15;
+}
+
+.updated {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.intro {
+  margin-top: 14px;
+  color: #334155;
+}
+
+.intro p {
+  margin: 0 0 12px;
+}
+
+.body p {
+  margin: 0 0 14px;
+}
+
+.section {
+  margin-top: 30px;
+}
+
+.heading {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0b1638;
+  letter-spacing: -0.01em;
+}
+
+.subHeading {
+  margin: 18px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.bullets,
+.steps {
+  margin: 0 0 14px;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.bullets li::marker {
+  color: #94a3b8;
+}
+
+.steps li::marker {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.body a {
+  color: #1c6ef2;
+  font-weight: 600;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e5e9f2;
+  border-radius: 10px;
+  margin: 0 0 14px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 460px;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid #eef1f7;
+  vertical-align: top;
+}
+
+.table th {
+  background: #f6f8fc;
+  font-weight: 700;
+  color: #0b1638;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}

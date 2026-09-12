@@ -1,10 +1,25 @@
 import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/next';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/site/seo';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Document Editor',
-  description: 'A browser word processor that opens .docx documents from a URL.',
+  /*
+   * The default was "Document Editor", which described one route and was what
+   * every other page inherited — including the public ones a search engine
+   * actually reads. The template lets each page name itself and still be
+   * attributed to the site.
+   */
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} — Word & Excel Efficiency Mock Tests`,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  // The audience sits state government exams in India; the locale tells an
+  // answer engine which English, and which country's exams, this is about.
+  openGraph: { type: 'website', siteName: SITE_NAME, locale: 'en_IN' },
 };
 
 export const viewport: Viewport = {

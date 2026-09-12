@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { requireUser } from '@/auth/cookies';
 import { WordShell } from '@/components/WordShell';
 import { isLanguage, type Language } from '@/exam/types';
+
+export const metadata: Metadata = {
+  title: 'Document Editor',
+  // Behind a login; a crawler only ever reaches the redirect to /login.
+  robots: { index: false, follow: false },
+};
 
 /**
  * `/editor?docUrl=...`

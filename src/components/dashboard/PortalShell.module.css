@@ -163,11 +163,6 @@
   line-height: 1.1;
 }
 
-.logoBy {
-  font-size: 9.5px;
-  color: var(--db-text-faint);
-}
-
 .navSection + .navSection {
   margin-top: 4px;
 }
@@ -453,4 +448,12 @@ a.examPickerButton:hover {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/*
+ * Cancels the content column's padding so the footer spans the full width, and
+ * pushes it to the bottom when the page above it is short.
+ */
+.footerSlot {
+  margin: auto -20px -20px;
 }
