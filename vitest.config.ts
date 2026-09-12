@@ -19,7 +19,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    // `scripts/` as well as `src/`: the build-time migration gate lives there
+    // (it is tooling, not app code) and is exactly the kind of thing that rots
+    // silently once nobody is looking at it.
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     css: true,
   },
 });
