@@ -1,0 +1,38 @@
+/*
+ * `.content` (`PortalShell.module.css`) is a flex column — `margin-top: auto`
+ * is what pushes this to the bottom of the viewport on a short page instead
+ * of sitting right under it, while still scrolling with the page (not pinned)
+ * once the content is tall enough to need scrolling.
+ */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-top: 14px;
+  margin-top: auto;
+  border-top: 1px solid var(--db-border);
+  font-size: 11.5px;
+  color: var(--db-text-faint);
+}
+
+.copyright {
+  margin: 0;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.link {
+  color: var(--db-text-faint);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--db-accent);
+  text-decoration: underline;
+}
