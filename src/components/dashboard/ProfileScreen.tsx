@@ -3,6 +3,7 @@ import type { ChallengePlan } from '@/dashboard/types';
 import { challengeProgressPct } from '@/dashboard/seedDashboard';
 import { AvatarUpload } from './AvatarUpload';
 import { ChangePasswordCard } from './ChangePasswordCard';
+import { EditableName } from './EditableName';
 import { ExamEnrollmentsCard, type RegisteredExam, type SelectableExam } from './ExamEnrollmentsCard';
 import styles from './ProfileScreen.module.css';
 
@@ -60,7 +61,7 @@ export function ProfileScreen({
           <div className={styles.identity}>
             <AvatarUpload initials={initials} avatarUrl={avatarUrl} />
             <div>
-              <p className={styles.name}>{name}</p>
+              <EditableName name={name} />
               <p className={styles.role}>{role}</p>
             </div>
           </div>
