@@ -59,6 +59,43 @@ const seconds = (ms: number): number => Math.max(1, Math.ceil(ms / 1000));
  * transaction open across a third-party HTTP call pins a pooled connection for
  * the length of someone else's outage.
  */
+export interface ActiveCodeStatus {
+  expiresAt: Date;
+  attemptsRemaining: number;
+}
+
+/**
+ * The account's current code's expiry and remaining guesses, or `null` if
+ * there isn't a live one (never issued, already consumed by a match,
+ * superseded by a resend, or killed by a failed send/attempt exhaustion).
+ *
+ * `/verify-email` seeds its countdown and attempts display from this on
+ * every page load — not just the first one. A wrong guess is written to the
+ * `attempts` column before anything is returned to the caller (see
+ * `confirmVerificationCode`), so a reload can never show a candidate more
+ * tries than the row actually has left: the limit was never client state to
+ * begin with, only its on-screen display was, and this is what fixes that.
+ *
+ * `consumedAt IS NULL` alone is enough to guarantee `attemptsRemaining >= 1`
+ * — `confirmVerificationCode` sets `consumedAt` in the same write as the
+ * attempt that reaches `OTP_MAX_ATTEMPTS`, so the two are never out of step.
+ */
+export async function activeCodeStatus(userId: string): Promise<ActiveCodeStatus | null> {
+  const [record] = await db
+    .select({
+      expiresAt: emailVerificationCodes.expiresAt,
+      consumedAt: emailVerificationCodes.consumedAt,
+      attempts: emailVerificationCodes.attempts,
+    })
+    .from(emailVerificationCodes)
+    .where(eq(emailVerificationCodes.userId, userId))
+    .orderBy(desc(emailVerificationCodes.createdAt))
+    .limit(1);
+
+  if (!record || record.consumedAt) return null;
+  return { expiresAt: record.expiresAt, attemptsRemaining: Math.max(0, OTP_MAX_ATTEMPTS - record.attempts) };
+}
+
 export async function issueVerificationCode(user: User, ipHash: string | null): Promise<IssueResult> {
   if (user.emailVerifiedAt) return { ok: false, reason: 'already_verified' };
 

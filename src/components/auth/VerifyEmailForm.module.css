@@ -1,3 +1,34 @@
+.backLink {
+  display: inline-block;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0 0 16px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--db-text-muted);
+  cursor: pointer;
+}
+
+.backLink:hover {
+  color: var(--db-text);
+  text-decoration: underline;
+}
+
+.countdown {
+  margin: -6px 0 16px;
+  font-size: 12.5px;
+  color: var(--db-text-muted);
+}
+
+.countdownExpired {
+  margin: -6px 0 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
 /* A code, not prose: wide tracking and a monospaced stack so six digits are
    countable at a glance and 0/O cannot be confused. */
 .codeInput {

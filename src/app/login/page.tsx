@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/auth/cookies';
+import { getCurrentUser, signOutIfUnverified } from '@/auth/cookies';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { pageMetadata } from '@/site/seo';
 
@@ -20,10 +20,18 @@ export default async function LoginPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getCurrentUser();
-  if (user) redirect('/dashboard');
+  if (user?.emailVerifiedAt) redirect('/dashboard');
+  // An unverified session landing here — the browser's Back button from
+  // /verify-email, a stale tab, a bookmark — gets signed out rather than
+  // bounced back into the /dashboard -> /verify-email loop. See
+  // `signOutIfUnverified`'s own comment.
+  const signedOut = await signOutIfUnverified(user);
 
   const params = await searchParams;
   const error = Array.isArray(params.error) ? params.error[0] : params.error;
+  // Set by `ForgotPasswordForm`'s "Back to login" — carrying the email
+  // already typed there back rather than making someone retype it.
+  const emailParam = Array.isArray(params.email) ? params.email[0] : params.email;
 
-  return <LoginForm googleError={error} />;
+  return <LoginForm googleError={error} clearStaleSession={signedOut} initialEmail={emailParam} />;
 }

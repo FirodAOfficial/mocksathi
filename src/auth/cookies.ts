@@ -2,7 +2,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
-import { getUserBySessionToken, type CreatedSession } from './session';
+import { deleteSession, getUserBySessionToken, type CreatedSession } from './session';
 import type { User } from '@/db/schema';
 
 /** Next.js-specific glue between the session store and the browser cookie. */
@@ -25,6 +25,45 @@ export async function setSessionCookie(session: CreatedSession): Promise<void> {
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+/**
+ * Signs out an unverified session — a no-op for anyone else (`null`, or
+ * already verified).
+ *
+ * `/login` and `/signup` call this on `user` before deciding what to render.
+ * Without it, a candidate who hits the browser's Back button (or a
+ * bookmark, or a stale tab) while mid-signup lands back on one of those
+ * pages still holding that session, and the obvious-looking fix —
+ * `if (user) redirect('/dashboard')` — just bounces them straight to
+ * `/verify-email` again, which is not "back" at all. Clearing the session
+ * here instead lets the page render as it would for anyone signed out,
+ * which is what "back" actually means once verification is unfinished:
+ * there is no /verify-email-appropriate state to return them to.
+ *
+ * Deletes the *server-side* session row only — never `clearSessionCookie`,
+ * which writes a cookie, and Next.js only allows that from a Server Action
+ * or Route Handler, not a page's own render (it throws if you try). Not
+ * clearing the browser cookie is harmless: the token it holds no longer
+ * resolves to anything the moment the row is gone, so every later
+ * `getCurrentUser()` call anywhere already sees them as signed out. The
+ * stale cookie itself is overwritten the next time they actually sign in.
+ *
+ * Takes the already-fetched `user` rather than looking it up again —
+ * `getCurrentUser` is wrapped in React's `cache()`, so a second call in the
+ * same request would return the same (soon to be stale) value anyway.
+ *
+ * Returns whether it actually cleared a session — the two callers use this
+ * to tell their client form to also call `POST /api/auth/logout` once on
+ * mount, which finishes the job by clearing the browser's cookie too (that
+ * route is a Route Handler, so it's allowed to).
+ */
+export async function signOutIfUnverified(user: User | null): Promise<boolean> {
+  if (!user || user.emailVerifiedAt) return false;
+
+  const token = await readSessionToken();
+  if (token) await deleteSession(token);
+  return true;
 }
 
 export async function readSessionToken(): Promise<string | undefined> {

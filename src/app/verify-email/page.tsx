@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/auth/cookies';
+import { activeCodeStatus } from '@/auth/emailVerification';
 import { VerifyEmailForm } from '@/components/auth/VerifyEmailForm';
 import { pageMetadata } from '@/site/seo';
 import type { Metadata } from 'next';
@@ -24,5 +25,14 @@ export default async function VerifyEmailPage() {
   const user = await requireUser();
   if (user.emailVerifiedAt) redirect('/dashboard');
 
-  return <VerifyEmailForm email={user.email} />;
+  const status = await activeCodeStatus(user.id);
+
+  return (
+    <VerifyEmailForm
+      name={user.name}
+      email={user.email}
+      codeExpiresAt={status?.expiresAt.toISOString() ?? null}
+      initialAttemptsRemaining={status?.attemptsRemaining ?? null}
+    />
+  );
 }
