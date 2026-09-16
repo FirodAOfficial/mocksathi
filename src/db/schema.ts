@@ -1,4 +1,17 @@
-import { boolean, date, index, integer, jsonb, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  date,
+  doublePrecision,
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 /**
  * Database schema, source of truth for the migrations in `db/migrations/`.
@@ -468,3 +481,50 @@ export interface QuestionOperationRow {
   kind: string;
   [key: string]: unknown;
 }
+
+/**
+ * A candidate's most recent marked sitting of an authored paper.
+ *
+ * One row per `(user, test)` — a resit's `onConflictDoUpdate`
+ * (`src/db/attempts.ts`) overwrites it rather than adding another, so "the
+ * score" for a paper is never ambiguous between two rows. `result` holds the
+ * whole `ExamResult` (`src/exam/result.ts`) the candidate was shown, stored
+ * verbatim so "View Submission" renders exactly what marking produced
+ * without re-marking — plain `jsonb` with no `$type` here, same reason
+ * `content`/`operations` above are declared structurally rather than
+ * imported: this file is read by `drizzle.config.ts`, which runs outside
+ * Next's module resolution and cannot follow a `@/` import. `score`,
+ * `maxScore` and `accuracyPct` mirror `result.you` so the mocks list can sort
+ * and display them without unpacking the JSON.
+ *
+ * Only a sitting of a stored paper is recorded here — the sample paper a
+ * fresh database falls back to has no `tests` row for `testId` to name, so
+ * nothing is stored for it.
+ */
+export const testAttempts = pgTable(
+  'test_attempts',
+  {
+    id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    testId: uuid('test_id')
+      .notNull()
+      .references(() => tests.id, { onDelete: 'cascade' }),
+    subject: testSubjectEnum('subject').notNull(),
+    /** `Language` (`src/exam/types.ts`) — which passage/workbook language the candidate actually sat, so "View Submission" replays the same one rather than defaulting to English. */
+    language: text('language').notNull().default('en'),
+    score: doublePrecision('score').notNull(),
+    maxScore: doublePrecision('max_score').notNull(),
+    accuracyPct: doublePrecision('accuracy_pct').notNull(),
+    result: jsonb('result').notNull(),
+    submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // The upsert target that makes a resit overwrite rather than accumulate.
+  (table) => [unique('test_attempts_user_test_unique').on(table.userId, table.testId)],
+);
+
+export type TestAttemptRow = typeof testAttempts.$inferSelect;
+export type NewTestAttemptRow = typeof testAttempts.$inferInsert;

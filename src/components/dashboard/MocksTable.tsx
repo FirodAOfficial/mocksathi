@@ -29,8 +29,8 @@ function ScoreCells({ mock }: { mock: MockSummary }) {
   return (
     <>
       <span className={mock.isBestScore ? styles.monoBest : styles.monoStrong}>{mock.score.toFixed(1)}</span>
-      <span className={styles.mono}>{mock.accuracyPct}%</span>
-      <span className={styles.mono}>#{mock.rank?.toLocaleString('en-IN')}</span>
+      <span className={styles.mono}>{mock.accuracyPct !== undefined ? `${mock.accuracyPct}%` : '—'}</span>
+      <span className={styles.mono}>{mock.rank !== undefined ? `#${mock.rank.toLocaleString('en-IN')}` : '—'}</span>
     </>
   );
 }
@@ -64,11 +64,13 @@ function ActionCell({ mock }: { mock: MockSummary }) {
     case 'missed':
       return <span className={styles.actionLocked}>Missed</span>;
     default:
-      return (
-        <Link href={`/dashboard/mocks/${mock.mockNumber}/solutions`} className={styles.actionSecondary}>
-          Solutions
+      // 'done' rows always carry a `testSlug` — they come from `publishedTestRows`,
+      // which only marks a row 'done' once a `test_attempts` row exists for it.
+      return mock.testSlug ? (
+        <Link href={`/dashboard/mocks/test/${encodeURIComponent(mock.testSlug)}/submission`} className={styles.actionSecondary}>
+          View Submission
         </Link>
-      );
+      ) : null;
   }
 }
 
@@ -98,9 +100,10 @@ function MockRow({ mock }: { mock: MockSummary }) {
  * A list of `MockSummary` rows — the full "All Mocks" page renders through this.
  *
  * The rows are published `tests` now, not the thirty fixture mocks this used to
- * show. The score, accuracy, rank and time columns come back empty for all of
- * them, which is honest rather than unfinished: there is no `attempts` table,
- * so nothing knows whether a paper has been sat.
+ * show. Score comes from `test_attempts` once the candidate has sat a paper
+ * (`publishedTestRows`); rank and time still come back empty, which is honest
+ * rather than unfinished — there is no cohort rank or per-question timing
+ * stored anywhere yet.
  */
 export function MocksTable({ heading, mocks, headerRight, emptyNote }: MocksTableProps) {
   return (

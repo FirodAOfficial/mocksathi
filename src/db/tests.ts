@@ -9,6 +9,7 @@ import {
 } from '@/exam/authoring';
 import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
+import { attemptsForUser, type StoredAttempt } from './attempts';
 import { db } from './client';
 import { isUniqueViolation } from './pgErrors';
 import {
@@ -347,16 +348,20 @@ export function attemptFromTest(
  * The mock tables showed thirty fictional papers numbered 1–30 out of
  * `seedDashboard.ts`. These are the real ones, in the order they were written.
  *
- * The score, accuracy, rank, time and date columns come back empty, and that is
- * honest rather than unfinished: there is no `attempts` table, so nothing
- * anywhere knows whether a candidate has sat a paper or what they scored.
- * Inventing a number for those columns would be the one thing worse than a dash.
+ * The accuracy, rank and time columns still come back empty, and that is
+ * honest rather than unfinished: there is no rank or per-question timing
+ * anywhere yet. The score column, though, is real once `userId` is given —
+ * `test_attempts` (`src/db/attempts.ts`) is where a submission records it.
  *
  * `mockNumber` is the row's position in this list, not an id — it is what the
  * table prints as "Mock 1" and uses as a key. Once a schedule exists it becomes
  * the candidate's own numbering.
+ *
+ * `userId` is optional so this still works for a caller with no signed-in
+ * candidate to check attempts against (there is none today, but nothing here
+ * should assume one). Every row then reads as `available`, as before.
  */
-export async function publishedTestRows(): Promise<MockSummary[]> {
+export async function publishedTestRows(userId?: string): Promise<MockSummary[]> {
   const rows = await db
     .select({
       test: tests,
@@ -370,15 +375,27 @@ export async function publishedTestRows(): Promise<MockSummary[]> {
     .groupBy(tests.id)
     .orderBy(asc(tests.createdAt));
 
+  const attempts: Map<string, StoredAttempt> = userId
+    ? await attemptsForUser(
+        userId,
+        rows.map(({ test }) => test.id),
+      )
+    : new Map();
+
   return rows.map(({ test, questionCount, totalMarks }, index) => {
     const questions = Number(questionCount ?? 0);
+    const attempt = attempts.get(test.id);
 
     return {
       mockNumber: index + 1,
       testSlug: test.slug,
       paperName: `${test.name} · ${questions} Q${questions === 1 ? '' : 's'}`,
-      // Published and not yet sat. Nothing here knows any more than that.
-      state: 'available' as const,
+      // 'done' once this candidate has a stored sitting of it, 'available' —
+      // published and not yet sat — otherwise. Nothing here knows any more.
+      state: attempt ? ('done' as const) : ('available' as const),
+      score: attempt?.score,
+      accuracyPct: attempt ? Math.round(attempt.accuracyPct) : undefined,
+      timeSpentSeconds: attempt?.result.you.timeSeconds,
       maxScore: Number(totalMarks ?? 0),
       mockType: test.subject,
       questionCount: questions,

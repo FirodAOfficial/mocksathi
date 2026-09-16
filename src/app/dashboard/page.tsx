@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   const [data, currentPlan, mocks] = await Promise.all([
     dashboardDataFor(user),
     currentPlanForUser(user.id),
-    publishedTestRows(),
+    publishedTestRows(user.id),
   ]);
   return <DashboardScreen data={data} currentPlan={currentPlan} mocks={mocks} />;
 }

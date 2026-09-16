@@ -7,14 +7,14 @@ import { publishedTestRows } from '@/db/tests';
  * Every paper an admin has published, as data.
  *
  * Real rows from `tests`, not the thirty fixture mocks this list used to show.
- * They are deliberately not openable from here: a row has no scheduled sitting
- * behind it yet, so "Start" would mean something different per row that nothing
- * can currently express. `/dashboard/today` is where a paper is opened, and
- * linking a row to its own sitting is the next phase (`sdd/test-authoring.md`).
+ * `publishedTestRows` is given the signed-in candidate's id so each row also
+ * carries their own latest score once they have sat it (`test_attempts`,
+ * `src/db/attempts.ts`) — that is what turns a row's action from "Start" into
+ * "View Submission".
  */
 export default async function AllMocksPage() {
-  await requireUser();
-  const mocks = await publishedTestRows();
+  const user = await requireUser();
+  const mocks = await publishedTestRows(user.id);
 
   // The first Word paper is what `/exam` serves as today's, so the card names
   // that one rather than a fixture mock number.

@@ -42,11 +42,14 @@ function StatusPill({ mock }: { mock: MockSummary }) {
 function ActionCell({ mock }: { mock: MockSummary }) {
   switch (mock.state) {
     case 'done':
-      return (
-        <Link href={`/dashboard/mocks/${mock.mockNumber}/solutions`} className={styles.actionOutline}>
+      // Rows here are `publishedTestRows` output, which only marks one 'done'
+      // once a `test_attempts` row exists for it — that row always carries a
+      // `testSlug`.
+      return mock.testSlug ? (
+        <Link href={`/dashboard/mocks/test/${encodeURIComponent(mock.testSlug)}/submission`} className={styles.actionOutline}>
           View Result
         </Link>
-      );
+      ) : null;
     case 'today':
     case 'available':
       // A paper with no questions cannot be sat — `loadPaper` returns null for
