@@ -527,16 +527,6 @@ a.examPickerButton:hover {
   gap: 16px;
 }
 
-/*
- * The footer sits inside the scroll container, so it scrolls with the page
- * rather than being pinned to the viewport. This cancels the content column's
- * padding so it spans the full width, and pushes it down when the page above
- * it is short.
- */
-.footerSlot {
-  margin: auto -20px -20px;
-}
-
 @media (max-width: 900px) {
   /* The topbar packs a lot in: menu button, exam name, streak, bell, and a
      full name+role user chip. On a phone that's more than one row's worth

@@ -130,8 +130,7 @@
 
 .link:focus-visible,
 .socialButton:focus-visible,
-.compactLink:focus-visible,
-.compactMail:focus-visible {
+.compactLink:focus-visible {
   outline: 2px solid #4d8dff;
   outline-offset: 3px;
 }
@@ -151,48 +150,34 @@
  * The compact card: sign-in and sign-up.
  * ---------------------------------------------------------------------- */
 
+/*
+ * A footnote, not a second card: the sign-in/sign-up form above this is
+ * already the page's one visual anchor, so this stays a single slim row —
+ * an opaque background (needed on the dark mobile gradient, see the
+ * component doc) but no border or shadow to make it read as its own box.
+ */
 .compact {
   width: 100%;
   max-width: 480px;
-  background: var(--db-surface, #fff);
-  border: 1px solid var(--db-border, #e8edf5);
-  border-radius: 14px;
-  padding: 16px 18px;
-  box-shadow: 0 1px 2px #0b16380a;
-}
-
-.compactTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--db-border, #e8edf5);
-}
-
-.compactMail {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--db-text-muted, #64748b);
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-.compactMail:hover {
-  color: var(--db-accent, #1c6ef2);
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  background: var(--db-surface, #fff);
+  border-radius: 10px;
+  padding: 9px 14px;
 }
 
 .compactLinks {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 16px;
-  row-gap: 6px;
-  margin-bottom: 10px;
+  column-gap: 14px;
+  row-gap: 4px;
 }
 
 .compactLink {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--db-text-muted, #64748b);
   text-decoration: none;

@@ -83,25 +83,24 @@ export function SiteFooter() {
 }
 
 /**
- * The same links as a compact card, for the sign-in and sign-up screens.
+ * The same links as a single slim line, for the sign-in and sign-up screens.
  *
- * Those pages are a full-height split with the form centred in one half; the
- * full footer's three columns would push the sign-in card off a laptop screen.
+ * Those pages are a full-height split with the form centred in one half, and
+ * the form card above this is already the page's one visual anchor — a
+ * second bordered, shadowed card stacked under it (logo, mail address, a
+ * divider, then the links) read as competing with it rather than as a
+ * footnote. This is sized to be exactly that: a footnote.
  *
  * It carries its own opaque background rather than inheriting whatever is
  * behind it: this renders on both the plain-white desktop background and the
  * dark-gradient mobile one (`LoginScreen.module.css`), and one text colour
- * could not read on both.
+ * could not read on both. "Contact Us" is already one of `SITE_LINKS`, so
+ * dropping the standalone mail row here does not lose that.
  */
 export function SiteFooterCompact() {
   return (
     <footer className={styles.compact}>
-      <div className={styles.compactTop}>
-        <BrandLogo size={26} tone="dark" />
-        <a className={styles.compactMail} href={MAIL_URL}>
-          {CONTACT.email}
-        </a>
-      </div>
+      <p className={styles.compactCopyright}>&copy; {new Date().getFullYear()} MockSathi</p>
 
       <nav className={styles.compactLinks} aria-label="Company and policies">
         {SITE_LINKS.map((link) => (
@@ -110,10 +109,6 @@ export function SiteFooterCompact() {
           </LegalNavLink>
         ))}
       </nav>
-
-      <p className={styles.compactCopyright}>
-        &copy; {new Date().getFullYear()} MockSathi. All rights reserved.
-      </p>
     </footer>
   );
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { CandidateProfile, ExamEnrollment, NavSection } from '@/dashboard/types';
-import { SiteFooter } from '@/components/site/SiteFooter';
+import { PortalFooter } from './PortalFooter';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './PortalShell.module.css';
 import { SelectExamModal, type SelectExamOption } from './SelectExamModal';
@@ -389,15 +389,11 @@ export function PortalShell({
             Inside the scroll container, not after it: `.content` is what
             scrolls, so a sibling footer would be pinned to the viewport and
             take a strip of every screen. Here it sits at the end of the page,
-            which is where a footer belongs.
-
-            The policy links belong under the portal at all, rather than only on
-            the public pages, because a signed-in candidate looking for the
-            refund terms should not have to sign out to find them.
+            which is where a footer belongs. An ordinary last flex child, not
+            a full-bleed slot — `PortalFooter` is sized to sit inside the
+            page's own padding like everything above it, not to bleed past it.
           */}
-          <div className={styles.footerSlot}>
-            <SiteFooter />
-          </div>
+          <PortalFooter />
         </div>
       </div>
 
