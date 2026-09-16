@@ -55,8 +55,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     return badRequest('WEAK_PASSWORD', `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
 
-  const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
-  if (existing) {
+  const [existing] = await db
+    .select({ id: users.id, emailVerifiedAt: users.emailVerifiedAt })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (existing && existing.emailVerifiedAt) {
     return NextResponse.json(
       { code: 'EMAIL_TAKEN', detail: 'An account with that email already exists.' },
       { status: 409 },
@@ -64,7 +69,31 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const passwordHash = await hashPassword(password);
-  const [user] = await db.insert(users).values({ email, name, passwordHash }).returning();
+
+  /*
+   * `existing` here is unverified: a prior signup was abandoned before the
+   * OTP was entered, so nobody has actually proven they own this inbox yet.
+   * Rather than locking the address out forever with EMAIL_TAKEN, this
+   * attempt reclaims the same row — new name and password overwrite the old
+   * (never-confirmed) ones. It's still safe: whoever can read the code that
+   * `issueVerificationCode` sends below is the real owner either way, and
+   * reusing the row (instead of deleting + reinserting) keeps that call
+   * subject to the same per-account cooldown/rate limit the abandoned
+   * attempt already started, so this can't be used to bypass it.
+   */
+  const user = existing
+    ? await db
+        .update(users)
+        .set({ name, passwordHash, updatedAt: new Date() })
+        .where(eq(users.id, existing.id))
+        .returning()
+        .then((rows) => rows[0])
+    : await db
+        .insert(users)
+        .values({ email, name, passwordHash })
+        .returning()
+        .then((rows) => rows[0]);
+
   if (!user) {
     return NextResponse.json({ code: 'SIGNUP_FAILED', detail: 'Could not create the account.' }, { status: 500 });
   }
