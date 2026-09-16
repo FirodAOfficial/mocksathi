@@ -78,6 +78,13 @@
       "when": 1789536197630,
       "tag": "0010_drop_email_verified_at_default",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789538710372,
+      "tag": "0011_odd_vermin",
+      "breakpoints": true
     }
   ]
 }

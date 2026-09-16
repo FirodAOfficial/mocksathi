@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
-import { and, asc, eq, gt, inArray } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, ne } from 'drizzle-orm';
 import { db } from '@/db/client';
 import { sessions, users, type User } from '@/db/schema';
 
@@ -94,4 +94,23 @@ export async function getUserBySessionToken(token: string): Promise<User | null>
 
 export async function deleteSession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.id, hashToken(token)));
+}
+
+/**
+ * Signs every device out. Used after a password reset (`src/auth/
+ * passwordReset.ts`), which has no session of its own to spare — the route
+ * calling it is unauthenticated, so there's no "current" device to keep.
+ */
+export async function deleteAllSessionsForUser(userId: string): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+/**
+ * Signs every *other* device out, keeping `keepToken`'s session alive. Used
+ * after a password change from inside an active session (`POST /api/profile/
+ * password`), so the tab that just made the change isn't logged out of by
+ * its own request.
+ */
+export async function deleteOtherSessionsForUser(userId: string, keepToken: string): Promise<void> {
+  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.id, hashToken(keepToken))));
 }

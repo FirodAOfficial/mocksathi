@@ -100,9 +100,14 @@ export function LoginForm({ googleError }: LoginFormProps) {
               </div>
 
               <div className={cardStyles.field}>
-                <label className={cardStyles.label} htmlFor="password">
-                  Password
-                </label>
+                <div className={styles.passwordLabelRow}>
+                  <label className={cardStyles.label} htmlFor="password">
+                    Password
+                  </label>
+                  <Link href="/forgot-password" className={styles.forgotLink}>
+                    Forgot password?
+                  </Link>
+                </div>
                 <input
                   id="password"
                   type="password"

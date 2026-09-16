@@ -13,7 +13,7 @@
  * of recipients.
  */
 
-export type OtpPurpose = 'email-verification';
+export type OtpPurpose = 'email-verification' | 'password-reset';
 
 export interface OtpEmailContent {
   subject: string;
@@ -34,8 +34,30 @@ export interface OtpEmailOptions {
   expiresInMinutes: number;
 }
 
-export function otpEmailContent({ code, expiresInMinutes }: OtpEmailOptions): OtpEmailContent {
-  const subject = `${code} is your MockSathi verification code`;
+/**
+ * The copy that differs by purpose — everything else about the template
+ * (layout, code block, expiry line, footer) is identical, so only these four
+ * strings branch rather than the whole function.
+ */
+const COPY: Record<OtpPurpose, { subjectSuffix: string; heading: string; lede: string; footer: string }> = {
+  'email-verification': {
+    subjectSuffix: 'verification code',
+    heading: 'Verify your email',
+    lede: 'Your verification code is:',
+    footer: "If you didn't request this code, you can safely ignore this email.",
+  },
+  'password-reset': {
+    subjectSuffix: 'password reset code',
+    heading: 'Reset your password',
+    lede: 'Your password reset code is:',
+    footer:
+      "If you didn't request this, you can safely ignore this email — your password won't change until this code is entered.",
+  },
+};
+
+export function otpEmailContent({ code, purpose, expiresInMinutes }: OtpEmailOptions): OtpEmailContent {
+  const { subjectSuffix, heading, lede, footer } = COPY[purpose];
+  const subject = `${code} is your MockSathi ${subjectSuffix}`;
 
   /*
    * The code is in the subject line as well as the body.
@@ -48,15 +70,15 @@ export function otpEmailContent({ code, expiresInMinutes }: OtpEmailOptions): Ot
   const text = [
     'MockSathi',
     '',
-    'Verify your email',
+    heading,
     '',
-    'Your verification code is:',
+    lede,
     '',
     code,
     '',
     `This code expires in ${expiresInMinutes} minutes.`,
     '',
-    "If you didn't request this code, you can safely ignore this email.",
+    footer,
     '',
     '© MockSathi',
   ].join('\n');
@@ -70,7 +92,7 @@ export function otpEmailContent({ code, expiresInMinutes }: OtpEmailOptions): Ot
 </head>
 <body style="margin:0;padding:0;background:#f1f4f9;">
 <!-- Preheader: what a client shows beside the subject in the inbox list. -->
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your MockSathi verification code is ${code}. It expires in ${expiresInMinutes} minutes.</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your MockSathi ${subjectSuffix} is ${code}. It expires in ${expiresInMinutes} minutes.</div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f1f4f9;">
 <tr>
@@ -84,8 +106,8 @@ export function otpEmailContent({ code, expiresInMinutes }: OtpEmailOptions): Ot
 </tr>
 <tr>
 <td style="padding:22px 32px 0;font-family:${FONT};">
-<h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:${INK};">Verify your email</h1>
-<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#334155;">Your verification code is:</p>
+<h1 style="margin:0;font-size:22px;line-height:1.3;font-weight:700;color:${INK};">${heading}</h1>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#334155;">${lede}</p>
 </td>
 </tr>
 <tr>
@@ -102,7 +124,7 @@ export function otpEmailContent({ code, expiresInMinutes }: OtpEmailOptions): Ot
 <tr>
 <td style="padding:18px 32px 0;font-family:${FONT};">
 <p style="margin:0;font-size:14px;line-height:1.6;color:${MUTED};">This code expires in ${expiresInMinutes} minutes.</p>
-<p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:${MUTED};">If you didn&rsquo;t request this code, you can safely ignore this email.</p>
+<p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:${MUTED};">${footer}</p>
 </td>
 </tr>
 <tr>

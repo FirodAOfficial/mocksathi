@@ -128,6 +128,43 @@ export const emailVerificationCodes = pgTable(
 export type EmailVerificationCode = typeof emailVerificationCodes.$inferSelect;
 export type NewEmailVerificationCode = typeof emailVerificationCodes.$inferInsert;
 
+/**
+ * Emailed password-reset codes.
+ *
+ * The same shape as `emailVerificationCodes`, for the same reasons (rows kept
+ * after use so the rate limit/cooldown in `src/auth/otpPolicy.ts` has
+ * something to count, `codeHash` scrypt'd for the same six-digit-keyspace
+ * reason) — but a separate table, not a shared one with a `purpose` column.
+ * The two flows have different preconditions (a verification code cares
+ * whether the account is already verified; a reset code doesn't) and
+ * different success actions (mark verified vs. overwrite `passwordHash` and
+ * sign out every session), so `src/auth/passwordReset.ts` composes them
+ * independently of `src/auth/emailVerification.ts` rather than the two
+ * sharing a table a `WHERE purpose = ...` would have to filter correctly on
+ * every query forever.
+ */
+export const passwordResetCodes = pgTable(
+  'password_reset_codes',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    ipHash: text('ip_hash'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('password_reset_codes_user_created_idx').on(table.userId, table.createdAt)],
+);
+
+export type PasswordResetCode = typeof passwordResetCodes.$inferSelect;
+export type NewPasswordResetCode = typeof passwordResetCodes.$inferInsert;
+
 export const EXAM_STATUSES = ['draft', 'published', 'archived'] as const;
 export type ExamStatus = (typeof EXAM_STATUSES)[number];
 export const examStatusEnum = pgEnum('exam_status', EXAM_STATUSES);

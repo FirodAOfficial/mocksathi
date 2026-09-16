@@ -322,8 +322,10 @@ export const SEED_DASHBOARD: DashboardData = {
 /**
  * The menu everyone who isn't an admin sees — flat, no section headers,
  * matching the simplified reference design (Dashboard / My Tests /
- * Performance / Help & Support / Share). Logout and Profile live in the
- * topbar's user menu (`PortalShell`) instead, matching that reference too.
+ * Performance / Profile & Settings / Help & Support / Share). Profile is
+ * also reachable from the topbar's user menu (`PortalShell`) — kept in both
+ * places, since the sidebar is the more discoverable one. Logout stays
+ * topbar-only.
  */
 export const SIMPLIFIED_NAV_SECTIONS: NavSection[] = [
   {
@@ -331,6 +333,7 @@ export const SIMPLIFIED_NAV_SECTIONS: NavSection[] = [
       { label: 'Dashboard', icon: 'home', href: '/dashboard' },
       { label: 'My Tests', icon: 'layers', href: '/dashboard/mocks' },
       { label: 'Performance', icon: 'bar-chart-3', href: '/dashboard/performance' },
+      { label: 'Profile & Settings', icon: 'user', href: '/dashboard/profile' },
       { label: 'Help & Support', icon: 'circle-help', href: '/dashboard/help' },
       { label: 'Share', icon: 'share', href: '/dashboard/share' },
     ],

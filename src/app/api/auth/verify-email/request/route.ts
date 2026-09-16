@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/auth/cookies';
-import { hashIp, issueVerificationCode } from '@/auth/emailVerification';
+import { issueVerificationCode } from '@/auth/emailVerification';
+import { clientIp, hashIp } from '@/auth/requestContext';
 
 /**
  * Sends a verification code to the signed-in account's own address.
@@ -16,18 +17,6 @@ import { hashIp, issueVerificationCode } from '@/auth/emailVerification';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/**
- * The requester's address, as Vercel reports it.
- *
- * `x-forwarded-for` is a list when proxies chain; the first entry is the client.
- * Absent locally, which is why the per-address limit tolerates null rather than
- * refusing the request.
- */
-function clientIp(request: NextRequest): string | null {
-  const forwarded = request.headers.get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? null;
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await requireUser();
