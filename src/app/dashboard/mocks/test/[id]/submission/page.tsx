@@ -5,11 +5,11 @@ import { ResultView } from '@/components/result/ResultView';
 import headerStyles from '@/components/dashboard/AnalysisScreen.module.css';
 import emptyStyles from '@/components/dashboard/ComingSoonScreen.module.css';
 import { attemptFor } from '@/db/attempts';
-import { attemptFromTest, getTestBySlug, questionsForTest } from '@/db/tests';
+import { attemptFromTest, getTestById, questionsForTest } from '@/db/tests';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const test = await getTestBySlug(slug);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const test = await getTestById(id);
   return { title: `${test?.name ?? 'Submission'} · MockSathi` };
 }
 
@@ -21,12 +21,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  * `test_attempts` row instead of a fresh mark — "the latest score" is exactly
  * what `recordAttempt` (`src/db/attempts.ts`) keeps there, one row per
  * `(user, test)`.
+ *
+ * Addressed by the test's id, not its slug: a slug is regenerated when an
+ * admin renames the paper (`updateTest`), which would otherwise turn a
+ * reloaded or bookmarked submission link into a 404 for a paper that still
+ * exists. The id never changes.
  */
-export default async function TestSubmissionPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function TestSubmissionPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
-  const { slug } = await params;
+  const { id } = await params;
 
-  const test = await getTestBySlug(slug);
+  const test = await getTestById(id);
   if (!test) notFound();
 
   const attempt = await attemptFor(user.id, test.id);
@@ -58,6 +63,7 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
       attempt={examAttempt}
       language={attempt.language}
       backHref="/dashboard/mocks"
+      attemptCount={attempt.attemptCount}
     />
   );
 }

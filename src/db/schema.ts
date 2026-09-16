@@ -517,7 +517,25 @@ export const testAttempts = pgTable(
     score: doublePrecision('score').notNull(),
     maxScore: doublePrecision('max_score').notNull(),
     accuracyPct: doublePrecision('accuracy_pct').notNull(),
+    /**
+     * How many times this candidate has submitted this paper, including this
+     * sitting. `recordAttempt` (`src/db/attempts.ts`) increments it in the
+     * same upsert that overwrites `score`/`result` — the row stays one per
+     * `(user, test)` (only the latest sitting's detail survives), but this
+     * count is the one thing that accumulates across every resit rather than
+     * being replaced by the latest.
+     */
+    attemptCount: integer('attempt_count').notNull().default(1),
     result: jsonb('result').notNull(),
+    /**
+     * What the candidate actually submitted, keyed by question number —
+     * `Record<number, AnswerPayload>` (`src/exam/types.ts`), the same shape
+     * `markAttempt` was given. Kept alongside `result` so "View Submission"
+     * can show "your answer" on the solutions review immediately after
+     * finishing, not just the marked outcome — the whole reason a final
+     * submission now forwards to that page instead of rendering inline.
+     */
+    answers: jsonb('answers').notNull().default({}),
     submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

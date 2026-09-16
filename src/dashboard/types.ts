@@ -94,6 +94,15 @@ export interface MockSummary {
    * rows had no Start button before they were real.
    */
   testSlug?: string;
+  /**
+   * The same `tests` row's id.
+   *
+   * Used for the "View Submission" link rather than `testSlug`: an admin
+   * renaming the paper regenerates its slug (`updateTest`), which would
+   * otherwise turn a reloaded or bookmarked submission link into a 404. The
+   * id never changes.
+   */
+  testId?: string;
   paperName: string;
   state: MockState;
   mockType: MockType;

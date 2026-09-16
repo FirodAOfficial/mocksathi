@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { ExamResult } from '@/exam/result';
 import type { Language, Subject } from '@/exam/types';
 import { db } from './client';
@@ -23,6 +23,8 @@ export interface StoredAttempt {
   score: number;
   maxScore: number;
   accuracyPct: number;
+  /** How many times this candidate has submitted this paper, including this sitting. */
+  attemptCount: number;
   result: ExamResult;
   submittedAt: Date;
 }
@@ -36,6 +38,7 @@ function fromRow(row: TestAttemptRow): StoredAttempt {
     score: row.score,
     maxScore: row.maxScore,
     accuracyPct: row.accuracyPct,
+    attemptCount: row.attemptCount,
     result: row.result as ExamResult,
     submittedAt: row.submittedAt,
   };
@@ -46,7 +49,11 @@ function fromRow(row: TestAttemptRow): StoredAttempt {
  *
  * Upserted on `(userId, testId)`: a resit replaces the stored score and
  * result rather than piling up a history nothing reads yet, so "the score"
- * for a paper always means the most recent attempt.
+ * for a paper always means the most recent attempt. `attemptCount` is the
+ * exception — it accumulates (`+ 1` in the same `UPDATE`, so two concurrent
+ * resubmissions can't both read the same starting count and undercount) even
+ * though everything else about the row is overwritten, so it still answers
+ * "how many times has this candidate sat this paper".
  */
 export async function recordAttempt(params: {
   userId: string;
@@ -70,10 +77,10 @@ export async function recordAttempt(params: {
 
   await db
     .insert(testAttempts)
-    .values({ userId, testId, ...shared })
+    .values({ userId, testId, attemptCount: 1, ...shared })
     .onConflictDoUpdate({
       target: [testAttempts.userId, testAttempts.testId],
-      set: shared,
+      set: { ...shared, attemptCount: sql`${testAttempts.attemptCount} + 1` },
     });
 }
 

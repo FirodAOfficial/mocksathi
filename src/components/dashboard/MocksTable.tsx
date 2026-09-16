@@ -64,12 +64,22 @@ function ActionCell({ mock }: { mock: MockSummary }) {
     case 'missed':
       return <span className={styles.actionLocked}>Missed</span>;
     default:
-      // 'done' rows always carry a `testSlug` — they come from `publishedTestRows`,
+      // 'done' rows always carry a `testId` — they come from `publishedTestRows`,
       // which only marks a row 'done' once a `test_attempts` row exists for it.
-      return mock.testSlug ? (
-        <Link href={`/dashboard/mocks/test/${encodeURIComponent(mock.testSlug)}/submission`} className={styles.actionSecondary}>
-          View Submission
-        </Link>
+      // Addressed by id, not slug, so the link survives a rename (see
+      // `MockSummary.testId`). Retake reuses the same href a fresh "Start"
+      // would — `recordAttempt` (`src/db/attempts.ts`) overwrites the stored
+      // score on resubmission, so sitting it again always leaves the latest
+      // attempt as "the score".
+      return mock.testId ? (
+        <>
+          <Link href={`/dashboard/mocks/test/${mock.testId}/submission`} className={styles.actionPrimary}>
+            View Submission
+          </Link>
+          <Link href={startHrefFor(mock)} className={styles.actionGhost}>
+            Retake
+          </Link>
+        </>
       ) : null;
   }
 }

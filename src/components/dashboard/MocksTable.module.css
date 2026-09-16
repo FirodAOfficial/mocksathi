@@ -34,7 +34,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 72px minmax(160px, 1.5fr) 84px 84px 84px 84px 76px 104px;
+  grid-template-columns: 72px minmax(160px, 1.5fr) 84px 84px 84px 84px 76px 150px;
   align-items: center;
   font-size: 12.5px;
   color: #334155;
@@ -43,8 +43,11 @@
   gap: 8px;
   /* A guaranteed minimum, not left to `1.5fr`'s size resolving unpredictably
      once the row is wider than the viewport — `.table`'s `overflow-x: auto`
-     below is what actually makes a table this wide workable on a phone. */
-  min-width: 720px;
+     below is what actually makes a table this wide workable on a phone. The
+     last column is wide enough for a 'done' row's two stacked actions
+     (View Submission, Retake), not just the single-action states.
+  */
+  min-width: 766px;
 }
 
 .row:last-child {
@@ -140,7 +143,10 @@
 }
 
 .actionCell {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
 }
 
 .actionPrimary {
@@ -152,17 +158,25 @@
   font-size: 11.5px;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.actionSecondary {
-  display: inline-block;
-  padding: 6px 13px;
-  border-radius: 7px;
-  border: 1px solid var(--db-border);
-  color: #475569;
-  font-size: 11.5px;
+/*
+ * A lighter-weight alternative to a row's main action — "Retake" under
+ * "View Submission" — so two links stacked in one cell read as one primary
+ * button with a quiet option beneath it, not two competing buttons.
+ */
+.actionGhost {
+  font-size: 11px;
   font-weight: 600;
-  text-decoration: none;
+  color: var(--db-text-faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.actionGhost:hover {
+  color: var(--db-accent);
 }
 
 .actionLocked {

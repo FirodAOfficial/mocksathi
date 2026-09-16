@@ -389,6 +389,7 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
     return {
       mockNumber: index + 1,
       testSlug: test.slug,
+      testId: test.id,
       paperName: `${test.name} · ${questions} Q${questions === 1 ? '' : 's'}`,
       // 'done' once this candidate has a stored sitting of it, 'available' —
       // published and not yet sat — otherwise. Nothing here knows any more.

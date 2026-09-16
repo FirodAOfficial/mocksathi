@@ -19,6 +19,13 @@ export interface ResultScreenProps {
    * came before it, so the destination is supplied by whoever renders it.
    */
   backHref?: string;
+  /**
+   * How many times this candidate has sat this paper, including this
+   * sitting. Undefined on a fresh submission and the design fixtures — a
+   * count only means something once there is a stored paper to count sittings
+   * of ("View Submission" on `/dashboard/mocks`, `src/db/attempts.ts`).
+   */
+  attemptCount?: number;
 }
 
 /**
@@ -28,7 +35,7 @@ export interface ResultScreenProps {
  * is what lets the preview route render the approved design figures and the
  * live app render a real submission through the same components.
  */
-export function ResultScreen({ result, onViewSolutions, backHref = '/' }: ResultScreenProps) {
+export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptCount }: ResultScreenProps) {
   const qualified = outcomeOf(result) === 'qualified';
 
   const meta: { icon: MetaIcon; tone: string; value: string; label: string }[] = [
@@ -51,6 +58,11 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/' }: Result
             <strong className={styles.testTitle}>{result.testName}</strong>
             <span className={styles.testTagline}>{result.tagline}</span>
           </span>
+          {attemptCount !== undefined && (
+            <span className={styles.attemptBadge}>
+              Attempt {attemptCount}
+            </span>
+          )}
         </div>
 
         <div className={styles.topActions}>
