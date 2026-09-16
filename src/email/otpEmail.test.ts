@@ -76,3 +76,27 @@ describe('otpEmailContent', () => {
     expect(CONTENT.text).toContain('MockSathi');
   });
 });
+
+const RESET_CONTENT = otpEmailContent({ code: '048261', purpose: 'password-reset', expiresInMinutes: 10 });
+
+describe('otpEmailContent, password-reset purpose', () => {
+  it('does not read like an email-verification message', () => {
+    // The two purposes share every line of markup except this copy — this is
+    // the one thing actually worth asserting distinguishes them.
+    expect(RESET_CONTENT.subject).not.toBe(CONTENT.subject);
+    expect(RESET_CONTENT.subject).toContain('password reset code');
+    expect(RESET_CONTENT.html).toContain('Reset your password');
+    expect(RESET_CONTENT.text).toContain('Reset your password');
+    expect(RESET_CONTENT.text).not.toContain('Verify your email');
+  });
+
+  it('tells a recipient who did not ask that their password is untouched', () => {
+    expect(RESET_CONTENT.text).toContain("your password won't change until this code is entered");
+  });
+
+  it('still puts the code in the subject, the HTML and the plain text', () => {
+    expect(RESET_CONTENT.subject).toContain('048261');
+    expect(RESET_CONTENT.html).toContain('048261');
+    expect(RESET_CONTENT.text).toContain('048261');
+  });
+});

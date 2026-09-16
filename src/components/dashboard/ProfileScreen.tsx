@@ -2,6 +2,7 @@ import { LegalNavLink } from '@/components/legal/LegalNavLink';
 import type { ChallengePlan } from '@/dashboard/types';
 import { challengeProgressPct } from '@/dashboard/seedDashboard';
 import { AvatarUpload } from './AvatarUpload';
+import { ChangePasswordCard } from './ChangePasswordCard';
 import { ExamEnrollmentsCard, type RegisteredExam, type SelectableExam } from './ExamEnrollmentsCard';
 import styles from './ProfileScreen.module.css';
 
@@ -22,6 +23,7 @@ export interface ProfileScreenProps {
   enrollments: RegisteredExam[];
   availableExams: SelectableExam[];
   challenge: ChallengePlan;
+  hasPassword: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ export function ProfileScreen({
   enrollments,
   availableExams,
   challenge,
+  hasPassword,
 }: ProfileScreenProps) {
   const pct = challengeProgressPct(challenge);
 
@@ -88,6 +91,8 @@ export function ProfileScreen({
       </div>
 
       <ExamEnrollmentsCard enrollments={enrollments} availableExams={availableExams} />
+
+      <ChangePasswordCard hasPassword={hasPassword} />
 
       <div className={styles.card}>
         <p className={styles.cardTitle}>Preferences</p>

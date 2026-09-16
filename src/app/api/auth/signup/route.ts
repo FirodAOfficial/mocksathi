@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { setSessionCookie } from '@/auth/cookies';
-import { hashIp, issueVerificationCode } from '@/auth/emailVerification';
+import { issueVerificationCode } from '@/auth/emailVerification';
 import { hashPassword } from '@/auth/password';
+import { clientIp, hashIp } from '@/auth/requestContext';
 import { createSession } from '@/auth/session';
 import { isValidEmail, normalizeEmail, MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import { db } from '@/db/client';
@@ -29,12 +30,6 @@ interface SignupBody {
 
 function badRequest(code: string, detail: string): NextResponse {
   return NextResponse.json({ code, detail }, { status: 400 });
-}
-
-/** The requester's address, for the per-address code limit. See the verify-email route. */
-function clientIp(request: Request): string | null {
-  const forwarded = request.headers.get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? null;
 }
 
 export async function POST(request: Request): Promise<NextResponse> {

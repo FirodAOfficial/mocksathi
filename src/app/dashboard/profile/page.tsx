@@ -18,6 +18,7 @@ export default async function ProfilePage() {
       initials={initialsFor(user.name)}
       role={data.candidate.role}
       avatarUrl={user.avatarUrl}
+      hasPassword={user.passwordHash !== null}
       memberSinceLabel={user.createdAt.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
       enrollments={myEnrollments.map((enrollment) => ({
         examId: enrollment.exam.id,

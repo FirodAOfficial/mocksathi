@@ -1,5 +1,4 @@
 import 'server-only';
-import { createHash } from 'node:crypto';
 import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import { sendOtpEmail } from '@/email/sendOtpEmail';
 import { db } from '@/db/client';
@@ -38,11 +37,6 @@ export type ConfirmResult =
   | { ok: false; reason: 'expired' }
   | { ok: false; reason: 'too_many_attempts' }
   | { ok: false; reason: 'mismatch'; attemptsRemaining: number };
-
-/** SHA-256 of an IP, so the per-address limit needs no record of where. */
-export function hashIp(ip: string | null): string | null {
-  return ip ? createHash('sha256').update(ip).digest('hex') : null;
-}
 
 const seconds = (ms: number): number => Math.max(1, Math.ceil(ms / 1000));
 
