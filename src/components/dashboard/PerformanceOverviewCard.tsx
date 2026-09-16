@@ -17,7 +17,7 @@ export interface PerformanceOverviewCardProps {
  */
 export function PerformanceOverviewCard({ performance, mocksAttempted, planName }: PerformanceOverviewCardProps) {
   return (
-    <div className={styles.card}>
+    <div className={styles.card} data-tour="performance-overview">
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Your Performance</h2>

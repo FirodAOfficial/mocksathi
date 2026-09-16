@@ -7,6 +7,8 @@ import type { CandidateProfile, ExamEnrollment, NavSection } from '@/dashboard/t
 import { SiteFooter } from '@/components/site/SiteFooter';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './PortalShell.module.css';
+import { SelectExamModal, type SelectExamOption } from './SelectExamModal';
+import { StudentTour } from './tour/StudentTour';
 
 const LOGOUT_HREF = '/logout';
 
@@ -28,6 +30,10 @@ export interface PortalShellProps {
   simplifiedMenu?: boolean;
   /** The sidebar's bottom plan widget — shown only alongside `simplifiedMenu` (admins don't need it), and only once a default plan exists to fall back to. */
   planWidget?: PlanWidgetData;
+  /** Whether this candidate has finished (or skipped) the student tour — `false` auto-starts it on mount. */
+  hasCompletedTour?: boolean;
+  /** Published exams the candidate hasn't registered for yet. Non-empty only when they have no exam at all — see `dashboard/layout.tsx`. */
+  availableExams?: SelectExamOption[];
   children: ReactNode;
 }
 
@@ -46,6 +52,8 @@ export function PortalShell({
   navSections,
   simplifiedMenu = false,
   planWidget,
+  hasCompletedTour = true,
+  availableExams = [],
   children,
 }: PortalShellProps) {
   const pathname = usePathname();
@@ -53,6 +61,20 @@ export function PortalShell({
   const [loggingOut, setLoggingOut] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // Auto-starts once per account (the DB flag), not once per mount — a
+  // full-page reload mid-tour, before it's finished or skipped, shows it
+  // again, which reads as "you haven't gotten through this yet" rather than
+  // a bug.
+  // Same "once per session, not once ever" reasoning as `tourOpen` below —
+  // shown again on the next full load if still dismissed without picking
+  // one, but not re-popped by every client-side navigation within this
+  // session.
+  const [examModalOpen, setExamModalOpen] = useState(() => availableExams.length > 0);
+  // Doesn't auto-start alongside the exam prompt — two modals stacked on a
+  // brand-new account's very first load would be a lot at once. It opens
+  // right after that one closes instead (`handleExamModalClose`) if it still
+  // needs to.
+  const [tourOpen, setTourOpen] = useState(() => !hasCompletedTour && !examModalOpen);
   const userMenuRef = useRef<HTMLDivElement>(null);
   // React's own documented pattern for "adjusting state when a prop
   // changes" without an effect — a ref would trip this project's
@@ -109,6 +131,19 @@ export function PortalShell({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [mobileNavOpen]);
 
+  function handleExamModalClose() {
+    setExamModalOpen(false);
+    if (!hasCompletedTour) setTourOpen(true);
+  }
+
+  function handleTourClose() {
+    setTourOpen(false);
+    // Fire-and-forget: marks it seen so it never auto-starts again. Safe to
+    // call even when it was already marked (replayed via "Take a tour") —
+    // the route is idempotent.
+    void fetch('/api/profile/tour', { method: 'POST' });
+  }
+
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -140,7 +175,7 @@ export function PortalShell({
         />
       )}
 
-      <aside className={sidebarClassName}>
+      <aside className={sidebarClassName} data-tour="nav-sidebar">
         <div className={styles.logoRow}>
           <div className={styles.logoMark}>M</div>
           <div>
@@ -317,6 +352,20 @@ export function PortalShell({
                     <DashboardIcon name="user" size={16} />
                     Profile
                   </Link>
+                  {simplifiedMenu && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.userMenuItem}
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setTourOpen(true);
+                      }}
+                    >
+                      <DashboardIcon name="circle-help" size={16} />
+                      Take a tour
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
@@ -351,6 +400,9 @@ export function PortalShell({
           </div>
         </div>
       </div>
+
+      {simplifiedMenu && <StudentTour open={tourOpen} onClose={handleTourClose} />}
+      {examModalOpen && <SelectExamModal exams={availableExams} onClose={handleExamModalClose} />}
     </div>
   );
 }

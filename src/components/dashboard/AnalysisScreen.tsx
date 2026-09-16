@@ -24,7 +24,7 @@ export function AnalysisScreen({
 }: AnalysisScreenProps) {
   return (
     <>
-      <div className={styles.header}>
+      <div className={styles.header} data-tour="performance-detail">
         <h1 className={styles.title}>{title}</h1>
         <p className={styles.subtitle}>{subtitle}</p>
       </div>

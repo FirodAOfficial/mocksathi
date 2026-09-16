@@ -46,6 +46,15 @@ export const users = pgTable('users', {
    * "whether" cannot, and it costs the same column.
    */
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  /**
+   * When the candidate finished — or explicitly skipped — the student
+   * product tour (`src/components/dashboard/tour/`). Null means it has
+   * never auto-shown yet; `PortalShell` starts it the first time a session
+   * with a null value mounts, and a skip sets this the same as finishing
+   * does, so a dismissal never nags again. A timestamp rather than a
+   * boolean for the same reason as `emailVerifiedAt`.
+   */
+  tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
   /** `admin` can manage exams (`/dashboard/admin/*`); `support` is reserved, not enforced anywhere yet. */
   role: userRoleEnum('role').notNull().default('student'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
