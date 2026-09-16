@@ -11,20 +11,26 @@ import { GoogleButton } from './GoogleButton';
 import { googleErrorMessage } from './googleErrorMessage';
 import styles from './LoginScreen.module.css';
 import { MarketingPanel } from './MarketingPanel';
+import { useClearStaleSession } from './useClearStaleSession';
 
 export interface LoginFormProps {
   /** The `?error=` query param from a failed `/api/auth/google/callback` redirect, if any. */
   googleError?: string;
+  /** Whether the page just signed out a stale unverified session on the way here — see `useClearStaleSession`. */
+  clearStaleSession?: boolean;
+  /** Pre-fills from `?email=` — how `ForgotPasswordForm`'s "Back to login" returns here without losing what was already typed. */
+  initialEmail?: string;
 }
 
 type Status = 'idle' | 'submitting' | 'redirecting';
 
-export function LoginForm({ googleError }: LoginFormProps) {
+export function LoginForm({ googleError, clearStaleSession = false, initialEmail = '' }: LoginFormProps) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
   const [status, setStatus] = useState<Status>('idle');
+  useClearStaleSession(clearStaleSession);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

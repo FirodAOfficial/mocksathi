@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { OTP_LENGTH } from '@/auth/otpPolicy';
@@ -118,6 +119,13 @@ export function ForgotPasswordForm() {
                 <div className={cardStyles.logoName}>Mocksathi</div>
               </div>
             </div>
+
+            <Link
+              href={email ? `/login?email=${encodeURIComponent(email)}` : '/login'}
+              className={verifyStyles.backLink}
+            >
+              ← Back to login
+            </Link>
 
             {step === 'request' ? (
               <>

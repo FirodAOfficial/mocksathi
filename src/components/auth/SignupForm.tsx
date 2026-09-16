@@ -14,6 +14,7 @@ import { googleErrorMessage } from './googleErrorMessage';
 import { LegalLinks } from './LegalLinks';
 import styles from './LoginScreen.module.css';
 import { MarketingPanel } from './MarketingPanel';
+import { useClearStaleSession } from './useClearStaleSession';
 
 export interface SignupExamOption {
   id: string;
@@ -26,19 +27,36 @@ export interface SignupFormProps {
   exams: SignupExamOption[];
   /** The `?error=` query param from a failed `/api/auth/google/callback` redirect, if any. */
   googleError?: string;
+  /** Whether the page just signed out a stale unverified session on the way here — see `useClearStaleSession`. */
+  clearStaleSession?: boolean;
+  /**
+   * Pre-fills from `?name=`/`?email=` — how `VerifyEmailForm`'s "Back"
+   * returns here without making someone retype what they already gave it.
+   * Never the password: there's nothing to carry back (only its hash ever
+   * existed past the original submit), so that field starts empty either way.
+   */
+  initialName?: string;
+  initialEmail?: string;
 }
 
 type Status = 'idle' | 'submitting' | 'redirecting';
 
-export function SignupForm({ exams, googleError }: SignupFormProps) {
+export function SignupForm({
+  exams,
+  googleError,
+  clearStaleSession = false,
+  initialName = '',
+  initialEmail = '',
+}: SignupFormProps) {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [examId, setExamId] = useState('');
   const [error, setError] = useState<string | null>(googleErrorMessage(googleError));
   const [status, setStatus] = useState<Status>('idle');
   const [agreed, setAgreed] = useState(false);
+  useClearStaleSession(clearStaleSession);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
