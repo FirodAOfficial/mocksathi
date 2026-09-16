@@ -61,6 +61,7 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
     <ResultView
       result={attempt.result}
       attempt={examAttempt}
+      answers={attempt.answers}
       language={attempt.language}
       backHref="/dashboard/mocks"
       attemptCount={attempt.attemptCount}

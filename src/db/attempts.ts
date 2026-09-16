@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { ExamResult } from '@/exam/result';
-import type { Language, Subject } from '@/exam/types';
+import type { AnswerPayload, Language, Subject } from '@/exam/types';
 import { db } from './client';
 import { testAttempts, type TestAttemptRow } from './schema';
 
@@ -26,6 +26,8 @@ export interface StoredAttempt {
   /** How many times this candidate has submitted this paper, including this sitting. */
   attemptCount: number;
   result: ExamResult;
+  /** What the candidate submitted, for the solutions review's "your answer". */
+  answers: Record<number, AnswerPayload>;
   submittedAt: Date;
 }
 
@@ -40,6 +42,7 @@ function fromRow(row: TestAttemptRow): StoredAttempt {
     accuracyPct: row.accuracyPct,
     attemptCount: row.attemptCount,
     result: row.result as ExamResult,
+    answers: row.answers as Record<number, AnswerPayload>,
     submittedAt: row.submittedAt,
   };
 }
@@ -61,8 +64,9 @@ export async function recordAttempt(params: {
   subject: Subject;
   language: Language;
   result: ExamResult;
+  answers: Record<number, AnswerPayload>;
 }): Promise<void> {
-  const { userId, testId, subject, language, result } = params;
+  const { userId, testId, subject, language, result, answers } = params;
   const now = new Date();
   const shared = {
     subject,
@@ -71,6 +75,7 @@ export async function recordAttempt(params: {
     maxScore: result.you.maxScore,
     accuracyPct: result.you.accuracy,
     result,
+    answers,
     submittedAt: now,
     updatedAt: now,
   };

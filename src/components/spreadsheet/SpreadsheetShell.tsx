@@ -185,6 +185,22 @@ function ShellBody({
           },
           controller.signal,
         );
+
+        // A stored paper's score already lives at a real, reloadable URL the
+        // moment the server responds — `recordAttempt` wrote it before this
+        // request returned — so a real submission forwards there instead of
+        // rendering the result in place at `/spreadsheet`'s own address. That
+        // is the same page "View Submission" opens later, so there is exactly
+        // one result screen for a stored paper, not two that could drift. A
+        // full navigation (not `next/navigation`'s router) on purpose: it
+        // tears down the workbook and the exam store cleanly rather than
+        // carrying a finished sitting's state into the next page. The sample
+        // paper has no such page (no `tests` row behind it), so it still
+        // renders inline below.
+        if (testId) {
+          window.location.replace(`/dashboard/mocks/test/${testId}/submission`);
+          return;
+        }
         setResult(marked);
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;

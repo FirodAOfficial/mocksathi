@@ -177,12 +177,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const language = isLanguage(body.language) ? body.language : 'en';
+  const answers = numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, AnswerPayload>;
 
   const { result } = markAttempt(
     paper.attempt,
     paper.rubrics,
     {
-      answers: numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, AnswerPayload>,
+      answers,
       timePerQuestion: numericKeys(body.timePerQuestion) as unknown as Record<number, number>,
       totalTimeSeconds: Number.isFinite(body.totalTimeSeconds) ? Number(body.totalTimeSeconds) : 0,
       // The starting passage or workbook differs by language, so marking must
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // `tests` row for that one to attach a score to, and it always stands for a
   // fresh database rather than a candidate's own progress.
   if (paper.testId) {
-    await recordAttempt({ userId: user.id, testId: paper.testId, subject: paper.subject, language, result });
+    await recordAttempt({ userId: user.id, testId: paper.testId, subject: paper.subject, language, result, answers });
   }
 
   // Only the result crosses back — never the criteria, which would leak the key.
