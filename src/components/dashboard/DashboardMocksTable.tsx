@@ -42,11 +42,23 @@ function StatusPill({ mock }: { mock: MockSummary }) {
 function ActionCell({ mock }: { mock: MockSummary }) {
   switch (mock.state) {
     case 'done':
-      return (
-        <Link href={`/dashboard/mocks/${mock.mockNumber}/solutions`} className={styles.actionOutline}>
-          View Result
-        </Link>
-      );
+      // Rows here are `publishedTestRows` output, which only marks one 'done'
+      // once a `test_attempts` row exists for it — that row always carries a
+      // `testId`. Addressed by id, not slug, so the link survives a rename
+      // (see `MockSummary.testId`). Retake reuses the same href a fresh
+      // "Start Mock" would — `recordAttempt` (`src/db/attempts.ts`) overwrites
+      // the stored score on resubmission, so sitting it again always leaves
+      // the latest attempt as "the score".
+      return mock.testId ? (
+        <>
+          <Link href={`/dashboard/mocks/test/${mock.testId}/submission`} className={styles.actionOutline}>
+            View Result
+          </Link>
+          <Link href={startHrefFor(mock)} className={styles.actionGhost}>
+            Retake
+          </Link>
+        </>
+      ) : null;
     case 'today':
     case 'available':
       // A paper with no questions cannot be sat — `loadPaper` returns null for
@@ -152,7 +164,7 @@ export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
               <span>
                 <StatusPill mock={mock} />
               </span>
-              <span className={styles.right}>
+              <span className={styles.actionCell}>
                 <ActionCell mock={mock} />
               </span>
             </div>

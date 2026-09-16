@@ -14,6 +14,8 @@ export interface ResultViewProps {
   answers?: Record<number, AnswerPayload>;
   language: Language;
   backHref?: string;
+  /** See `ResultScreenProps.attemptCount`. */
+  attemptCount?: number;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface ResultViewProps {
  * lives here rather than in either screen, which keeps the design preview route
  * and the live submission on exactly the same pair of components.
  */
-export function ResultView({ result, attempt, answers, language, backHref = '/' }: ResultViewProps) {
+export function ResultView({ result, attempt, answers, language, backHref = '/', attemptCount }: ResultViewProps) {
   const [showingSolutions, setShowingSolutions] = useState(false);
 
   if (showingSolutions) {
@@ -43,6 +45,7 @@ export function ResultView({ result, attempt, answers, language, backHref = '/' 
       result={result}
       backHref={backHref}
       onViewSolutions={() => setShowingSolutions(true)}
+      attemptCount={attemptCount}
     />
   );
 }

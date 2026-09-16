@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireUser } from '@/auth/cookies';
+import { recordAttempt } from '@/db/attempts';
 import { WORD_MARKER } from '@/exam/marking/wordMarker';
 import { SHEET_MARKER } from '@/exam/marking/sheet/sheetMarker';
 import { markAttempt, validateQuestionBank, type SubjectMarker } from '@/exam/marking/markAttempt';
@@ -61,6 +62,12 @@ interface Paper {
   rubrics: QuestionRubric<never>[];
   marker: SubjectMarker<unknown, never>;
   identity: { testName: string; tagline: string; maximumMarks: number; qualifyingMarks: number };
+  subject: Subject;
+  /**
+   * The stored test being sat, for recording the attempt — null for the
+   * fixture sample paper, which has no `tests` row for a score to attach to.
+   */
+  testId: string | null;
 }
 
 /**
@@ -91,6 +98,8 @@ async function paperForTest(testId: string): Promise<Paper | null> {
     rubrics: rubricsFor(questions.map(draftFromRow)) as unknown as QuestionRubric<never>[],
     marker: (excel ? SHEET_MARKER : WORD_MARKER) as unknown as SubjectMarker<unknown, never>,
     identity,
+    subject: test.subject,
+    testId: test.id,
   };
 }
 
@@ -101,6 +110,8 @@ function paperFor(subject: Subject): Paper {
       rubrics: EXCEL_QUESTION_BANK as unknown as QuestionRubric<never>[],
       marker: SHEET_MARKER as unknown as SubjectMarker<unknown, never>,
       identity: EXCEL_PAPER,
+      subject: 'excel',
+      testId: null,
     };
   }
 
@@ -109,6 +120,8 @@ function paperFor(subject: Subject): Paper {
     rubrics: QUESTION_BANK as unknown as QuestionRubric<never>[],
     marker: WORD_MARKER as unknown as SubjectMarker<unknown, never>,
     identity: PAPER,
+    subject: 'word',
+    testId: null,
   };
 }
 
@@ -130,7 +143,7 @@ function numericKeys(source: Record<string, unknown> | undefined): Record<number
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  await requireUser();
+  const user = await requireUser();
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) {
     return NextResponse.json({ code: 'TOO_LARGE', detail: 'The submission is too large.' }, { status: 413 });
@@ -163,16 +176,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  const language = isLanguage(body.language) ? body.language : 'en';
+  const answers = numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, AnswerPayload>;
+
   const { result } = markAttempt(
     paper.attempt,
     paper.rubrics,
     {
-      answers: numericKeys(body.answers as Record<string, unknown>) as unknown as Record<number, AnswerPayload>,
+      answers,
       timePerQuestion: numericKeys(body.timePerQuestion) as unknown as Record<number, number>,
       totalTimeSeconds: Number.isFinite(body.totalTimeSeconds) ? Number(body.totalTimeSeconds) : 0,
       // The starting passage or workbook differs by language, so marking must
       // begin from the one the candidate actually saw.
-      language: isLanguage(body.language) ? body.language : 'en',
+      language,
     },
     {
       topper: REFERENCE_TOPPER,
@@ -187,6 +203,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       qualifyingMarks: paper.identity.qualifyingMarks,
     },
   );
+
+  // Stored against the paper actually sat, never the sample: there is no
+  // `tests` row for that one to attach a score to, and it always stands for a
+  // fresh database rather than a candidate's own progress.
+  if (paper.testId) {
+    await recordAttempt({ userId: user.id, testId: paper.testId, subject: paper.subject, language, result, answers });
+  }
 
   // Only the result crosses back — never the criteria, which would leak the key.
   return NextResponse.json(result, { headers: { 'cache-control': 'no-store' } });
