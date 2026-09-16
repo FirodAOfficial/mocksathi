@@ -88,7 +88,7 @@ export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
   );
 
   return (
-    <div className={styles.card}>
+    <div className={styles.card} data-tour="dashboard-mocks">
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>All Mocks</h2>

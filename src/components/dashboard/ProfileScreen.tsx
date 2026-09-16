@@ -56,7 +56,7 @@ export function ProfileScreen({
       </div>
 
       <div className={styles.grid}>
-        <div className={styles.card}>
+        <div className={styles.card} data-tour="profile-account">
           <p className={styles.cardTitle}>Account</p>
           <div className={styles.identity}>
             <AvatarUpload initials={initials} avatarUrl={avatarUrl} />

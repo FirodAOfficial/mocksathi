@@ -24,7 +24,7 @@ export function TodaysMockCard({ mock }: TodaysMockCardProps) {
   if (!mock) return null;
 
   return (
-    <div className={styles.card}>
+    <div className={styles.card} data-tour="todays-mock">
       <div className={styles.info}>
         <div className={styles.iconRing}>
           <DashboardIcon name="file-check-2" size={20} />

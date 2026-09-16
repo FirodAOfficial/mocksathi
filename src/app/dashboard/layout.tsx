@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { requireVerifiedUser } from '@/auth/cookies';
 import { PortalShell, type PlanWidgetData } from '@/components/dashboard/PortalShell';
 import { dashboardDataFor, fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
+import { availableExamsForUser } from '@/db/enrollments';
 import { currentPlanForUser } from '@/db/plans';
 
 const inter = Inter({ subsets: ['latin'], variable: '--db-font' });
@@ -36,6 +37,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   ]);
   const unreadNotifications = data.notifications.filter((notification) => !notification.read).length;
 
+  // Only fetched for the candidates who'd actually see the prompt — an
+  // admin, or anyone who already has a target exam, costs nothing extra.
+  const needsExamPrompt = simplifiedMenu && data.enrollments.length === 0;
+  const availableExams = needsExamPrompt ? await availableExamsForUser(user.id) : [];
+
   const planWidget: PlanWidgetData | undefined = currentPlan
     ? {
         planName: currentPlan.plan.name,
@@ -56,6 +62,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         navSections={data.navSections}
         simplifiedMenu={simplifiedMenu}
         planWidget={planWidget}
+        hasCompletedTour={user.tourCompletedAt !== null}
+        availableExams={availableExams.map((exam) => ({ id: exam.id, name: exam.name, category: exam.category }))}
       >
         {children}
       </PortalShell>
