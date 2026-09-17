@@ -150,3 +150,17 @@
     grid-column: span 3;
   }
 }
+
+@media (max-width: 600px) {
+  /* `minmax(0, 1fr)` stopped the page overflowing, but three columns still
+     squeezed each card too narrow for its own content ("00:08:45" clipped
+     mid-digit). Below 600px the cards stack into one column instead — full
+     card width, nothing to shrink. */
+  .totals {
+    grid-template-columns: 1fr;
+  }
+
+  .tip {
+    grid-column: auto;
+  }
+}

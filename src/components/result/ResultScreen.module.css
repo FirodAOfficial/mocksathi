@@ -281,3 +281,12 @@
     display: none;
   }
 }
+
+@media (max-width: 600px) {
+  /* Two columns still squeezed each meta card too narrow on a phone — one
+     column below 600px instead, same reasoning as `TimeAnalysis.module.css`'s
+     `.totals`. */
+  .metaRow {
+    grid-template-columns: 1fr;
+  }
+}
