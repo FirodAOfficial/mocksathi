@@ -249,3 +249,16 @@
     grid-column: span 2;
   }
 }
+
+@media (max-width: 600px) {
+  /* Two columns still squeezed each tile too narrow on a phone — one column
+     below 600px instead, same reasoning as `TimeAnalysis.module.css`'s
+     `.totals`. */
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .cta {
+    grid-column: auto;
+  }
+}
