@@ -1,5 +1,6 @@
 import type { PerformanceSnapshot as PerformanceSnapshotData, SubjectSnapshot } from '@/dashboard/types';
 import styles from './AnalysisScreen.module.css';
+import { EmptyAnalytics } from './EmptyAnalytics';
 import { PerformanceSnapshot } from './PerformanceSnapshot';
 import { SubjectSnapshotList } from './SubjectSnapshotList';
 
@@ -8,6 +9,8 @@ export interface AnalysisScreenProps {
   subjects: SubjectSnapshot[];
   title?: string;
   subtitle?: string;
+  /** Real count of distinct papers sat. Zero shows an empty state instead of the fixture numbers below. */
+  mocksAttempted: number;
 }
 
 /**
@@ -21,6 +24,7 @@ export function AnalysisScreen({
   subjects,
   title = 'Overall Analysis',
   subtitle = 'Score, accuracy and attempt rate across your recent mocks.',
+  mocksAttempted,
 }: AnalysisScreenProps) {
   return (
     <>
@@ -29,11 +33,20 @@ export function AnalysisScreen({
         <p className={styles.subtitle}>{subtitle}</p>
       </div>
 
-      <div className={styles.kpiRow}>
-        <PerformanceSnapshot performance={performance} />
-      </div>
+      {mocksAttempted === 0 ? (
+        <EmptyAnalytics
+          title="No analysis yet"
+          body="Scores, accuracy and a subject-by-subject breakdown will appear here once you've completed your first mock."
+        />
+      ) : (
+        <>
+          <div className={styles.kpiRow}>
+            <PerformanceSnapshot performance={performance} />
+          </div>
 
-      <SubjectSnapshotList subjects={subjects} />
+          <SubjectSnapshotList subjects={subjects} />
+        </>
+      )}
     </>
   );
 }

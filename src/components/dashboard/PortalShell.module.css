@@ -98,16 +98,6 @@
   padding: 4px 10px 26px;
 }
 
-.sidebarSpacious .logoMark {
-  width: 36px;
-  height: 36px;
-  font-size: 17px;
-}
-
-.sidebarSpacious .logoName {
-  font-size: 17px;
-}
-
 .sidebarSpacious .navItem,
 .sidebarSpacious .navButton {
   padding: 14px 14px;
@@ -194,26 +184,7 @@
   align-items: center;
   gap: 9px;
   padding: 4px 8px 14px;
-}
-
-.logoMark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--db-accent);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 15px;
-  flex: none;
-}
-
-.logoName {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--db-text);
-  line-height: 1.1;
+  text-decoration: none;
 }
 
 .navSection + .navSection {

@@ -1,5 +1,8 @@
+import { redirect } from 'next/navigation';
 import { requireVerifiedUser } from '@/auth/cookies';
+import { attemptFor } from '@/db/attempts';
 import { paperFor } from '@/db/tests';
+import { mockLimitStatusForUser } from '@/dashboard/mockLimit';
 import { EXCEL_PAPER, PAPER } from '@/exam/result';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
@@ -60,6 +63,20 @@ export default async function ExamInstructionsPage({
   const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
 
   const paper = await paperFor({ slug: first(params.test), subject }, user.name);
+
+  // The free-plan gate: only a *new* real paper counts against the limit — a
+  // retake never does (`attemptFor` finding a row means this candidate has
+  // already sat it), and neither does the local sample fallback below, which
+  // isn't a real entitlement to protect. Closes the direct-URL bypass around
+  // `StartMockAction`'s client-side check, which only guards the dashboard's
+  // own Start buttons.
+  if (paper) {
+    const alreadyAttempted = await attemptFor(user.id, paper.testId);
+    if (!alreadyAttempted) {
+      const { limitReached } = await mockLimitStatusForUser(user.id);
+      if (limitReached) redirect('/dashboard?limitReached=1');
+    }
+  }
 
   const fallbackAttempt: ExamAttempt = subject === 'excel' ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;
   const fallbackIdentity = subject === 'excel' ? EXCEL_PAPER : PAPER;

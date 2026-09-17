@@ -1,5 +1,6 @@
 import 'server-only';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, sql } from 'drizzle-orm';
+import { cache } from 'react';
 import type { ExamResult } from '@/exam/result';
 import type { AnswerPayload, Language, Subject } from '@/exam/types';
 import { db } from './client';
@@ -116,3 +117,18 @@ export async function attemptsForUser(userId: string, testIds: string[]): Promis
 
   return new Map(rows.map((row) => [row.testId, fromRow(row)]));
 }
+
+/**
+ * How many distinct papers this candidate has ever sat — one row per
+ * `(user, test)` (`schema.ts`), so a retake never inflates this. This is the
+ * real number behind the free-tier "X of Y mocks used" figure; see
+ * `src/dashboard/mockLimit.ts`.
+ *
+ * Wrapped in React's `cache()`, same reasoning as `currentPlanForUser`
+ * (`src/db/plans.ts`): the dashboard layout and the page it wraps both need
+ * this for the same request.
+ */
+export const attemptedTestCountForUser = cache(async (userId: string): Promise<number> => {
+  const [row] = await db.select({ value: count() }).from(testAttempts).where(eq(testAttempts.userId, userId));
+  return row?.value ?? 0;
+});

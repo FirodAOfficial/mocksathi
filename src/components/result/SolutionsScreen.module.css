@@ -15,7 +15,10 @@
   background: linear-gradient(180deg, #fff, #f7fafe);
   border-bottom: 1px solid #dfe9f6;
   flex-wrap: wrap;
-  justify-content: space-between;
+  /* Was `space-between` against the logo this header used to open with —
+     now there is only the one button, which belongs on the same right edge
+     it always sat at. */
+  justify-content: flex-end;
   align-items: center;
   gap: 20px;
   padding: 12px 22px;

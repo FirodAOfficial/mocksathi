@@ -65,10 +65,14 @@ export function StudentTour({ open, onClose }: StudentTourProps) {
   const advance = useCallback(() => {
     if (stepIndex >= LAST_STEP_INDEX) {
       onClose();
+      // The last step's own page is `/dashboard/profile` (`tourSteps.ts`) —
+      // without this, finishing the tour leaves the candidate sitting there
+      // instead of on the dashboard home they started from.
+      router.push('/dashboard');
       return;
     }
     setStepIndex((index) => index + 1);
-  }, [stepIndex, onClose]);
+  }, [stepIndex, onClose, router]);
 
   const back = useCallback(() => {
     setStepIndex((index) => Math.max(0, index - 1));

@@ -1,15 +1,15 @@
 import { requireUser } from '@/auth/cookies';
 import { ComingSoonScreen } from '@/components/dashboard/ComingSoonScreen';
 import { SubscriptionScreen } from '@/components/dashboard/SubscriptionScreen';
-import { dashboardDataFor, fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
+import { attemptedTestCountForUser } from '@/db/attempts';
 import { currentPlanForUser, listPlans } from '@/db/plans';
 
 export default async function SubscriptionPage() {
   const user = await requireUser();
-  const [currentPlan, plans, dashboardData] = await Promise.all([
+  const [currentPlan, plans, mocksUsed] = await Promise.all([
     currentPlanForUser(user.id),
     listPlans({ activeOnly: true }),
-    dashboardDataFor(user),
+    attemptedTestCountForUser(user.id),
   ]);
 
   if (!currentPlan) {
@@ -38,7 +38,7 @@ export default async function SubscriptionPage() {
       isSubscribed={currentPlan.isSubscribed}
       daysRemaining={currentPlan.daysRemaining}
       mockLimit={currentPlan.plan.mockLimit}
-      mocksUsed={fixtureMocksUsedCount(dashboardData)}
+      mocksUsed={mocksUsed}
     />
   );
 }

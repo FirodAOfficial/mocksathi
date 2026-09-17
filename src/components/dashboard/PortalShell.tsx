@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { BrandLogo } from '@/components/site/BrandLogo';
 import type { CandidateProfile, ExamEnrollment, NavSection } from '@/dashboard/types';
 import { PortalFooter } from './PortalFooter';
 import { DashboardIcon } from './icons/DashboardIcon';
@@ -176,12 +177,9 @@ export function PortalShell({
       )}
 
       <aside className={sidebarClassName} data-tour="nav-sidebar">
-        <div className={styles.logoRow}>
-          <div className={styles.logoMark}>M</div>
-          <div>
-            <div className={styles.logoName}>Mocksathi</div>
-          </div>
-        </div>
+        <Link href="/dashboard" className={styles.logoRow} aria-label="Mocksathi dashboard">
+          <BrandLogo tone="dark" size={simplifiedMenu ? 36 : 30} />
+        </Link>
 
         {navSections.map((section) => (
           <nav
