@@ -157,6 +157,13 @@ export function PortalShell({
 
   const iconSize = simplifiedMenu ? 20 : 17;
 
+  // The result and worked-solutions screens (their own dense, two-column
+  // design) get the full width instead — the topbar (exam picker, streak,
+  // profile) stays, since it costs nothing and keeps "where am I" answered,
+  // but the nav sidebar is exactly the space a candidate is there to spend
+  // reading their answers, not navigating away.
+  const hideSidebar = pathname.startsWith('/dashboard/mocks/test/');
+
   const sidebarClassName = [
     styles.sidebar,
     simplifiedMenu ? styles.sidebarSpacious : '',
@@ -176,101 +183,28 @@ export function PortalShell({
         />
       )}
 
-      <aside className={sidebarClassName} data-tour="nav-sidebar">
-        <Link href="/dashboard" className={styles.logoRow} aria-label="Mocksathi dashboard">
-          <BrandLogo tone="dark" size={simplifiedMenu ? 36 : 30} />
+      {/*
+        A full-width strip above the sidebar/content split below it, not
+        inside `.main` — it carries the logo now (`.topbarLogo`), so it reads
+        as the page's own header rather than something that belongs beside
+        the nav. That's also what lets the sidebar disappear entirely on some
+        routes (`hideSidebar`) without the topbar's own layout changing shape.
+      */}
+      <header className={styles.topbar}>
+        <Link href="/dashboard" className={styles.topbarLogo} aria-label="Mocksathi dashboard">
+          {/* Full lockup on desktop, mark only below 900px (`.topbarLogoFull`/
+              `.topbarLogoCompact` toggle which of these shows) — the
+              wordmark is the first thing worth giving up for room on a phone
+              topbar that also carries the menu button and the exam picker. */}
+          <span className={styles.topbarLogoFull}>
+            <BrandLogo tone="dark" size={26} />
+          </span>
+          <span className={styles.topbarLogoCompact}>
+            <BrandLogo tone="dark" size={24} markOnly />
+          </span>
         </Link>
 
-        {navSections.map((section) => (
-          <nav
-            key={section.title ?? 'primary'}
-            className={styles.navSection}
-            aria-label={section.title ?? 'Dashboard'}
-          >
-            {section.title && <div className={styles.navSectionTitle}>{section.title}</div>}
-            {section.items.map((item) => {
-              if (item.href === LOGOUT_HREF) {
-                return (
-                  <button
-                    key={item.href}
-                    type="button"
-                    className={styles.navButton}
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                  >
-                    <DashboardIcon name={item.icon} size={iconSize} />
-                    {loggingOut ? 'Logging out…' : item.label}
-                  </button>
-                );
-              }
-
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={active ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <DashboardIcon name={item.icon} size={iconSize} />
-                  {item.label}
-                  {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        ))}
-
-        {simplifiedMenu && planWidget && (
-          <div className={styles.planWidget}>
-            <div className={styles.planCard}>
-              <div className={styles.planCardHeading}>
-                <DashboardIcon name="star" size={14} />
-                {planWidget.planName}
-              </div>
-              {planWidget.isSubscribed ? (
-                <>
-                  <p className={styles.planCardDetail}>
-                    {planWidget.daysRemaining !== null
-                      ? `${planWidget.daysRemaining} day${planWidget.daysRemaining === 1 ? '' : 's'} remaining`
-                      : 'No expiry'}
-                  </p>
-                  <Link href="/dashboard/subscription" className={styles.planCtaMuted}>
-                    Manage plan
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <p className={styles.planCardDetail}>
-                    {planWidget.mockLimit !== null
-                      ? `${Math.max(0, planWidget.mockLimit - planWidget.mocksUsed)} free mocks left`
-                      : 'Unlimited mocks'}
-                  </p>
-                  {planWidget.mockLimit !== null && (
-                    <>
-                      <div className={styles.planTrack}>
-                        <div
-                          className={styles.planFill}
-                          style={{ width: `${Math.min(100, (planWidget.mocksUsed / planWidget.mockLimit) * 100)}%` }}
-                        />
-                      </div>
-                      <p className={styles.planUsageLabel}>
-                        {planWidget.mocksUsed}/{planWidget.mockLimit} used
-                      </p>
-                    </>
-                  )}
-                  <Link href="/dashboard/subscription" className={styles.planCta}>
-                    Upgrade now
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </aside>
-
-      <div className={styles.main}>
-        <header className={styles.topbar}>
+        {!hideSidebar && (
           <button
             type="button"
             className={styles.menuButton}
@@ -280,118 +214,215 @@ export function PortalShell({
           >
             <DashboardIcon name={mobileNavOpen ? 'x' : 'menu'} size={20} />
           </button>
+        )}
 
-          <div className={styles.examPicker}>
-            {primaryExam ? (
-              <div className={styles.examPickerButton}>
-                <span className={styles.examPickerLabel}>{primaryExam.examName}</span>
-                <DashboardIcon name="chevron-down" size={14} />
-              </div>
-            ) : (
-              <Link href="/dashboard/profile" className={styles.examPickerButton}>
-                + Add your exam
-              </Link>
-            )}
-            {otherExams.length > 0 && (
-              <div className={styles.alsoEnrolled}>
-                also enrolled:
-                {otherExams.map((exam) => (
-                  <span key={exam.examId} className={styles.enrolledChip}>
-                    {exam.examName}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className={styles.topbarRight}>
-            <div className={styles.streakBadge}>
-              <DashboardIcon name="flame" size={16} />
-              <span className={styles.streakLabel}>{challengeTotalDays} Day Streak</span>
+        <div className={styles.examPicker}>
+          {primaryExam ? (
+            <div className={styles.examPickerButton}>
+              <span className={styles.examPickerLabel}>{primaryExam.examName}</span>
+              <DashboardIcon name="chevron-down" size={14} />
             </div>
-            <button type="button" className={styles.bellButton} aria-label="Notifications">
-              <DashboardIcon name="bell" size={18} />
-              {unreadNotifications > 0 && <span className={styles.bellDot}>{unreadNotifications}</span>}
-            </button>
-            <div className={styles.userMenu} ref={userMenuRef}>
-              <button
-                type="button"
-                className={styles.userChip}
-                onClick={() => setUserMenuOpen((open) => !open)}
-                aria-haspopup="menu"
-                aria-expanded={userMenuOpen}
-              >
-                {candidate.avatarUrl && !avatarBroken ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage/Google URL, not one `next/image` can optimize meaningfully.
-                  <img
-                    src={candidate.avatarUrl}
-                    alt=""
-                    className={styles.avatarImage}
-                    onError={() => setAvatarBroken(true)}
-                  />
-                ) : (
-                  <div className={styles.avatar}>{candidate.initials}</div>
-                )}
-                <div className={styles.userText}>
-                  <div className={styles.userName}>{candidate.name}</div>
-                  <div className={styles.userRole}>{candidate.role}</div>
-                </div>
-                <DashboardIcon name="chevron-down" size={14} />
-              </button>
+          ) : (
+            <Link href="/dashboard/profile" className={styles.examPickerButton}>
+              + Add your exam
+            </Link>
+          )}
+          {otherExams.length > 0 && (
+            <div className={styles.alsoEnrolled}>
+              also enrolled:
+              {otherExams.map((exam) => (
+                <span key={exam.examId} className={styles.enrolledChip}>
+                  {exam.examName}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
-              {userMenuOpen && (
-                <div className={styles.userMenuPanel} role="menu">
-                  <Link
-                    href="/dashboard/profile"
-                    role="menuitem"
-                    className={styles.userMenuItem}
-                    onClick={() => setUserMenuOpen(false)}
-                  >
-                    <DashboardIcon name="user" size={16} />
-                    Profile
-                  </Link>
-                  {simplifiedMenu && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.userMenuItem}
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        setTourOpen(true);
-                      }}
-                    >
-                      <DashboardIcon name="circle-help" size={16} />
-                      Take a tour
-                    </button>
-                  )}
+        <div className={styles.topbarRight}>
+          <div className={styles.streakBadge}>
+            <DashboardIcon name="flame" size={16} />
+            <span className={styles.streakLabel}>{challengeTotalDays} Day Streak</span>
+          </div>
+          <button type="button" className={styles.bellButton} aria-label="Notifications">
+            <DashboardIcon name="bell" size={18} />
+            {unreadNotifications > 0 && <span className={styles.bellDot}>{unreadNotifications}</span>}
+          </button>
+          <div className={styles.userMenu} ref={userMenuRef}>
+            <button
+              type="button"
+              className={styles.userChip}
+              onClick={() => setUserMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+            >
+              {candidate.avatarUrl && !avatarBroken ? (
+                // eslint-disable-next-line @next/next/no-img-element -- a per-user Supabase Storage/Google URL, not one `next/image` can optimize meaningfully.
+                <img
+                  src={candidate.avatarUrl}
+                  alt=""
+                  className={styles.avatarImage}
+                  onError={() => setAvatarBroken(true)}
+                />
+              ) : (
+                <div className={styles.avatar}>{candidate.initials}</div>
+              )}
+              <div className={styles.userText}>
+                <div className={styles.userName}>{candidate.name}</div>
+                <div className={styles.userRole}>{candidate.role}</div>
+              </div>
+              <DashboardIcon name="chevron-down" size={14} />
+            </button>
+
+            {userMenuOpen && (
+              <div className={styles.userMenuPanel} role="menu">
+                <Link
+                  href="/dashboard/profile"
+                  role="menuitem"
+                  className={styles.userMenuItem}
+                  onClick={() => setUserMenuOpen(false)}
+                >
+                  <DashboardIcon name="user" size={16} />
+                  Profile
+                </Link>
+                {simplifiedMenu && (
                   <button
                     type="button"
                     role="menuitem"
                     className={styles.userMenuItem}
-                    onClick={handleLogout}
-                    disabled={loggingOut}
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      setTourOpen(true);
+                    }}
                   >
-                    <DashboardIcon name="log-out" size={16} />
-                    {loggingOut ? 'Logging out…' : 'Logout'}
+                    <DashboardIcon name="circle-help" size={16} />
+                    Take a tour
                   </button>
-                </div>
-              )}
-            </div>
+                )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={styles.userMenuItem}
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                >
+                  <DashboardIcon name="log-out" size={16} />
+                  {loggingOut ? 'Logging out…' : 'Logout'}
+                </button>
+              </div>
+            )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        <div className={styles.content}>
-          {children}
+      <div className={styles.body}>
+        {!hideSidebar && (
+          <aside className={sidebarClassName} data-tour="nav-sidebar">
+            {navSections.map((section) => (
+              <nav
+                key={section.title ?? 'primary'}
+                className={styles.navSection}
+                aria-label={section.title ?? 'Dashboard'}
+              >
+                {section.title && <div className={styles.navSectionTitle}>{section.title}</div>}
+                {section.items.map((item) => {
+                  if (item.href === LOGOUT_HREF) {
+                    return (
+                      <button
+                        key={item.href}
+                        type="button"
+                        className={styles.navButton}
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                      >
+                        <DashboardIcon name={item.icon} size={iconSize} />
+                        {loggingOut ? 'Logging out…' : item.label}
+                      </button>
+                    );
+                  }
 
-          {/*
-            Inside the scroll container, not after it: `.content` is what
-            scrolls, so a sibling footer would be pinned to the viewport and
-            take a strip of every screen. Here it sits at the end of the page,
-            which is where a footer belongs. An ordinary last flex child, not
-            a full-bleed slot — `PortalFooter` is sized to sit inside the
-            page's own padding like everything above it, not to bleed past it.
-          */}
-          <PortalFooter />
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={active ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      <DashboardIcon name={item.icon} size={iconSize} />
+                      {item.label}
+                      {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ))}
+
+            {simplifiedMenu && planWidget && (
+              <div className={styles.planWidget}>
+                <div className={styles.planCard}>
+                  <div className={styles.planCardHeading}>
+                    <DashboardIcon name="star" size={14} />
+                    {planWidget.planName}
+                  </div>
+                  {planWidget.isSubscribed ? (
+                    <>
+                      <p className={styles.planCardDetail}>
+                        {planWidget.daysRemaining !== null
+                          ? `${planWidget.daysRemaining} day${planWidget.daysRemaining === 1 ? '' : 's'} remaining`
+                          : 'No expiry'}
+                      </p>
+                      <Link href="/dashboard/subscription" className={styles.planCtaMuted}>
+                        Manage plan
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className={styles.planCardDetail}>
+                        {planWidget.mockLimit !== null
+                          ? `${Math.max(0, planWidget.mockLimit - planWidget.mocksUsed)} free mocks left`
+                          : 'Unlimited mocks'}
+                      </p>
+                      {planWidget.mockLimit !== null && (
+                        <>
+                          <div className={styles.planTrack}>
+                            <div
+                              className={styles.planFill}
+                              style={{
+                                width: `${Math.min(100, (planWidget.mocksUsed / planWidget.mockLimit) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <p className={styles.planUsageLabel}>
+                            {planWidget.mocksUsed}/{planWidget.mockLimit} used
+                          </p>
+                        </>
+                      )}
+                      <Link href="/dashboard/subscription" className={styles.planCta}>
+                        Upgrade now
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
+
+        <div className={styles.main}>
+          <div className={styles.content}>
+            {children}
+
+            {/*
+              Inside the scroll container, not after it: `.content` is what
+              scrolls, so a sibling footer would be pinned to the viewport and
+              take a strip of every screen. Here it sits at the end of the page,
+              which is where a footer belongs. An ordinary last flex child, not
+              a full-bleed slot — `PortalFooter` is sized to sit inside the
+              page's own padding like everything above it, not to bleed past it.
+            */}
+            <PortalFooter />
+          </div>
         </div>
       </div>
 

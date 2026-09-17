@@ -1,5 +1,5 @@
 import type { CurrentPlan } from '@/db/plans';
-import type { DashboardData, MockSummary } from '@/dashboard/types';
+import type { DashboardData, MockSummary, PerformanceSnapshot } from '@/dashboard/types';
 import { DashboardMocksTable } from './DashboardMocksTable';
 import styles from './DashboardScreen.module.css';
 import { LimitReachedNotice } from './LimitReachedNotice';
@@ -21,6 +21,8 @@ export interface DashboardScreenProps {
   mocks: MockSummary[];
   /** Distinct papers this candidate has actually sat — real, from `test_attempts`, not the fixture calendar. */
   mocksAttempted: number;
+  /** Real, from `test_attempts` (`src/dashboard/realAnalysis.ts`) — not `data.performance`, which is `SEED_DASHBOARD` fixture. */
+  performance: PerformanceSnapshot;
   /** True once an unsubscribed candidate has used every mock their plan allows — gates "Start Mock" in `DashboardMocksTable`. */
   mockLimitReached: boolean;
   /**
@@ -45,6 +47,7 @@ export function DashboardScreen({
   currentPlan,
   mocks,
   mocksAttempted,
+  performance,
   mockLimitReached,
   showLimitReachedModal = false,
 }: DashboardScreenProps) {
@@ -58,7 +61,7 @@ export function DashboardScreen({
       </div>
 
       <PerformanceOverviewCard
-        performance={data.performance}
+        performance={performance}
         mocksAttempted={mocksAttempted}
         planName={currentPlan?.plan.name ?? null}
       />

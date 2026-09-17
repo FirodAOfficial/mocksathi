@@ -10,7 +10,11 @@
   --db-text-label: #a3aec0;
 
   display: flex;
-  align-items: stretch;
+  /* Column now, not row: the topbar is a full-width strip at the very top
+     (it carries the logo now, so it reads as the page's own header, not
+     something that belongs beside the nav) with the sidebar and content
+     stacked below it, side by side, inside `.body`. */
+  flex-direction: column;
   /* Fixed to the viewport, not min-height: the portal is a fixed frame whose
      sidebar and topbar stay put while one region scrolls — .content below.
      `<body>` no longer sets `overflow: hidden` (the site pages need the
@@ -21,6 +25,17 @@
   color: var(--db-text);
   font-family: var(--db-font, 'Inter', system-ui, -apple-system, sans-serif);
   font-size: 13px;
+}
+
+/* Everything under the topbar: the sidebar and the main content, side by
+   side. Its own row so the topbar above it can stay a plain, full-width
+   flex child of `.shell` instead of needing to know about the split below it. */
+.body {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -92,10 +107,6 @@
    sidebar doesn't read as mostly empty space below a short list. */
 .sidebarSpacious {
   padding: 20px 16px;
-}
-
-.sidebarSpacious .logoRow {
-  padding: 4px 10px 26px;
 }
 
 .sidebarSpacious .navItem,
@@ -179,14 +190,6 @@
   color: #dbe4fb;
 }
 
-.logoRow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 4px 8px 14px;
-  text-decoration: none;
-}
-
 .navSection + .navSection {
   margin-top: 4px;
 }
@@ -266,12 +269,41 @@
   flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Not `space-between`: with the logo as its own small flex child now, that
+     spread the exam picker out toward the middle of the bar instead of
+     sitting next to the logo. Everything packs to the left with one small
+     gap apiece; `.topbarRight` pushes itself to the far edge instead
+     (`margin-left: auto`), so the visual grouping stays [logo · exam] ⟷
+     [streak · bell · profile] without every gap having to be equal. */
+  justify-content: flex-start;
   padding: 11px 20px;
   background: var(--db-surface);
   border-bottom: 1px solid var(--db-border);
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
+}
+
+/*
+ * Lives in the topbar rather than the sidebar on purpose: the sidebar is
+ * hidden entirely on some routes (`hideSidebar` in `PortalShell.tsx`), and a
+ * logo that only existed there would need its own fallback wherever the
+ * sidebar disappears. Here it's simply always present, and the topbar's own
+ * layout never has to change shape between the two states.
+ */
+.topbarLogo {
+  display: flex;
+  align-items: center;
+  flex: none;
+  text-decoration: none;
+}
+
+.topbarLogoFull {
+  display: flex;
+}
+
+/* Shown instead of `.topbarLogoFull` below 900px — see the mobile media query. */
+.topbarLogoCompact {
+  display: none;
 }
 
 .examPicker {
@@ -327,6 +359,10 @@ a.examPickerButton:hover {
   display: flex;
   align-items: center;
   gap: 16px;
+  /* The one gap that isn't uniform with the rest of `.topbar` — everything
+     else packs to the left; this cluster (streak, bell, profile) is what's
+     meant to sit at the far right. */
+  margin-left: auto;
 }
 
 .streakBadge {
@@ -509,6 +545,24 @@ a.examPickerButton:hover {
     padding: 10px 14px;
     gap: 10px;
     flex-wrap: nowrap;
+  }
+
+  /* Menu button leads on a phone — it's the thing most worth reaching for
+     first — with the mark-only logo right after it, not the full wordmark
+     lockup (`.topbarLogoFull`/`.topbarLogoCompact`) that has room to spare
+     next to the exam picker on desktop. Source order is unchanged (logo
+     first in the JSX, for a screen reader/no-JS fallback); this is a purely
+     visual reorder. */
+  .menuButton {
+    order: -1;
+  }
+
+  .topbarLogoFull {
+    display: none;
+  }
+
+  .topbarLogoCompact {
+    display: flex;
   }
 
   .examPicker {

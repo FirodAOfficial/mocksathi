@@ -41,7 +41,7 @@ export function AnalysisScreen({
       ) : (
         <>
           <div className={styles.kpiRow}>
-            <PerformanceSnapshot performance={performance} />
+            <PerformanceSnapshot performance={performance} mocksAttempted={mocksAttempted} />
           </div>
 
           <SubjectSnapshotList subjects={subjects} />
