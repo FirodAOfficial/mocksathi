@@ -1,12 +1,6 @@
 import 'server-only';
 import { and, asc, count, desc, eq, gt, max, sum } from 'drizzle-orm';
-import {
-  buildAttempt,
-  workbookFromGrid,
-  type ExcelOperation,
-  type QuestionDraft,
-  type WordOperation,
-} from '@/exam/authoring';
+import { buildAttempt } from '@/exam/authoring';
 import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
 import { attemptsForUser, type StoredAttempt } from './attempts';
@@ -16,14 +10,13 @@ import {
   exams,
   testQuestions,
   tests,
-  type ExcelContentRow,
   type NewTest,
   type NewTestQuestion,
   type Test,
   type TestQuestion,
   type TestSubject,
-  type WordContentRow,
 } from './schema';
+import { draftFromRow } from './questionRow';
 import { slugify } from './slug';
 import type { ParsedQuestionFields, ParsedTestFields } from './testInput';
 
@@ -279,47 +272,11 @@ export async function moveQuestion(question: TestQuestion, direction: 'up' | 'do
 /* -- Rows to a paper ------------------------------------------------------- */
 
 /**
- * One stored question as an authoring draft.
- *
- * The casts are the reconciliation the schema's `jsonb` types stand in for.
- * They are safe in one direction only: everything written through
- * `parseQuestionInput` was rebuilt from the closed vocabulary in
- * `testInput.ts`, so a row cannot hold an operation the builders do not know.
- * A row written by hand, or by a future migration, is not covered — which is
- * exactly why the write path validates rather than trusting its caller.
+ * Re-exported from `questionRow.ts`, which is where it moved when it needed
+ * testing: this module is `server-only` and reaches the database client, and a
+ * pure row-to-draft mapping should be checkable without either.
  */
-export function draftFromRow(row: TestQuestion): QuestionDraft {
-  const base = {
-    number: row.position,
-    topic: row.topic,
-    difficulty: row.difficulty,
-    instruction: { en: row.instructionEn, hi: row.instructionHi },
-    solution: { en: row.solutionEn, hi: row.solutionHi },
-    marks: row.marks,
-  };
-
-  if (row.subject === 'word') {
-    const content = row.content as WordContentRow;
-    return {
-      ...base,
-      subject: 'word',
-      lines: content.lines,
-      scope: content.scope,
-      operations: row.operations as WordOperation[],
-    };
-  }
-
-  const content = row.content as ExcelContentRow;
-  return {
-    ...base,
-    subject: 'excel',
-    // The grid is stored, the workbook is built — so an edit to the sheet is
-    // an edit to cells an admin can still see, not to a snapshot no form can
-    // open again.
-    workbook: workbookFromGrid(content.grid, content.startingView),
-    operations: row.operations as ExcelOperation[],
-  };
-}
+export { draftFromRow } from './questionRow';
 
 /**
  * A stored paper as the attempt the player renders.

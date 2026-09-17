@@ -19,6 +19,7 @@ import { CharacterCount, Dropcursor, Gapcursor, Placeholder, UndoRedo } from '@t
 import type { AnyExtension } from '@tiptap/core';
 import { BLOCK_FORMAT_TYPES, BlockFormat } from './BlockFormat';
 import { CharacterFormat } from './CharacterFormat';
+import { UnderlineFormat } from './UnderlineFormat';
 import { RibbonOnlyShortcuts, ribbonOnly } from './ribbonOnlyShortcuts';
 
 /**
@@ -84,8 +85,12 @@ export function buildEditorExtensions(): AnyExtension[] {
     FontSize,
     Color,
 
-    // Emboss/engrave and character scale and spacing, also on `textStyle`.
+    // Emboss/engrave, small caps, hidden text, and character scale and
+    // spacing, all on `textStyle`.
     CharacterFormat,
+
+    // The underline drop-down's style and colour, on the underline mark.
+    UnderlineFormat,
 
     // Paragraph formatting
     TextAlign.configure({ types: [...BLOCK_FORMAT_TYPES] }),

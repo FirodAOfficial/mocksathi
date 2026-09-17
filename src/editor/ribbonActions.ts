@@ -2,7 +2,8 @@
 
 import type { Editor } from '@tiptap/react';
 import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model';
-import type { TextEffect } from './extensions/CharacterFormat';
+import type { CapsMode, TextEffect } from './extensions/CharacterFormat';
+import type { UnderlineStyle } from './functions/underline';
 import { applyCase, type LetterCase } from '@/utils/letterCase';
 import type { NormalizedStyleId, ParagraphBorders, TextAlignment } from '@/services/document/types';
 
@@ -70,6 +71,45 @@ export function stepFontSize(editor: Editor, direction: 1 | -1): void {
 
 export function setFontFamily(editor: Editor, family: string): void {
   editor.chain().focus().setFontFamily(family).run();
+}
+
+/**
+ * Word's underline drop-down.
+ *
+ * Choosing a style underlines the selection in it; choosing None removes the
+ * underline however it was drawn, which is why this is one function rather than
+ * a toggle and a style setter that could disagree.
+ */
+export function setUnderlineStyle(editor: Editor, style: UnderlineStyle | null): void {
+  const chain = editor.chain().focus();
+  if (style === null) chain.unsetUnderline().run();
+  else chain.setUnderlineStyle(style).run();
+}
+
+export function setUnderlineColor(editor: Editor, color: string | null): void {
+  editor.chain().focus().setUnderlineColor(color).run();
+}
+
+/** The Font dialog's Small caps / All caps, and Hidden. */
+export function setCaps(editor: Editor, caps: CapsMode | null): void {
+  editor.chain().focus().setCaps(caps).run();
+}
+
+export function setHiddenText(editor: Editor, hidden: boolean): void {
+  editor.chain().focus().setHiddenText(hidden).run();
+}
+
+export function setDoubleStrike(editor: Editor, on: boolean): void {
+  editor.chain().focus().setDoubleStrike(on).run();
+}
+
+/** The Paragraph dialog's At least / Exactly line spacing. */
+export function setLineSpacingAt(editor: Editor, mode: 'atLeast' | 'exactly' | null, points: number): void {
+  editor.chain().focus().setLineSpacingAt(mode, points).run();
+}
+
+export function setContextualSpacing(editor: Editor, on: boolean): void {
+  editor.chain().focus().setContextualSpacing(on).run();
 }
 
 export function setTextColor(editor: Editor, color: string | null): void {
@@ -346,7 +386,10 @@ export function setDocumentFont(editor: Editor, family: string): void {
   editor.chain().focus().selectAll().setFontFamily(family).setTextSelection({ from, to }).run();
 }
 
-/** Sets the left and right indents directly, as Layout's Indent boxes do. */
-export function setIndents(editor: Editor, indents: { left?: number | null; right?: number | null }): void {
+/** Sets the indents directly, as Layout's Indent boxes and the dialog do. */
+export function setIndents(
+  editor: Editor,
+  indents: { left?: number | null; right?: number | null; firstLine?: number | null },
+): void {
   editor.chain().focus().setParagraphIndents(indents).run();
 }

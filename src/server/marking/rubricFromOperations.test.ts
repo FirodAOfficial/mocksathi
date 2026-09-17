@@ -151,7 +151,9 @@ describe('what the derived key says', () => {
     const closing = wordRubricFor(draft).criteria.at(-1)!;
     if (closing.kind !== 'unchanged') throw new Error('expected an unchanged criterion');
 
-    expect(closing.except[0]!.target).toMatchObject({ by: 'range', block: 0 });
+    // The target is the question's own selection, resolved against the
+    // document when it is marked rather than stored as offsets here.
+    expect(closing.except[0]!.target).toMatchObject({ by: 'selection' });
     expect(closing.except[0]!.marks).toEqual(['underline']);
   });
 

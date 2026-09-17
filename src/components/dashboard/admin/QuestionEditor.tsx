@@ -4,6 +4,17 @@ import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'reac
 import { rangeFromA1, rangeToA1 } from '@/exam/authoring';
 import { columnToLabel, labelToColumn, type RangeAddress } from '@/spreadsheet/model/address';
 import { QUESTION_DIFFICULTIES, type ExcelContentRow, type TestQuestion, type TestSubject, type WordContentRow } from '@/db/schema';
+import { WORD_FUNCTIONS, WORD_FUNCTION_LIST, isWordFunctionId } from '@/editor/functions/catalog';
+import type { WordOperation } from '@/exam/authoring';
+import { PassagePreview } from '@/components/result/PassagePreview';
+import { questionPreview } from './questionPreview';
+import { FUNCTION_CATEGORIES, type ParamSpec } from '@/editor/functions/types';
+import {
+  SELECTORS,
+  resolveSelections,
+  type SelectionSpec,
+  type SelectorName,
+} from '@/editor/functions/selection';
 import styles from './TestWorkbench.module.css';
 
 /**
@@ -58,12 +69,17 @@ interface OperationDraft {
   /** React key only — never sent. */
   id: string;
   kind: string;
+  /**
+   * A Word function's arguments, by parameter name.
+   *
+   * Held as strings because that is what an input yields; the catalog's
+   * `ParamSpec` says what each one is and `operationFrom` converts on the way
+   * out. Everything below this line is the Excel half, which is still a field
+   * per kind — its operations address ranges and cells rather than taking a
+   * list of scalars, so a generic bag would not have saved anything.
+   */
+  args: Record<string, string>;
   color: string;
-  family: string;
-  size: string;
-  align: string;
-  lineHeight: string;
-  levels: string;
   rangeA1: string;
   across: boolean;
   centre: boolean;
@@ -88,8 +104,38 @@ interface EditorState {
   solutionHi: string;
   passageEn: string;
   passageHi: string;
+  /** How the question names its text; see `@/editor/functions/selection`. */
+  selector: SelectorName;
+  selectorIndex: string;
+  selectorParagraph: string;
+  selectorText: string;
+  selectorOccurrence: string;
   scopeFrom: string;
   scopeTo: string;
+  /**
+   * A multi-step question's steps, carried through untouched.
+   *
+   * The form does not offer these — they come from papers a migration loaded —
+   * and dropping them on the way through would quietly turn "number the first,
+   * second and fourth paragraphs" into a question about the first paragraph.
+   */
+  steps: unknown[] | null;
+  /**
+   * The formatting the passage *starts* with, which the form does offer.
+   *
+   * This is what makes "remove the highlight from the second paragraph" a
+   * question rather than a no-op: the paragraph has to arrive highlighted. It
+   * applies to the same text the question is about, which is what every such
+   * question actually wants — a passage whose starting formatting sits
+   * somewhere else is still authored through the API.
+   */
+  initialOperations: OperationDraft[];
+  /**
+   * A stored `initial` this form cannot represent — more than one entry, or one
+   * addressing different text — kept verbatim so editing the instruction does
+   * not silently rewrite it.
+   */
+  initialPassThrough: unknown[] | null;
   gridEn: string[][];
   gridHi: string[][];
   startingGridlines: boolean;
@@ -113,23 +159,25 @@ const BLANK_STYLE: StyleDraft = {
   numberFormat: '',
 };
 
-/** The default colour per operation, so a freshly added one already means something. */
-const DEFAULT_COLOUR: Record<string, string> = { highlight: '#ffff00', fontColor: '#ff0000' };
 
 function newId(): string {
   return crypto.randomUUID();
+}
+
+/** A Word function's parameters at their catalog defaults. */
+function defaultArgsFor(kind: string): Record<string, string> {
+  if (!isWordFunctionId(kind)) return {};
+  const args: Record<string, string> = {};
+  for (const param of WORD_FUNCTIONS[kind].params) args[param.name] = String(param.default);
+  return args;
 }
 
 function blankOperation(kind: string): OperationDraft {
   return {
     id: newId(),
     kind,
-    color: DEFAULT_COLOUR[kind] ?? '#ffff00',
-    family: '',
-    size: '',
-    align: 'center',
-    lineHeight: '2',
-    levels: '1',
+    args: defaultArgsFor(kind),
+    color: '#ffff00',
     rangeA1: '',
     across: false,
     centre: kind === 'merge',
@@ -171,8 +219,16 @@ function blankState(subject: TestSubject): EditorState {
     solutionHi: '',
     passageEn: '',
     passageHi: '',
+    selector: 'all',
+    selectorIndex: '1',
+    selectorParagraph: '1',
+    selectorText: '',
+    selectorOccurrence: '1',
     scopeFrom: '',
     scopeTo: '',
+    steps: null,
+    initialOperations: [],
+    initialPassThrough: null,
     gridEn: blankGrid(),
     gridHi: blankGrid(),
     startingGridlines: true,
@@ -207,14 +263,18 @@ function operationDraftFrom(stored: Record<string, unknown>): OperationDraft {
   const draft = blankOperation(kind);
   const range = stored.range as RangeAddress | null | undefined;
 
+  if (isWordFunctionId(kind)) {
+    const args = { ...draft.args };
+    for (const param of WORD_FUNCTIONS[kind].params) {
+      const value = stored[param.name];
+      if (value !== undefined && value !== null) args[param.name] = String(value);
+    }
+    return { ...draft, args };
+  }
+
   return {
     ...draft,
     ...(typeof stored.color === 'string' ? { color: stored.color } : {}),
-    ...(typeof stored.family === 'string' ? { family: stored.family } : {}),
-    ...(typeof stored.size === 'number' ? { size: String(stored.size) } : {}),
-    ...(typeof stored.align === 'string' ? { align: stored.align } : {}),
-    ...(typeof stored.value === 'number' ? { lineHeight: String(stored.value) } : {}),
-    ...(typeof stored.levels === 'number' ? { levels: String(stored.levels) } : {}),
     ...(range ? { rangeA1: rangeToA1(range) } : {}),
     across: stored.across === true,
     centre: stored.centre === true,
@@ -239,6 +299,96 @@ function operationDraftFrom(stored: Record<string, unknown>): OperationDraft {
   };
 }
 
+/**
+ * A stored selection as the form's fields.
+ *
+ * The inverse of `parseScope` on the server. Every field is filled whatever the
+ * selector, so switching between selectors in the picker keeps what was already
+ * typed — the same reason the operation drafts hold every field at once.
+ */
+function selectionFields(scope: WordContentRow['scope']): Pick<
+  EditorState,
+  'selector' | 'selectorIndex' | 'selectorParagraph' | 'selectorText' | 'selectorOccurrence' | 'scopeFrom' | 'scopeTo'
+> {
+  const blank = {
+    selector: 'all' as SelectorName,
+    selectorIndex: '1',
+    selectorParagraph: '1',
+    selectorText: '',
+    selectorOccurrence: '1',
+    scopeFrom: '',
+    scopeTo: '',
+  };
+
+  if (scope === 'all') return blank;
+
+  // The legacy shape: a character range in the first paragraph.
+  if (!('select' in scope)) {
+    return { ...blank, scopeFrom: String(scope.from), scopeTo: String(scope.to) };
+  }
+
+  switch (scope.select) {
+    case 'paragraph':
+      return { ...blank, selector: 'paragraph', selectorIndex: String(scope.index) };
+    case 'word':
+    case 'sentence':
+      return {
+        ...blank,
+        selector: scope.select,
+        selectorIndex: String(scope.index),
+        selectorParagraph: String(scope.paragraph ?? 1),
+      };
+    case 'words':
+      return {
+        ...blank,
+        selector: 'words',
+        scopeFrom: String(scope.from),
+        scopeTo: String(scope.to),
+        selectorParagraph: String(scope.paragraph ?? 1),
+      };
+    case 'text':
+      return {
+        ...blank,
+        selector: 'text',
+        selectorText: scope.text,
+        selectorOccurrence: String(scope.occurrence ?? 1),
+        selectorParagraph: String(scope.paragraph ?? 1),
+      };
+    case 'range':
+      return {
+        ...blank,
+        selector: 'range',
+        scopeFrom: String(scope.from),
+        scopeTo: String(scope.to),
+        selectorParagraph: String(scope.paragraph ?? 1),
+      };
+  }
+}
+
+/**
+ * A stored `initial` as the form's rows, when the form can represent it.
+ *
+ * One entry addressing the question's own text is the shape every "remove the
+ * formatting" question has, and the only one the rows below can edit. Anything
+ * else is kept verbatim and shown as read-only, rather than being flattened
+ * into something the author did not write.
+ */
+function startingFormattingFields(
+  content: WordContentRow,
+): Pick<EditorState, 'initialOperations' | 'initialPassThrough'> {
+  const initial = content.initial ?? [];
+  const only = initial.length === 1 ? initial[0] : undefined;
+
+  if (!only || JSON.stringify(only.scope) !== JSON.stringify(content.scope)) {
+    return { initialOperations: [], initialPassThrough: initial.length > 0 ? initial : null };
+  }
+
+  return {
+    initialOperations: (only.operations as unknown as Record<string, unknown>[]).map(operationDraftFrom),
+    initialPassThrough: null,
+  };
+}
+
 function stateFromQuestion(question: TestQuestion): EditorState {
   const base: EditorState = {
     ...blankState(question.subject),
@@ -260,8 +410,9 @@ function stateFromQuestion(question: TestQuestion): EditorState {
       // The Hindi passage is stored even when it equals the English one; an
       // empty box here means "same as English", so show it as empty again.
       passageHi: content.lines.hi.join('\n') === content.lines.en.join('\n') ? '' : content.lines.hi.join('\n'),
-      scopeFrom: content.scope === 'all' ? '' : String(content.scope.from),
-      scopeTo: content.scope === 'all' ? '' : String(content.scope.to),
+      ...selectionFields(content.scope),
+      steps: content.steps ?? null,
+      ...startingFormattingFields(content),
     };
   }
 
@@ -327,25 +478,24 @@ function answerValueFrom(text: string): string | number | undefined {
 function operationFrom(draft: OperationDraft): Record<string, unknown> {
   const range = rangeFromA1(draft.rangeA1);
 
+  /*
+   * A Word operation is its parameters, converted to the types the catalog
+   * declares. The server rebuilds it from the same declaration rather than
+   * trusting this — see `wordOperationOf` — so what this has to get right is
+   * the shape, not the safety.
+   */
+  if (isWordFunctionId(draft.kind)) {
+    const operation: Record<string, unknown> = { kind: draft.kind };
+    for (const param of WORD_FUNCTIONS[draft.kind].params) {
+      const raw = draft.args[param.name] ?? '';
+      if (param.type === 'number') operation[param.name] = numberOrUndefined(raw);
+      else if (param.type === 'boolean') operation[param.name] = raw === 'true';
+      else operation[param.name] = raw;
+    }
+    return operation;
+  }
+
   switch (draft.kind) {
-    case 'bold':
-    case 'italic':
-    case 'underline':
-    case 'strike':
-      return { kind: draft.kind };
-    case 'highlight':
-    case 'fontColor':
-      return { kind: draft.kind, color: draft.color };
-    case 'fontFamily':
-      return { kind: 'fontFamily', family: draft.family };
-    case 'fontSize':
-      return { kind: 'fontSize', size: numberOrUndefined(draft.size) };
-    case 'align':
-      return { kind: 'align', align: draft.align };
-    case 'lineHeight':
-      return { kind: 'lineHeight', value: numberOrUndefined(draft.lineHeight) };
-    case 'indent':
-      return { kind: 'indent', levels: numberOrUndefined(draft.levels) };
     case 'merge':
       return { kind: 'merge', range, across: draft.across, centre: draft.centre };
     case 'style':
@@ -399,15 +549,29 @@ function operationProblem(draft: OperationDraft): string | null {
   const needsRange = (): string | null =>
     rangeFromA1(draft.rangeA1) ? null : draft.rangeA1.trim() === '' ? 'Needs a range' : 'That is not a range';
 
+  if (isWordFunctionId(draft.kind)) {
+    for (const param of WORD_FUNCTIONS[draft.kind].params) {
+      const raw = (draft.args[param.name] ?? '').trim();
+
+      if (param.type === 'number') {
+        const value = numberOrUndefined(raw);
+        if (value === undefined) return `Needs ${param.label.toLowerCase()}`;
+        if (value < param.min || value > param.max) {
+          return `${param.label} must be between ${param.min} and ${param.max}`;
+        }
+      }
+
+      if (param.type === 'text' && raw === '') return `Needs ${param.label.toLowerCase()}`;
+      // The underline's colour is the one optional parameter; the server
+      // agrees, and reads an empty one as Word's Automatic.
+      if (param.type === 'colour' && raw === '' && draft.kind !== 'underlineStyle') {
+        return `Needs ${param.label.toLowerCase()}`;
+      }
+    }
+    return null;
+  }
+
   switch (draft.kind) {
-    case 'fontFamily':
-      return draft.family.trim() ? null : 'Needs a font name';
-    case 'fontSize':
-      return numberOrUndefined(draft.size) === undefined ? 'Needs a size' : null;
-    case 'lineHeight':
-      return numberOrUndefined(draft.lineHeight) === undefined ? 'Needs a spacing' : null;
-    case 'indent':
-      return numberOrUndefined(draft.levels) === undefined ? 'Needs a number of levels' : null;
     case 'merge':
     case 'outsideBorder':
       return needsRange();
@@ -444,21 +608,41 @@ function gridIsEmpty(grid: string[][]): boolean {
   return grid.every((row) => row.every((cell) => cell.trim() === ''));
 }
 
+/**
+ * The starting formatting, as the API takes it.
+ *
+ * A single entry addressing the question's own text, which is the shape every
+ * "remove the formatting" question has. A stored `initial` the form could not
+ * represent is sent back exactly as it arrived.
+ */
+function startingFormattingPayload(values: EditorState): { initial?: unknown[] } {
+  if (values.initialPassThrough) return { initial: values.initialPassThrough };
+  if (values.initialOperations.length === 0) return {};
+
+  const scope = selectionFromFields(values);
+  if (!scope) return {};
+
+  return { initial: [{ scope, operations: values.initialOperations.map(operationFrom) }] };
+}
+
 /* -- Vocabulary shown in the pickers --------------------------------------- */
 
-const WORD_KINDS: { value: string; label: string }[] = [
-  { value: 'bold', label: 'Bold' },
-  { value: 'italic', label: 'Italic' },
-  { value: 'underline', label: 'Underline' },
-  { value: 'strike', label: 'Strikethrough' },
-  { value: 'highlight', label: 'Highlight colour' },
-  { value: 'fontColor', label: 'Font colour' },
-  { value: 'fontFamily', label: 'Font' },
-  { value: 'fontSize', label: 'Font size' },
-  { value: 'align', label: 'Alignment' },
-  { value: 'lineHeight', label: 'Line spacing' },
-  { value: 'indent', label: 'Indent' },
-];
+/**
+ * Every Word function the catalog declares, grouped by its ribbon group.
+ *
+ * Not a list kept here: a function added to `@/editor/functions/catalog` shows
+ * up in this picker, with its own fields, validated on the way out, with no
+ * edit to this file. That is what the catalog is for.
+ */
+const WORD_KIND_GROUPS = FUNCTION_CATEGORIES.map((category) => ({
+  label: category.label,
+  kinds: WORD_FUNCTION_LIST.filter((entry) => entry.category === category.value).map((entry) => ({
+    value: entry.id,
+    label: entry.label,
+  })),
+})).filter((group) => group.kinds.length > 0);
+
+const WORD_KINDS: { value: string; label: string }[] = WORD_KIND_GROUPS.flatMap((group) => group.kinds);
 
 const EXCEL_KINDS: { value: string; label: string }[] = [
   { value: 'merge', label: 'Merge cells' },
@@ -505,12 +689,7 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
     }));
   }
 
-  function updateOperation(operationId: string, changes: Partial<OperationDraft>) {
-    set(
-      'operations',
-      values.operations.map((operation) => (operation.id === operationId ? { ...operation, ...changes } : operation)),
-    );
-  }
+
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -529,8 +708,15 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
         ? {
             passageEn: values.passageEn,
             passageHi: values.passageHi,
+            selector: values.selector,
+            selectorIndex: values.selectorIndex,
+            selectorParagraph: values.selectorParagraph,
+            selectorText: values.selectorText,
+            selectorOccurrence: values.selectorOccurrence,
             scopeFrom: values.scopeFrom,
             scopeTo: values.scopeTo,
+            ...(values.steps ? { steps: values.steps } : {}),
+            ...startingFormattingPayload(values),
           }
         : {
             gridEn: values.gridEn,
@@ -586,6 +772,9 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
   };
   const operationProblems = new Map(
     values.operations.map((operation) => [operation.id, operationProblem(operation)] as const),
+  );
+  const initialProblems = new Map(
+    values.initialOperations.map((operation) => [operation.id, operationProblem(operation)] as const),
   );
 
   /** Everything outstanding, named in one place — the per-field marks can be off-screen behind the language tabs. */
@@ -780,44 +969,12 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
               the rendered page.
             </p>
 
-            <div className={styles.grid2}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={`scopeFrom-${question?.id ?? 'new'}`}>
-                  Line range: from <span className={styles.optional}>(optional)</span>
-                </label>
-                <input
-                  id={`scopeFrom-${question?.id ?? 'new'}`}
-                  name="scopeFrom"
-                  type="number"
-                  min={0}
-                  className={styles.input}
-                  placeholder="Whole paragraph"
-                  value={values.scopeFrom}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor={`scopeTo-${question?.id ?? 'new'}`}>
-                  Line range: to <span className={styles.optional}>(optional)</span>
-                </label>
-                <input
-                  id={`scopeTo-${question?.id ?? 'new'}`}
-                  name="scopeTo"
-                  type="number"
-                  min={1}
-                  className={styles.input}
-                  placeholder="Whole paragraph"
-                  value={values.scopeTo}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            <p className={styles.hint}>
-              Leave both blank unless the question names one wrapped line (&ldquo;underline the 2nd line&rdquo;).
-              Those are character offsets into the first paragraph, measured from the rendered page — so a passage
-              addressed this way must read identically in both languages, and must be re-measured if its wording
-              changes.
-            </p>
+            <SelectionFields
+              id={id}
+              values={values}
+              lines={values.passageEn.split('\n')}
+              onChange={handleChange}
+            />
           </>
         ) : (
           <>
@@ -870,61 +1027,57 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
           does something extra has not answered the question — so add only what the instruction says.
         </p>
 
-        <div className={styles.operations}>
-          {missing.noOperations && (
-            <p className={`${styles.operationEmpty} ${styles.invalid}`}>
-              Required — a question with no operation has no answer to show.
-            </p>
-          )}
-          {values.operations.map((operation, index) => (
-            <div
-              className={operationProblems.get(operation.id) ? `${styles.operation} ${styles.invalid}` : styles.operation}
-              key={operation.id}
-            >
-              <div className={styles.operationHead}>
-                <span className={styles.number}>{index + 1}</span>
-                <select
-                  className={styles.operationKind}
-                  value={operation.kind}
-                  onChange={(event) => updateOperation(operation.id, { kind: event.target.value })}
-                  aria-label={`Operation ${index + 1}`}
-                >
-                  {kinds.map((kind) => (
-                    <option key={kind.value} value={kind.value}>
-                      {kind.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className={styles.dangerButton}
-                  onClick={() => set('operations', values.operations.filter((entry) => entry.id !== operation.id))}
-                  aria-label={`Remove operation ${index + 1}`}
-                >
-                  Remove
-                </button>
-              </div>
-              <OperationFields
-                operation={operation}
-                onChange={(changes) => updateOperation(operation.id, changes)}
-              />
-              {operationProblems.get(operation.id) && (
-                <p className={styles.requiredNote}>{operationProblems.get(operation.id)}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        {missing.noOperations && (
+          <p className={`${styles.operationEmpty} ${styles.invalid}`}>
+            Required — a question with no operation has no answer to show.
+          </p>
+        )}
 
-        <button
-          type="button"
-          className={styles.addButton}
-          onClick={() =>
-            set('operations', [...values.operations, blankOperation(subject === 'word' ? 'bold' : 'style')])
-          }
-        >
-          + Add an operation
-        </button>
+        <OperationList
+          operations={values.operations}
+          kinds={kinds}
+          problems={operationProblems}
+          label="Operation"
+          defaultKind={subject === 'word' ? 'bold' : 'style'}
+          onChange={(next) => set('operations', next)}
+        />
       </div>
+
+      {subject === 'word' && (
+        <div className={styles.group}>
+          <p className={styles.groupTitle}>What the passage starts with</p>
+          <p className={styles.hint}>
+            Formatting the candidate finds already applied, to the same text the question is about. This is what
+            makes &ldquo;remove the highlight&rdquo; a question rather than a no-op — and the marking follows: the
+            passage below is what &ldquo;nothing else changed&rdquo; is measured against.
+          </p>
+
+          {values.initialPassThrough ? (
+            <p className={styles.hint}>
+              This question&rsquo;s starting formatting was written through the API and addresses text other than
+              the question&rsquo;s own. It is kept as it is; editing it here would rewrite it.
+            </p>
+          ) : (
+            <OperationList
+              operations={values.initialOperations}
+              kinds={kinds}
+              problems={initialProblems}
+              label="Starting format"
+              defaultKind="highlight"
+              onChange={(next) => set('initialOperations', next)}
+            />
+          )}
+        </div>
+      )}
+
+      {subject === 'word' && (
+        <QuestionPreviewPanel
+          lines={values.passageEn.split('\n')}
+          scope={selectionFromFields(values)}
+          operations={values.operations}
+          initial={values.initialOperations}
+        />
+      )}
 
       {outstanding.length > 0 && (
         <p className={styles.outstanding}>
@@ -948,6 +1101,317 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
       </div>
     </form>
   );
+}
+
+/* -- Seeing the question ---------------------------------------------------- */
+
+/**
+ * The passage as the candidate opens it, and as it looks answered.
+ *
+ * An author writing "bold the third word" cannot tell from the form whether
+ * they have written the third word or the third paragraph — the difference is
+ * an index in a picker. These two panels are where that becomes visible, and
+ * they are rendered by the same builders the exam and the marker use, so a
+ * preview that looks right cannot be a question that sits wrong.
+ */
+function QuestionPreviewPanel({
+  lines,
+  scope,
+  operations,
+  initial,
+}: {
+  lines: string[];
+  scope: SelectionSpec | null;
+  operations: OperationDraft[];
+  initial: OperationDraft[];
+}) {
+  const preview =
+    scope === null
+      ? null
+      : questionPreview({
+          lines,
+          scope,
+          operations: operations.map(operationFrom) as unknown as WordOperation[],
+          initial: initial.map(operationFrom) as unknown as WordOperation[],
+        });
+
+  return (
+    <div className={styles.group}>
+      <p className={styles.groupTitle}>What the candidate will see</p>
+      <p className={styles.hint}>
+        The English passage, rendered by the editor itself. The left panel is what opens when the question is
+        selected; the right is the worked answer shown after the paper closes — and what the answer key checks.
+      </p>
+
+      {preview === null ? (
+        <p className={styles.hint}>
+          Nothing to show yet — fill in the passage, and make sure the selection names text that is in it.
+        </p>
+      ) : (
+        <div className={styles.grid2}>
+          <div className={styles.field}>
+            <span className={styles.label}>As the candidate finds it</span>
+            <div className={styles.previewSheet}>
+              <PassagePreview document={preview.start} />
+            </div>
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>Answered correctly</span>
+            <div className={styles.previewSheet}>
+              <PassagePreview document={preview.answer} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -- Operation lists ------------------------------------------------------- */
+
+/**
+ * A list of operations, added to and removed from.
+ *
+ * Shared by the two lists on this form — what the question asks for, and what
+ * the passage starts with — because they are the same vocabulary pointed in
+ * opposite directions: one applies formatting, the other is the formatting that
+ * is already there for a question to ask about.
+ */
+function OperationList({
+  operations,
+  kinds,
+  problems,
+  label,
+  defaultKind,
+  onChange,
+}: {
+  operations: OperationDraft[];
+  kinds: { value: string; label: string }[];
+  problems: Map<string, string | null>;
+  label: string;
+  defaultKind: string;
+  onChange: (next: OperationDraft[]) => void;
+}) {
+  const update = (id: string, changes: Partial<OperationDraft>): void =>
+    onChange(operations.map((entry) => (entry.id === id ? { ...entry, ...changes } : entry)));
+
+  return (
+    <>
+      <div className={styles.operations}>
+        {operations.map((operation, index) => (
+          <div
+            className={problems.get(operation.id) ? `${styles.operation} ${styles.invalid}` : styles.operation}
+            key={operation.id}
+          >
+            <div className={styles.operationHead}>
+              <span className={styles.number}>{index + 1}</span>
+              <select
+                className={styles.operationKind}
+                value={operation.kind}
+                onChange={(event) => update(operation.id, { kind: event.target.value })}
+                aria-label={`${label} ${index + 1}`}
+              >
+                {kinds.map((kind) => (
+                  <option key={kind.value} value={kind.value}>
+                    {kind.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles.dangerButton}
+                onClick={() => onChange(operations.filter((entry) => entry.id !== operation.id))}
+                aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
+              >
+                Remove
+              </button>
+            </div>
+            <OperationFields operation={operation} onChange={(changes) => update(operation.id, changes)} />
+            {problems.get(operation.id) && <p className={styles.requiredNote}>{problems.get(operation.id)}</p>}
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className={styles.addButton}
+        onClick={() => onChange([...operations, blankOperation(defaultKind)])}
+      >
+        + Add {label.toLowerCase()}
+      </button>
+    </>
+  );
+}
+
+/* -- Naming the text a question is about ----------------------------------- */
+
+/**
+ * The selection picker.
+ *
+ * Each selector asks for what it needs and nothing else, and the preview under
+ * it shows the words the stored selection actually lands on — which is the
+ * whole reason for naming a selection rather than typing offsets: the admin can
+ * see they have named the right thing before the paper is sat.
+ */
+function SelectionFields({
+  id,
+  values,
+  lines,
+  onChange,
+}: {
+  id: (field: string) => string;
+  values: EditorState;
+  lines: string[];
+  onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+}) {
+  const scope = selectionFromFields(values);
+  const resolved = scope ? resolveSelections(scope, lines) : [];
+  const first = resolved[0];
+  const preview = first ? (lines[first.block] ?? '').slice(first.from, first.to) : '';
+
+  const number = (field: keyof EditorState, label: string, min: number) => (
+    <div className={styles.field}>
+      <label className={styles.label} htmlFor={id(field)}>
+        {label}
+      </label>
+      <input
+        id={id(field)}
+        name={field}
+        type="number"
+        min={min}
+        className={styles.input}
+        value={String(values[field] ?? '')}
+        onChange={onChange}
+      />
+    </div>
+  );
+
+  return (
+    <>
+      <div className={styles.grid2}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor={id('selector')}>
+            The question is about
+          </label>
+          <select
+            id={id('selector')}
+            name="selector"
+            className={styles.input}
+            value={values.selector}
+            onChange={onChange}
+          >
+            {SELECTORS.map((entry) => (
+              <option key={entry.value} value={entry.value}>
+                {entry.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {values.selector === 'paragraph' ? number('selectorIndex', 'Paragraph number', 1) : null}
+        {values.selector === 'word' || values.selector === 'sentence'
+          ? number('selectorIndex', values.selector === 'word' ? 'Word number' : 'Sentence number', 1)
+          : null}
+        {values.selector === 'words' ? number('scopeFrom', 'From word', 1) : null}
+        {values.selector === 'words' ? number('scopeTo', 'To word', 1) : null}
+        {values.selector === 'range' || values.selector === 'all' ? number('scopeFrom', 'From character', 0) : null}
+        {values.selector === 'range' || values.selector === 'all' ? number('scopeTo', 'To character', 1) : null}
+
+        {values.selector === 'text' ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('selectorText')}>
+              The words themselves
+            </label>
+            <input
+              id={id('selectorText')}
+              name="selectorText"
+              className={styles.input}
+              value={values.selectorText}
+              onChange={onChange}
+            />
+          </div>
+        ) : null}
+
+        {values.selector === 'text' ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor={id('selectorOccurrence')}>
+              Which occurrence
+            </label>
+            <select
+              id={id('selectorOccurrence')}
+              name="selectorOccurrence"
+              className={styles.input}
+              value={values.selectorOccurrence}
+              onChange={onChange}
+            >
+              <option value="all">Wherever it appears</option>
+              {[1, 2, 3, 4, 5].map((entry) => (
+                <option key={entry} value={String(entry)}>
+                  Occurrence {entry}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
+        {values.selector === 'word' ||
+        values.selector === 'words' ||
+        values.selector === 'sentence' ||
+        values.selector === 'text' ||
+        values.selector === 'range'
+          ? number('selectorParagraph', 'In paragraph', 1)
+          : null}
+      </div>
+
+      <p className={styles.hint}>
+        {values.selector === 'all' && values.scopeFrom === '' && values.scopeTo === ''
+          ? 'The whole first paragraph — what most questions are about. The character boxes are for a question that names one wrapped line, whose offsets are measured against the rendered page.'
+          : resolved.length === 0
+            ? 'This names nothing in the English passage — the question could not be marked as written.'
+            : resolved.length === 1
+              ? `Lands on “${preview}”.`
+              : `Lands on ${resolved.length} places, the first being “${preview}”.`}
+      </p>
+    </>
+  );
+}
+
+/** The form's selection fields as the selection they describe. */
+function selectionFromFields(values: EditorState): SelectionSpec | null {
+  const index = Number.parseInt(values.selectorIndex, 10);
+  const paragraph = Number.parseInt(values.selectorParagraph, 10);
+  const from = Number.parseInt(values.scopeFrom, 10);
+  const to = Number.parseInt(values.scopeTo, 10);
+  const inParagraph = Number.isFinite(paragraph) && paragraph > 1 ? { paragraph } : {};
+
+  switch (values.selector) {
+    case 'all':
+      if (!Number.isFinite(from) || !Number.isFinite(to)) return 'all';
+      return { from, to };
+    case 'paragraph':
+      return Number.isFinite(index) ? { select: 'paragraph', index } : null;
+    case 'word':
+      return Number.isFinite(index) ? { select: 'word', index, ...inParagraph } : null;
+    case 'sentence':
+      return Number.isFinite(index) ? { select: 'sentence', index, ...inParagraph } : null;
+    case 'words':
+      return Number.isFinite(from) && Number.isFinite(to) ? { select: 'words', from, to, ...inParagraph } : null;
+    case 'range':
+      return Number.isFinite(from) && Number.isFinite(to) ? { select: 'range', from, to, ...inParagraph } : null;
+    case 'text': {
+      if (values.selectorText.trim() === '') return null;
+      const occurrence =
+        values.selectorOccurrence === 'all' ? ('all' as const) : Number.parseInt(values.selectorOccurrence, 10);
+      return {
+        select: 'text',
+        text: values.selectorText,
+        ...(occurrence === 'all' || Number.isFinite(occurrence) ? { occurrence } : {}),
+        ...inParagraph,
+      };
+    }
+    default:
+      return null;
+  }
 }
 
 /* -- Per-kind fields ------------------------------------------------------- */
@@ -995,6 +1459,97 @@ function RangeField({
   );
 }
 
+/**
+ * One parameter of a Word function, as the control its type calls for.
+ *
+ * The admin form has no list of Word fields any more: the catalog says a
+ * function takes a colour called "Underline colour" and a choice between eight
+ * styles, and this renders exactly that. Adding a function to the catalog adds
+ * its fields here.
+ */
+function ParamField({
+  param,
+  value,
+  onChange,
+}: {
+  param: ParamSpec;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  switch (param.type) {
+    case 'colour':
+      return (
+        <Field label={param.label}>
+          <input
+            type="color"
+            className={styles.colorInput}
+            value={value || param.default}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </Field>
+      );
+
+    case 'number':
+      return (
+        <Field label={param.unit ? `${param.label} (${param.unit})` : param.label}>
+          <input
+            type="number"
+            className={styles.input}
+            min={param.min}
+            max={param.max}
+            step={param.step ?? 1}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </Field>
+      );
+
+    case 'enum':
+      return (
+        <Field label={param.label}>
+          <select className={styles.input} value={value} onChange={(event) => onChange(event.target.value)}>
+            {param.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      );
+
+    case 'text':
+      return (
+        <Field label={param.label}>
+          <input
+            className={styles.input}
+            maxLength={param.maxLength}
+            list={param.suggestions ? `suggestions-${param.name}` : undefined}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+          {param.suggestions ? (
+            <datalist id={`suggestions-${param.name}`}>
+              {param.suggestions.map((entry) => (
+                <option key={entry} value={entry} />
+              ))}
+            </datalist>
+          ) : null}
+        </Field>
+      );
+
+    case 'boolean':
+      return (
+        <Field label={param.label}>
+          <input
+            type="checkbox"
+            checked={value === 'true'}
+            onChange={(event) => onChange(String(event.target.checked))}
+          />
+        </Field>
+      );
+  }
+}
+
 function OperationFields({
   operation,
   onChange,
@@ -1002,109 +1557,28 @@ function OperationFields({
   operation: OperationDraft;
   onChange: (changes: Partial<OperationDraft>) => void;
 }) {
+  // Word functions render themselves from the catalog; the Excel half below
+  // still names its fields, because its operations address cells rather than
+  // taking a list of scalars.
+  if (isWordFunctionId(operation.kind)) {
+    const spec = WORD_FUNCTIONS[operation.kind];
+    if (spec.params.length === 0) return null;
+
+    return (
+      <div className={styles.grid2}>
+        {spec.params.map((param) => (
+          <ParamField
+            key={param.name}
+            param={param}
+            value={operation.args[param.name] ?? ''}
+            onChange={(value) => onChange({ args: { ...operation.args, [param.name]: value } })}
+          />
+        ))}
+      </div>
+    );
+  }
+
   switch (operation.kind) {
-    case 'bold':
-    case 'italic':
-    case 'underline':
-    case 'strike':
-      return null;
-
-    case 'highlight':
-    case 'fontColor':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Colour">
-            <input
-              type="color"
-              className={styles.colorInput}
-              value={operation.color}
-              onChange={(event) => onChange({ color: event.target.value })}
-            />
-          </Field>
-        </div>
-      );
-
-    case 'fontFamily':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Font name">
-            <input
-              className={styles.input}
-              placeholder="Times New Roman"
-              value={operation.family}
-              onChange={(event) => onChange({ family: event.target.value })}
-            />
-          </Field>
-        </div>
-      );
-
-    case 'fontSize':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Size (pt)">
-            <input
-              type="number"
-              min={1}
-              className={styles.input}
-              placeholder="15"
-              value={operation.size}
-              onChange={(event) => onChange({ size: event.target.value })}
-            />
-          </Field>
-        </div>
-      );
-
-    case 'align':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Alignment">
-            <select
-              className={styles.select}
-              value={operation.align}
-              onChange={(event) => onChange({ align: event.target.value })}
-            >
-              <option value="left">Left</option>
-              <option value="center">Centre</option>
-              <option value="right">Right</option>
-              <option value="justify">Justify</option>
-            </select>
-          </Field>
-        </div>
-      );
-
-    case 'lineHeight':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Line spacing">
-            <input
-              type="number"
-              step="0.05"
-              min={0.5}
-              className={styles.input}
-              placeholder="2"
-              value={operation.lineHeight}
-              onChange={(event) => onChange({ lineHeight: event.target.value })}
-            />
-          </Field>
-        </div>
-      );
-
-    case 'indent':
-      return (
-        <div className={styles.grid2}>
-          <Field label="Indent levels">
-            <input
-              type="number"
-              min={1}
-              max={10}
-              className={styles.input}
-              value={operation.levels}
-              onChange={(event) => onChange({ levels: event.target.value })}
-            />
-          </Field>
-        </div>
-      );
-
     case 'merge':
       return (
         <>

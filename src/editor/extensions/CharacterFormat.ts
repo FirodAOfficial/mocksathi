@@ -15,6 +15,9 @@ export type TextEffect = 'emboss' | 'engrave';
 export const MAX_CHARACTER_SPACING_PT = 20;
 export const CHARACTER_SCALE_OPTIONS = [33, 50, 66, 80, 90, 100, 150, 200] as const;
 
+/** The Font dialog's Small caps and All caps. */
+export type CapsMode = 'small' | 'all';
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     characterFormat: {
@@ -23,6 +26,11 @@ declare module '@tiptap/core' {
       setCharacterScale: (scale: number | null) => ReturnType;
       /** Points: positive expands, negative condenses, null is normal. */
       setCharacterSpacing: (points: number | null) => ReturnType;
+      /** Word's Double strikethrough, which is not the `strike` mark twice. */
+      setDoubleStrike: (on: boolean) => ReturnType;
+      setCaps: (caps: CapsMode | null) => ReturnType;
+      /** Word's Hidden: the text stays in the document but is not shown. */
+      setHiddenText: (hidden: boolean) => ReturnType;
     };
   }
 }
@@ -95,6 +103,59 @@ export const CharacterFormat = Extension.create({
               // Expanded and Condensed map exactly onto letter-spacing.
               return { style: `letter-spacing: ${points}pt` };
             },
+          },
+
+          /*
+           * Double strikethrough is its own property rather than the `strike`
+           * mark applied twice: a mark is either there or not, and Word treats
+           * single and double as two different answers.
+           */
+          doubleStrike: {
+            default: null,
+            parseHTML: (element) => (element.getAttribute('data-double-strike') === 'true' ? true : null),
+            renderHTML: (attributes) =>
+              attributes.doubleStrike
+                ? {
+                    'data-double-strike': 'true',
+                    style: 'text-decoration-line: line-through; text-decoration-style: double',
+                  }
+                : {},
+          },
+
+          caps: {
+            default: null,
+            parseHTML: (element) => {
+              const named = element.getAttribute('data-caps');
+              if (named === 'small' || named === 'all') return named;
+              if (element.style.textTransform === 'uppercase') return 'all';
+              if (element.style.fontVariant.includes('small-caps')) return 'small';
+              return null;
+            },
+            renderHTML: (attributes) => {
+              const caps = attributes.caps as CapsMode | null;
+              if (!caps) return {};
+              /*
+               * Small caps is `font-variant`, which leaves the letters as typed
+               * — the same thing Word's Small caps does, and the reason it is
+               * formatting rather than a Change Case that rewrites the text.
+               */
+              return {
+                'data-caps': caps,
+                style: caps === 'all' ? 'text-transform: uppercase' : 'font-variant: small-caps',
+              };
+            },
+          },
+
+          /*
+           * Word hides the text but keeps it in the document, and shows it
+           * again when formatting marks are on. The dotted underline is what
+           * Word draws under hidden text in that mode; `.marks` in the page's
+           * CSS is what reveals it, so a candidate can still find what they hid.
+           */
+          hidden: {
+            default: null,
+            parseHTML: (element) => (element.getAttribute('data-hidden') === 'true' ? true : null),
+            renderHTML: (attributes) => (attributes.hidden ? { 'data-hidden': 'true' } : {}),
           },
         },
       },

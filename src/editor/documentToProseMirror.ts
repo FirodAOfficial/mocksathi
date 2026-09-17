@@ -143,11 +143,14 @@ function blockAttributes(block: ParagraphBlock): Record<string, unknown> {
     styleName: NAMED_PARAGRAPH_STYLES.has(block.styleId) ? block.styleId : null,
     textAlign: paragraph.align,
     lineHeight: paragraph.lineHeight,
+    lineSpacingMode: paragraph.lineSpacingMode,
+    lineSpacingPt: paragraph.lineSpacingPt,
     indentLeft: paragraph.indentLeft,
     indentRight: paragraph.indentRight,
     indentFirstLine: paragraph.indentFirstLine,
     spaceBefore: paragraph.spaceBefore,
     spaceAfter: paragraph.spaceAfter,
+    contextualSpacing: paragraph.contextualSpacing,
     borders: paragraph.borders,
   };
 }
@@ -175,20 +178,28 @@ function marksFor(formatting: RunFormatting): MarkJson[] {
 
   if (formatting.bold) marks.push({ type: 'bold' });
   if (formatting.italic) marks.push({ type: 'italic' });
-  if (formatting.underline) marks.push({ type: 'underline' });
+  if (formatting.underline) {
+    marks.push({
+      type: 'underline',
+      attrs: { style: formatting.underlineStyle ?? 'single', color: formatting.underlineColor ?? null },
+    });
+  }
   if (formatting.strike) marks.push({ type: 'strike' });
   if (formatting.vertAlign === 'sub') marks.push({ type: 'subscript' });
   if (formatting.vertAlign === 'super') marks.push({ type: 'superscript' });
 
   // Font family, size and colour share one mark, so they are gathered together
   // rather than pushed individually — three textStyle marks would not merge.
-  const textStyle: Record<string, string | number> = {};
+  const textStyle: Record<string, string | number | boolean> = {};
   if (formatting.fontFamily) textStyle.fontFamily = formatting.fontFamily;
   if (formatting.fontSize) textStyle.fontSize = `${formatting.fontSize}pt`;
   if (formatting.color) textStyle.color = formatting.color;
   if (formatting.effect) textStyle.effect = formatting.effect;
   if (formatting.charScale) textStyle.charScale = formatting.charScale;
   if (formatting.charSpacing) textStyle.charSpacing = formatting.charSpacing;
+  if (formatting.doubleStrike) textStyle.doubleStrike = true;
+  if (formatting.caps) textStyle.caps = formatting.caps;
+  if (formatting.hidden) textStyle.hidden = true;
   if (Object.keys(textStyle).length > 0) marks.push({ type: 'textStyle', attrs: textStyle });
 
   if (formatting.highlight) marks.push({ type: 'highlight', attrs: { color: formatting.highlight } });

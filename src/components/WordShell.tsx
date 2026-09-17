@@ -17,6 +17,7 @@ import { TitleBar } from './TitleBar';
 import { Dialog } from './dialogs/Dialog';
 import { FindReplaceDialog } from './dialogs/FindReplaceDialog';
 import { FontDialog } from './dialogs/FontDialog';
+import { ParagraphDialog } from './dialogs/ParagraphDialog';
 import { WordCountDialog } from './dialogs/WordCountDialog';
 import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
@@ -61,7 +62,7 @@ export interface WordShellProps {
   testId?: string | null;
 }
 
-type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | null;
+type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
 
 /**
  * Composition root for the application.
@@ -290,6 +291,7 @@ export function WordShell({
           onReplace={() => setDialog('replace')}
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
+          onOpenParagraphDialog={() => setDialog('paragraph')}
         />
       ) : focusMode ? (
         // Focus hides the ribbon outright rather than reserving its height —
@@ -355,6 +357,10 @@ export function WordShell({
       ) : null}
 
       {editor && dialog === 'font' ? <FontDialog editor={editor} onClose={() => setDialog(null)} /> : null}
+
+      {editor && dialog === 'paragraph' ? (
+        <ParagraphDialog editor={editor} format={format} onClose={() => setDialog(null)} />
+      ) : null}
 
       {editor && dialog === 'wordCount' ? (
         <WordCountDialog

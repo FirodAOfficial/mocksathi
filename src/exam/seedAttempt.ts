@@ -1,4 +1,3 @@
-import type { JSONContent } from '@tiptap/core';
 import {
   buildWordQuestion,
   steps,
@@ -6,7 +5,7 @@ import {
   type WordQuestionDraft,
   type WordScope,
 } from './authoring';
-import type { Difficulty, ExamAttempt, Language, Localised, WordQuestion } from './types';
+import type { Difficulty, ExamAttempt, Localised, WordQuestion } from './types';
 
 /**
  * The demo paper: Word-operation tasks, in Hindi and English.
@@ -401,43 +400,10 @@ export const SEED_ATTEMPT: ExamAttempt = {
 };
 
 /**
- * The passage as it looks once the question is answered correctly.
+ * Re-exported so the fixture's own consumers keep their import.
  *
- * Built by applying the model answer to the passage the candidate started
- * from, rather than by storing a second copy of the text: the worked answer
- * then cannot show different words from the question.
+ * The renderer moved to `@/exam/modelAnswerDocument` when it stopped being a
+ * fixture's helper: authored papers show worked answers too.
  */
-export function modelAnswerDocument(question: WordQuestion, language: Language): JSONContent {
-  const { modelAnswer } = question;
-  const source = question.passage[language];
-  const [first, ...rest] = source.content ?? [];
-  const text = first?.content?.[0]?.text ?? '';
+export { modelAnswerDocument } from './modelAnswerDocument';
 
-  const marks = modelAnswer.marks;
-  const run = (value: string, formatted: boolean): JSONContent => ({
-    type: 'text',
-    text: value,
-    ...(formatted && marks ? { marks } : {}),
-  });
-
-  const content: JSONContent[] =
-    modelAnswer.scope === 'all'
-      ? [run(text, true)]
-      : [
-          run(text.slice(0, modelAnswer.scope.from), false),
-          run(text.slice(modelAnswer.scope.from, modelAnswer.scope.to), true),
-          run(text.slice(modelAnswer.scope.to), false),
-        ].filter((node) => node.text !== '');
-
-  return {
-    type: 'doc',
-    content: [
-      {
-        type: 'paragraph',
-        ...(modelAnswer.attrs ? { attrs: modelAnswer.attrs } : {}),
-        content,
-      },
-      ...rest,
-    ],
-  };
-}

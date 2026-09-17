@@ -4,12 +4,14 @@ import type {
   ExcelOperation,
   ExcelQuestionDraft,
   QuestionDraft,
-  WordOperation,
   WordQuestionDraft,
   WordScope,
   AnswerCell,
 } from '@/exam/authoring';
-import { rangeToA1 } from '@/exam/authoring';
+import { rangeToA1, stepsOf } from '@/exam/authoring';
+import { WORD_FUNCTIONS, criteriaOf, licencesOf } from '@/editor/functions/catalog';
+import { colourAlternatives } from '@/editor/functions/colours';
+import { describeSelection, selectionBlock } from '@/editor/functions/selection';
 import type { Criterion, Exemption, QuestionRubric, Target } from '@/exam/marking/criteria';
 import type { MarkName } from '@/exam/marking/flatten';
 import type {
@@ -20,7 +22,6 @@ import type {
 import type { RangeAddress } from '@/spreadsheet/model/address';
 import type { CellStyle } from '@/spreadsheet/model/styles';
 import type { ParagraphFormatting } from '@/services/document/types';
-import { INDENT_STEP_PX } from '@/utils/indent';
 
 /**
  * The answer key for an authored paper, derived from what its questions ask.
@@ -46,215 +47,84 @@ import { INDENT_STEP_PX } from '@/utils/indent';
 
 const NOTHING_ELSE = 'Nothing was changed beyond what the question asked for';
 
-/* -- Colours --------------------------------------------------------------- */
-
-/**
- * What to call a colour in feedback the candidate reads.
- *
- * "The paragraph is highlighted #00ff00" tells them nothing; "highlighted
- * green" tells them what to look for in the palette.
- */
-const COLOUR_NAMES: Record<string, string> = {
-  '#000000': 'black',
-  '#ffffff': 'white',
-  '#ff0000': 'red',
-  '#c00000': 'dark red',
-  '#00ff00': 'green',
-  '#008000': 'dark green',
-  '#0000ff': 'blue',
-  '#002060': 'dark blue',
-  '#1f497d': 'dark blue',
-  '#ffff00': 'yellow',
-  '#ffc000': 'amber',
-  '#e36c0a': 'orange',
-  '#7030a0': 'purple',
-};
-
-/**
- * Colours a candidate may reasonably reach for instead, and still be right.
- *
- * Office's palettes carry two reds and two dark blues, and which one a
- * candidate lands on is not what the question is testing — the hand-written
- * banks make the same allowance (`REDS`, `DARK_BLUES`). Without this an
- * authored question would be stricter than the sample papers for no reason
- * anyone could explain to the candidate who got it "wrong".
- */
-const COLOUR_ALTERNATIVES: Record<string, string[]> = {
-  '#ff0000': ['#ff0000', '#c00000'],
-  '#c00000': ['#c00000', '#ff0000'],
-  '#002060': ['#002060', '#1f497d'],
-  '#1f497d': ['#1f497d', '#002060'],
-  '#e36c0a': ['#e36c0a', '#ffc000'],
-  '#ffc000': ['#ffc000', '#e36c0a'],
-};
-
-function colourName(hex: string): string {
-  return COLOUR_NAMES[hex.toLowerCase()] ?? hex;
-}
-
-function acceptedColours(hex: string): string | string[] {
-  return COLOUR_ALTERNATIVES[hex.toLowerCase()] ?? hex.toLowerCase();
-}
-
 /* -- Word ------------------------------------------------------------------ */
-
-function wordTarget(scope: WordScope): Target {
-  return scope === 'all'
-    ? { by: 'block', block: 0 }
-    : { by: 'range', block: 0, from: scope.from, to: scope.to };
-}
-
-/** What the criterion labels call the text under test. */
-function wordSubject(scope: WordScope): string {
-  return scope === 'all' ? 'The paragraph' : 'The named line';
-}
-
-/**
- * One operation's contribution to the key: what must be true, and what it is
- * therefore allowed to have changed.
- */
-interface WordPiece {
-  criterion: Criterion;
-  /** Character formatting this operation licenses. */
-  mark?: MarkName;
-  /** Paragraph formatting this operation licenses. */
-  paragraph?: keyof ParagraphFormatting;
-}
-
-function wordPiece(operation: WordOperation, scope: WordScope): WordPiece {
-  const target = wordTarget(scope);
-  const subject = wordSubject(scope);
-
-  switch (operation.kind) {
-    case 'bold':
-    case 'italic':
-    case 'underline':
-    case 'strike': {
-      const named = operation.kind === 'strike' ? 'struck through' : `${operation.kind}`;
-      return {
-        criterion: { kind: 'marked', label: `${subject} is ${named}`, target, mark: operation.kind },
-        mark: operation.kind,
-      };
-    }
-
-    case 'highlight':
-      return {
-        criterion: {
-          kind: 'marked',
-          label: `${subject} is highlighted ${colourName(operation.color)}`,
-          target,
-          mark: 'highlight',
-          value: acceptedColours(operation.color),
-        },
-        mark: 'highlight',
-      };
-
-    case 'fontColor':
-      return {
-        criterion: {
-          kind: 'marked',
-          label: `${subject} is ${colourName(operation.color)}`,
-          target,
-          // The editor calls it `color`; the ribbon calls it Font Colour.
-          mark: 'color',
-          value: acceptedColours(operation.color),
-        },
-        mark: 'color',
-      };
-
-    case 'fontFamily':
-      return {
-        criterion: {
-          kind: 'marked',
-          label: `${subject} is in ${operation.family}`,
-          target,
-          mark: 'fontFamily',
-          value: operation.family,
-        },
-        mark: 'fontFamily',
-      };
-
-    case 'fontSize':
-      return {
-        criterion: {
-          kind: 'marked',
-          label: `${subject} is ${operation.size} pt`,
-          target,
-          // A number, not "15pt": the projection canonicalises sizes to points.
-          mark: 'fontSize',
-          value: operation.size,
-        },
-        mark: 'fontSize',
-      };
-
-    // Alignment, spacing and indent are properties of a paragraph — Word has no
-    // way to centre half a line — so these address the block whatever the
-    // question was scoped to, matching what `wordModelAnswer` shows.
-    case 'align':
-      return {
-        criterion: {
-          kind: 'blockAttr',
-          label: `The paragraph is ${operation.align === 'justify' ? 'justified' : `${operation.align}-aligned`}`,
-          block: 0,
-          attr: 'align',
-          value: operation.align,
-        },
-        paragraph: 'align',
-      };
-
-    case 'lineHeight':
-      return {
-        criterion: {
-          kind: 'blockAttr',
-          label: `The line spacing is ${operation.value.toFixed(1)}`,
-          block: 0,
-          attr: 'lineHeight',
-          value: operation.value,
-        },
-        paragraph: 'lineHeight',
-      };
-
-    case 'indent':
-      return {
-        criterion: {
-          kind: 'blockAttr',
-          label: `The paragraph is indented by ${operation.levels} level${operation.levels === 1 ? '' : 's'}`,
-          block: 0,
-          attr: 'indentLeft',
-          value: operation.levels * INDENT_STEP_PX,
-        },
-        paragraph: 'indentLeft',
-      };
-  }
-}
 
 /**
  * The key for one authored Word question.
  *
- * One exemption covers the lot: its `marks` are licensed only on the scoped
- * text, while its `paragraph` entries reach the whole block — which is what
- * `checkUnchanged` does with a range target, and exactly the split the model
- * answer makes.
+ * Nothing about what an operation *means* is decided here: every criterion and
+ * every licence comes from the function catalog, which is the same declaration
+ * the model answer is built from. This module's job is to walk the question's
+ * steps, point each function at the text its step selected, and close with the
+ * `unchanged` criterion the papers are built on.
  */
 export function wordRubricFor(draft: WordQuestionDraft): QuestionRubric {
-  const pieces = draft.operations.map((operation) => wordPiece(operation, draft.scope));
+  const criteria: Criterion[] = [];
+  const exemptions: Exemption[] = [];
 
-  const marks = [...new Set(pieces.flatMap((piece) => (piece.mark ? [piece.mark] : [])))];
-  const paragraph = [...new Set(pieces.flatMap((piece) => (piece.paragraph ? [piece.paragraph] : [])))];
+  for (const step of stepsOf(draft)) {
+    const target = wordTarget(step.scope);
+    const context = {
+      target,
+      subject: describeSelection(step.scope),
+      block: selectionBlock(step.scope),
+    };
 
-  const exemption: Exemption = {
-    target: wordTarget(draft.scope),
-    ...(marks.length > 0 ? { marks } : {}),
-    ...(paragraph.length > 0 ? { paragraph } : {}),
-  };
+    const marks = new Set<MarkName>();
+    const paragraph = new Set<keyof ParagraphFormatting>();
+    let style = false;
+    let list = false;
 
-  return {
-    number: draft.number,
-    criteria: [
-      ...pieces.map((piece) => piece.criterion),
-      { kind: 'unchanged', label: NOTHING_ELSE, except: [exemption] },
-    ],
-  };
+    for (const operation of step.operations) {
+      criteria.push(...criteriaOf(operation, context));
+
+      const licence = licencesOf(operation);
+      for (const mark of licence.marks ?? []) marks.add(mark);
+      for (const attr of licence.paragraph ?? []) paragraph.add(attr);
+      style = style || licence.style === true;
+      list = list || licence.list === true;
+    }
+
+    exemptions.push({
+      target,
+      ...(marks.size > 0 ? { marks: [...marks] } : {}),
+      ...(paragraph.size > 0 ? { paragraph: [...paragraph] } : {}),
+      ...(style ? { style: true } : {}),
+      ...(list ? { list: true } : {}),
+    });
+  }
+
+  /*
+   * One exemption per step: its `marks` are licensed only on that step's text,
+   * while its `paragraph` entries reach the whole block — which is what
+   * `checkUnchanged` does with a range target, and exactly the split the model
+   * answer makes.
+   *
+   * Left out entirely when the question asks for the wording to change. That
+   * criterion compares the submission character by character against the
+   * starting document, so on a question that says "replace 'contact' with
+   * 'conversation'" it would fail every correct answer. The replacement's own
+   * criteria carry the weight there: the new word is present, the old one is
+   * gone, and every other criterion still names the text it applies to.
+   */
+  const rewrites = stepsOf(draft).some((step) =>
+    step.operations.some((operation) => WORD_FUNCTIONS[operation.kind].rewritesText === true),
+  );
+
+  if (!rewrites) criteria.push({ kind: 'unchanged', label: NOTHING_ELSE, except: exemptions });
+
+  return { number: draft.number, criteria };
+}
+
+/**
+ * What the criteria are written about.
+ *
+ * A selection rather than a pair of offsets, resolved against the submitted
+ * document when it is marked — so "the fourth paragraph" means the same thing
+ * in both languages a paper is offered in.
+ */
+function wordTarget(scope: WordScope): Target {
+  return scope === 'all' ? { by: 'block', block: 0 } : { by: 'selection', selection: scope };
 }
 
 /* -- Excel ----------------------------------------------------------------- */
@@ -408,7 +278,7 @@ function excelPiece(operation: ExcelOperation): ExcelPiece {
         .map((property) => {
           const value = operation.style[property];
           if (typeof value !== 'string') return null;
-          const alternatives = COLOUR_ALTERNATIVES[value.toLowerCase()];
+          const alternatives = colourAlternatives(value);
           return alternatives ? { property, values: alternatives } : null;
         })
         .find((entry) => entry !== null);

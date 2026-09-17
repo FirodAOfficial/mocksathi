@@ -11,6 +11,8 @@
  * half-points, or eighth-points.
  */
 
+import type { UnderlineStyle } from '@/editor/functions/underline';
+
 export type DocumentFormat = 'docx' | 'doc' | 'txt' | 'blank';
 
 /** Paragraph styles exposed by the Styles gallery in the Home ribbon. */
@@ -30,7 +32,17 @@ export interface RunFormatting {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  /** Word's underline drop-down. Absent means the plain single line. */
+  underlineStyle?: UnderlineStyle;
+  /** `#rrggbb`. Absent is Word's "Automatic": the text's own colour. */
+  underlineColor?: string;
   strike?: boolean;
+  /** Word's Double strikethrough, which is not `strike` twice. */
+  doubleStrike?: boolean;
+  /** The Font dialog's Small caps / All caps. */
+  caps?: 'small' | 'all';
+  /** The Font dialog's Hidden: still in the document, not shown. */
+  hidden?: boolean;
   /** Word's w:vertAlign. Mutually exclusive with itself, never both. */
   vertAlign?: 'sub' | 'super';
   fontFamily?: string;
@@ -67,6 +79,8 @@ export interface ParagraphBorders {
   bottom: boolean;
   left: boolean;
   right: boolean;
+  /** `#rrggbb`; absent is Word's automatic black. */
+  color?: string;
 }
 
 export const NO_BORDERS: ParagraphBorders = { top: false, bottom: false, left: false, right: false };
@@ -78,11 +92,17 @@ export interface ParagraphFormatting {
   indentRight: number | null;
   /** Negative values are hanging indents. */
   indentFirstLine: number | null;
-  /** Multiplier, e.g. 1.15. */
+  /** Multiplier, e.g. 1.15 — Word's "Multiple" line spacing. */
   lineHeight: number | null;
+  /** Which of Word's three line-spacing modes is in force. */
+  lineSpacingMode: 'multiple' | 'atLeast' | 'exactly' | null;
+  /** The measurement for At least / Exactly, in points. */
+  lineSpacingPt: number | null;
   /** CSS pixels. */
   spaceBefore: number | null;
   spaceAfter: number | null;
+  /** "Don't add space between paragraphs of the same style". */
+  contextualSpacing: boolean | null;
   borders: ParagraphBorders | null;
 }
 
@@ -158,8 +178,11 @@ export const EMPTY_PARAGRAPH_FORMATTING: ParagraphFormatting = {
   indentRight: null,
   indentFirstLine: null,
   lineHeight: null,
+  lineSpacingMode: null,
+  lineSpacingPt: null,
   spaceBefore: null,
   spaceAfter: null,
+  contextualSpacing: null,
   borders: null,
 };
 

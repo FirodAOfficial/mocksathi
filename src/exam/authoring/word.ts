@@ -1,7 +1,8 @@
 import type { JSONContent } from '@tiptap/core';
-import { INDENT_STEP_PX } from '@/utils/indent';
+import { answerOf } from '@/editor/functions/catalog';
+import { applyParts } from '@/exam/modelAnswerDocument';
 import type { Localised, ModelAnswer, WordQuestion } from '@/exam/types';
-import type { WordOperation, WordQuestionDraft, WordScope } from './types';
+import type { WordOperation, WordQuestionDraft, WordScope, WordStep } from './types';
 
 /**
  * Turning a Word question's draft into the question the player renders.
@@ -11,6 +12,11 @@ import type { WordOperation, WordQuestionDraft, WordScope } from './types';
  * way the fixture is: one function deciding what "bold the paragraph" means,
  * rather than a fixture that formats one way and an authored question that
  * formats another.
+ *
+ * What each operation *means* is not decided here either — it is declared once
+ * in the function catalog (`@/editor/functions/catalog`), which is also what
+ * the answer key is derived from. This module's job is only to gather those
+ * contributions into the shape the review screen renders.
  */
 
 /** A passage from one paragraph per line. An empty line is an empty paragraph. */
@@ -39,7 +45,9 @@ export function wholeParagraph(marks?: ModelAnswer['marks'], attrs?: ModelAnswer
  * This is what a question naming a wrapped line ("underline the 2nd line")
  * produces. The offsets are measured against the rendered page, so they only
  * hold while the passage wording, the page width and the default font stay put
- * — see the note above `BOAT_LINE_TWO` in `seedAttempt.ts`.
+ * — see the note above `BOAT_LINE_TWO` in `seedAttempt.ts`. Every other way of
+ * naming text — the third word, the second sentence, a phrase — is a named
+ * selection instead, and is resolved from the passage rather than measured.
  */
 export function characterRange(
   from: number,
@@ -75,29 +83,9 @@ export function characterMarks(operations: readonly WordOperation[]): ModelAnswe
   const textStyle: Record<string, unknown> = {};
 
   for (const operation of operations) {
-    switch (operation.kind) {
-      case 'bold':
-      case 'italic':
-      case 'underline':
-      case 'strike':
-        marks.push({ type: operation.kind });
-        break;
-      case 'highlight':
-        marks.push({ type: 'highlight', attrs: { color: operation.color } });
-        break;
-      case 'fontColor':
-        textStyle.color = operation.color;
-        break;
-      case 'fontFamily':
-        textStyle.fontFamily = operation.family;
-        break;
-      case 'fontSize':
-        // The editor stores a size with its unit; the ribbon box shows the number.
-        textStyle.fontSize = `${operation.size}pt`;
-        break;
-      default:
-        break;
-    }
+    const contribution = answerOf(operation);
+    if (contribution.marks) marks.push(...contribution.marks);
+    if (contribution.textStyle) Object.assign(textStyle, contribution.textStyle);
   }
 
   if (Object.keys(textStyle).length > 0) marks.push({ type: 'textStyle', attrs: textStyle });
@@ -109,22 +97,23 @@ export function paragraphAttrs(operations: readonly WordOperation[]): ModelAnswe
   const attrs: Record<string, unknown> = {};
 
   for (const operation of operations) {
-    switch (operation.kind) {
-      case 'align':
-        attrs.textAlign = operation.align;
-        break;
-      case 'lineHeight':
-        attrs.lineHeight = operation.value;
-        break;
-      case 'indent':
-        attrs.indentLeft = operation.levels * INDENT_STEP_PX;
-        break;
-      default:
-        break;
-    }
+    const contribution = answerOf(operation);
+    if (contribution.attrs) Object.assign(attrs, contribution.attrs);
   }
 
   return Object.keys(attrs).length > 0 ? attrs : undefined;
+}
+
+/** One selection and the formatting it receives. */
+function part(operations: readonly WordOperation[], scope: WordScope): Omit<ModelAnswer, 'more'> {
+  const marks = characterMarks(operations);
+  const attrs = paragraphAttrs(operations);
+
+  return {
+    scope,
+    ...(marks ? { marks } : {}),
+    ...(attrs ? { attrs } : {}),
+  };
 }
 
 /**
@@ -135,12 +124,55 @@ export function paragraphAttrs(operations: readonly WordOperation[]): ModelAnswe
  * block-level operation applies to the block however the question was scoped.
  */
 export function wordModelAnswer(operations: readonly WordOperation[], scope: WordScope): ModelAnswer {
-  const marks = characterMarks(operations);
-  const attrs = paragraphAttrs(operations);
+  return part(operations, scope);
+}
 
-  return scope === 'all'
-    ? wholeParagraph(marks, attrs)
-    : characterRange(scope.from, scope.to, marks, attrs);
+/**
+ * The same, for a question that asks for more than one thing.
+ *
+ * The first step is the answer proper and the rest hang off `more`, so a
+ * single-step question produces exactly the object it always did — which is
+ * what lets the existing papers go through this path unchanged.
+ */
+export function wordModelAnswerFromSteps(list: readonly WordStep[]): ModelAnswer {
+  const [first, ...rest] = list;
+  if (!first) return { scope: 'all' };
+
+  const answer = part(first.operations, first.scope);
+  return rest.length === 0
+    ? answer
+    : { ...answer, more: rest.map((step) => part(step.operations, step.scope)) };
+}
+
+/**
+ * A draft's steps, however it was written.
+ *
+ * A question states either one selection and its operations — which is most of
+ * them — or a list of steps. Both arrive here as a list, so nothing downstream
+ * has to know which form was used.
+ */
+export function stepsOf(draft: WordQuestionDraft): WordStep[] {
+  if (draft.steps && draft.steps.length > 0) return draft.steps;
+  return [{ scope: draft.scope, operations: draft.operations }];
+}
+
+/**
+ * The passage as the candidate first sees it.
+ *
+ * Plain paragraphs, unless the question needs some of them to arrive already
+ * formatted — which is what makes "remove the highlight" a question rather than
+ * a no-op. The starting formatting goes through exactly the same renderer as
+ * the worked answer, so a question cannot start in a state its own answer could
+ * not describe.
+ */
+export function startingPassage(lines: readonly string[], initial: readonly WordStep[] = []): JSONContent {
+  const document = passageDocument(...lines);
+  if (initial.length === 0) return document;
+
+  return applyParts(
+    document,
+    initial.map((step) => part(step.operations, step.scope)),
+  );
 }
 
 /** The draft as the question the player renders. */
@@ -152,11 +184,11 @@ export function buildWordQuestion(draft: WordQuestionDraft): WordQuestion {
     difficulty: draft.difficulty,
     instruction: draft.instruction,
     passage: {
-      en: passageDocument(...draft.lines.en),
-      hi: passageDocument(...draft.lines.hi),
+      en: startingPassage(draft.lines.en, draft.initial),
+      hi: startingPassage(draft.lines.hi, draft.initial),
     },
     solution: draft.solution,
-    modelAnswer: wordModelAnswer(draft.operations, draft.scope),
+    modelAnswer: wordModelAnswerFromSteps(stepsOf(draft)),
     marks: draft.marks,
     // Every question starts untouched: nothing is flagged for review until the
     // candidate flags it.

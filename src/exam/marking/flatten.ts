@@ -70,7 +70,13 @@ export type MarkName =
   | 'bold'
   | 'italic'
   | 'underline'
+  /** Which line Word's underline drop-down drew: `double`, `wavy`, … */
+  | 'underlineStyle'
+  | 'underlineColor'
   | 'strike'
+  | 'doubleStrike'
+  | 'caps'
+  | 'hidden'
   | 'superscript'
   | 'subscript'
   | 'fontFamily'
@@ -95,7 +101,17 @@ export function canonicalMarks(marks: RunFormatting): RunFormatting {
   if (marks.bold) canonical.bold = true;
   if (marks.italic) canonical.italic = true;
   if (marks.underline) canonical.underline = true;
+  // A single underline is the plain one: `underline` alone already says so, and
+  // recording it twice would make "underline it" and "underline it, single"
+  // two different documents.
+  if (marks.underline && marks.underlineStyle && marks.underlineStyle !== 'single') {
+    canonical.underlineStyle = marks.underlineStyle;
+  }
+  if (marks.underline && marks.underlineColor) canonical.underlineColor = marks.underlineColor.toLowerCase();
   if (marks.strike) canonical.strike = true;
+  if (marks.doubleStrike) canonical.doubleStrike = true;
+  if (marks.caps === 'small' || marks.caps === 'all') canonical.caps = marks.caps;
+  if (marks.hidden) canonical.hidden = true;
   if (marks.vertAlign === 'sub' || marks.vertAlign === 'super') canonical.vertAlign = marks.vertAlign;
 
   if (marks.fontFamily) canonical.fontFamily = marks.fontFamily.trim();
@@ -133,8 +149,22 @@ export function hasMark(
       return marks.italic === true;
     case 'underline':
       return marks.underline === true;
+    case 'underlineStyle':
+      return value === undefined
+        ? marks.underlineStyle !== undefined
+        : (marks.underlineStyle ?? 'single') === value && marks.underline === true;
+    case 'underlineColor':
+      return value === undefined
+        ? marks.underlineColor !== undefined
+        : marks.underlineColor?.toLowerCase() === String(value).toLowerCase();
     case 'strike':
       return marks.strike === true;
+    case 'doubleStrike':
+      return marks.doubleStrike === true;
+    case 'caps':
+      return value === undefined ? marks.caps !== undefined : marks.caps === value;
+    case 'hidden':
+      return marks.hidden === true;
     case 'superscript':
       return marks.vertAlign === 'super';
     case 'subscript':

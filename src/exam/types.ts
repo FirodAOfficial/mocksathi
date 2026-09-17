@@ -1,5 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 import type { RangeAddress } from '@/spreadsheet/model/address';
+import type { SelectionSpec } from '@/editor/functions/selection';
 import type { CellValue } from '@/spreadsheet/model/Cell';
 import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
 import type { CellStyle } from '@/spreadsheet/model/styles';
@@ -51,16 +52,33 @@ export type QuestionStatus = 'attempted' | 'unattempted';
  */
 export interface ModelAnswer {
   /**
-   * Which characters of the first paragraph are formatted.
+   * Which text is formatted.
    *
-   * `'all'` for the usual "format the paragraph"; a character range for the
-   * questions that name one line.
+   * A *selection*, not a pair of offsets: "the third word" resolves to
+   * different characters in English and in Hindi, and one model answer serves
+   * both languages, so it has to carry the question rather than one language's
+   * answer to it. `'all'` and `{ from, to }` are the two shapes that existed
+   * before and still mean what they did.
    */
-  scope: 'all' | { from: number; to: number };
+  scope: SelectionSpec;
   /** Marks applied to that text, in editor JSON form. */
   marks?: { type: string; attrs?: Record<string, unknown> }[];
-  /** Paragraph attributes set on the block. */
+  /**
+   * Paragraph attributes set on the block.
+   *
+   * `styleId` and `list` are the two that are not really attributes — a style
+   * is a node type and a list is a wrapper — and `modelAnswerDocument` turns
+   * them back into the shapes the editor uses.
+   */
   attrs?: Record<string, unknown>;
+  /**
+   * Further selections this answer formats.
+   *
+   * A question may ask for more than one thing — "number the first, second and
+   * fourth paragraphs" — and each part names its own text. Absent for the
+   * single-selection questions that are most of a paper.
+   */
+  more?: Omit<ModelAnswer, 'more'>[];
 }
 
 /**

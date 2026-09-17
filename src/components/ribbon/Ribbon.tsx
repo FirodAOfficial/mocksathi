@@ -29,6 +29,7 @@ export interface RibbonProps {
   onReplace: () => void;
   onWordCount: () => void;
   onOpenFontDialog: () => void;
+  onOpenParagraphDialog: () => void;
 }
 
 export function Ribbon({
@@ -39,6 +40,7 @@ export function Ribbon({
   onReplace,
   onWordCount,
   onOpenFontDialog,
+  onOpenParagraphDialog,
 }: RibbonProps) {
   const activeTab = useUiStore((state) => state.activeTab);
   const setActiveTab = useUiStore((state) => state.setActiveTab);
@@ -105,6 +107,7 @@ export function Ribbon({
             onFind={onFind}
             onReplace={onReplace}
             onOpenFontDialog={onOpenFontDialog}
+            onOpenParagraphDialog={onOpenParagraphDialog}
           />
         ) : null}
         {activeTab === 'insert' ? <InsertTab editor={editor} /> : null}
