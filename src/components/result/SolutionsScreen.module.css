@@ -8,6 +8,8 @@
   background: #f4f8fd;
   display: flex;
   overflow-y: auto;
+  /* Vertically-scrollable only — same reasoning as `ResultScreen.module.css`'s `.page`. */
+  overflow-x: hidden;
 }
 
 .topBar {
@@ -495,7 +497,9 @@
 }
 
 .grid {
-  grid-template-columns: repeat(5, 1fr);
+  /* `minmax(0, 1fr)`, not a bare `1fr` — see the same note in
+     `ResultScreen.module.css`'s `.metaRow`. */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin: 14px 0 0;
   padding: 0;

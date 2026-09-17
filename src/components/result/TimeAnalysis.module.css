@@ -139,7 +139,11 @@
 
 @media (max-width: 1080px) {
   .totals {
-    grid-template-columns: repeat(3, 1fr);
+    /* `minmax(0, 1fr)`, not a bare `1fr` — see the same note in
+       `ResultScreen.module.css`'s `.metaRow`. This was the grid actually
+       forcing the page wider than a phone screen: three stat cards refusing
+       to shrink below "00:08:45" / "Average Time"'s content width. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .tip {
