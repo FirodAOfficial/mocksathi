@@ -11,6 +11,11 @@
   gap: 14px;
   height: 100%;
   overflow-y: auto;
+  /* Belt and braces alongside the grid fixes below: this screen is meant to
+     be vertically-scrollable only — a wide child (a fixed-width chart, a
+     grid track that refuses to shrink) should scroll within itself or get
+     clipped here, never widen the whole page. */
+  overflow-x: hidden;
   padding: 16px 20px 24px;
   background: linear-gradient(180deg, #f4f8fd, #eef3fa);
   font-family: var(--ui-font);
@@ -265,7 +270,11 @@
 
 @media (max-width: 1080px) {
   .metaRow {
-    grid-template-columns: repeat(2, 1fr);
+    /* `minmax(0, 1fr)`, not a bare `1fr`: a plain `1fr` track has an
+       automatic minimum equal to its content's min-content size, which is
+       exactly what pushed this grid (and the whole page) wider than a phone
+       viewport instead of letting the cards shrink. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .metaNote {

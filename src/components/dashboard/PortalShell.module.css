@@ -528,6 +528,12 @@ a.examPickerButton:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Every `/dashboard/*` page renders inside this one container — vertical
+     scroll only, on purpose. A page that overflows horizontally (a fixed-
+     width chart, a grid track that won't shrink) should scroll or clip
+     within itself instead of widening this and forcing the whole shell to
+     scroll sideways. */
+  overflow-x: hidden;
   padding: 20px;
   display: flex;
   flex-direction: column;
