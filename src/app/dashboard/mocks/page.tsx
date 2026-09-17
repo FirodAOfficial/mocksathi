@@ -1,6 +1,7 @@
 import { requireUser } from '@/auth/cookies';
 import { MocksTable } from '@/components/dashboard/MocksTable';
 import { TodaysMockCard } from '@/components/dashboard/TodaysMockCard';
+import { mockLimitStatusForUser } from '@/dashboard/mockLimit';
 import { publishedTestRows } from '@/db/tests';
 
 /**
@@ -14,7 +15,7 @@ import { publishedTestRows } from '@/db/tests';
  */
 export default async function AllMocksPage() {
   const user = await requireUser();
-  const mocks = await publishedTestRows(user.id);
+  const [mocks, limitStatus] = await Promise.all([publishedTestRows(user.id), mockLimitStatusForUser(user.id)]);
 
   // The first Word paper is what `/exam` serves as today's, so the card names
   // that one rather than a fixture mock number.
@@ -27,6 +28,7 @@ export default async function AllMocksPage() {
         heading={mocks.length === 0 ? 'All Mocks' : `All Mocks (${mocks.length})`}
         mocks={mocks}
         emptyNote="No papers published yet. An admin writes them in Test Enigma."
+        limitReached={limitStatus.limitReached}
       />
     </>
   );

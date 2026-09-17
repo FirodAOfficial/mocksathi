@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { PerformanceSnapshot } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
+import { EmptyAnalytics } from './EmptyAnalytics';
 import styles from './PerformanceOverviewCard.module.css';
 
 export interface PerformanceOverviewCardProps {
@@ -16,6 +17,24 @@ export interface PerformanceOverviewCardProps {
  * with a link out to that page for anyone who wants more than a glance.
  */
 export function PerformanceOverviewCard({ performance, mocksAttempted, planName }: PerformanceOverviewCardProps) {
+  if (mocksAttempted === 0) {
+    return (
+      <div className={styles.card} data-tour="performance-overview">
+        <div className={styles.header}>
+          <div>
+            <h2 className={styles.title}>Your Performance</h2>
+            <p className={styles.subtitle}>{planName ? `${planName} plan` : 'No mocks attempted yet'}</p>
+          </div>
+        </div>
+
+        <EmptyAnalytics
+          title="Your performance will show up here"
+          body="Complete your first mock and your average score, accuracy and time-per-question will appear on this card."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.card} data-tour="performance-overview">
       <div className={styles.header}>

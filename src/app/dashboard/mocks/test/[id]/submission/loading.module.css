@@ -1,0 +1,48 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  /*
+   * Covers the whole viewport, sidebar and topbar included — this route's
+   * result can take a moment to assemble (attempt, questions, worked
+   * solutions), and a candidate clicking around the nav mid-fetch would land
+   * on an inconsistent screen once it resolves. Unlike the ambient
+   * `dashboard/loading.tsx`, which deliberately leaves the shell clickable.
+   */
+  background: rgba(236, 239, 244, 0.92);
+  color: var(--db-text-muted);
+  cursor: wait;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--db-border);
+  border-top-color: var(--db-accent);
+  border-radius: 50%;
+  animation: submissionLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes submissionLoadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.text {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--db-text);
+}

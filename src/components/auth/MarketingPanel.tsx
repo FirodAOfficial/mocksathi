@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { BrandLogo } from '@/components/site/BrandLogo';
 import styles from './MarketingPanel.module.css';
 
 const STROKE = {
@@ -64,11 +65,8 @@ export function MarketingPanel() {
   return (
     <div className={styles.panel}>
       <div className={styles.logoRow}>
-        <div className={styles.logoMark}>MS</div>
-        <div>
-          <div className={styles.logoName}>Mocksathi</div>
-          <div className={styles.logoTagline}>PRACTICE · ANALYSE · SUCCEED</div>
-        </div>
+        <BrandLogo tone="light" size={46} />
+        <div className={styles.logoTagline}>PRACTICE · ANALYSE · SUCCEED</div>
       </div>
 
       <div className={styles.main}>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { startHrefFor } from '@/dashboard/mockRoutes';
 import type { MockSummary } from '@/dashboard/types';
+import { StartMockAction } from './StartMockAction';
 import styles from './TodaysMockScreen.module.css';
 
 export interface TodaysMockScreenProps {
@@ -12,6 +13,8 @@ export interface TodaysMockScreenProps {
    * simply absent then rather than showing an empty slot.
    */
   excelMock?: MockSummary;
+  /** True once an unsubscribed candidate has used every mock their plan allows — gates both start actions below. */
+  limitReached: boolean;
 }
 
 /**
@@ -24,7 +27,7 @@ export interface TodaysMockScreenProps {
  * Restyled to the dashboard's card system; the three options themselves are
  * unchanged.
  */
-export function TodaysMockScreen({ todaysMock, excelMock }: TodaysMockScreenProps) {
+export function TodaysMockScreen({ todaysMock, excelMock, limitReached }: TodaysMockScreenProps) {
   return (
     <>
       <div className={styles.header}>
@@ -43,9 +46,12 @@ export function TodaysMockScreen({ todaysMock, excelMock }: TodaysMockScreenProp
             Fifteen word-processing tasks, ten minutes. The instructions page covers the rules and
             is where the language is chosen.
           </p>
-          <Link href={startHrefFor(todaysMock)} className={styles.primary}>
-            Read the instructions
-          </Link>
+          <StartMockAction
+            href={startHrefFor(todaysMock)}
+            label="Read the instructions"
+            className={styles.primary ?? ''}
+            limitReached={limitReached}
+          />
         </div>
 
         {excelMock ? (
@@ -57,9 +63,12 @@ export function TodaysMockScreen({ todaysMock, excelMock }: TodaysMockScreenProp
               Mock {excelMock.mockNumber} · fifteen spreadsheet tasks, fifteen minutes. The
               instructions page covers the rules and is where the language is chosen.
             </p>
-            <Link href={startHrefFor(excelMock)} className={styles.primary}>
-              Read the instructions
-            </Link>
+            <StartMockAction
+              href={startHrefFor(excelMock)}
+              label="Read the instructions"
+              className={styles.primary ?? ''}
+              limitReached={limitReached}
+            />
           </div>
         ) : null}
 

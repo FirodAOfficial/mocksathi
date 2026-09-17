@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NOT_QUALIFIED_RESULT, QUALIFIED_RESULT } from '@/exam/result';
 import { ResultScreen } from './ResultScreen';
 
+// `BackToTestsLink` calls `useRouter()` for its pending-navigation overlay —
+// same mock `InstructionsScreen.test.tsx` uses for the same reason. The
+// screen is never actually navigated in these tests, so `push` is a no-op.
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+
 /**
  * The screen is pure presentation over one `ExamResult`, so these assert what
  * the two approved designs say — the figures, the outcome-specific wording, and

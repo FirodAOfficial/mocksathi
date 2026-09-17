@@ -1,0 +1,104 @@
+.dialog {
+  width: min(420px, 92vw);
+  padding: 20px 22px 22px;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(16, 24, 40, 0.2);
+  color: var(--db-text);
+}
+
+.dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.iconBadge {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.close {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--db-border);
+  background: var(--db-surface);
+  color: var(--db-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.close:hover {
+  background: #f1f5f9;
+  color: var(--db-text);
+}
+
+.body {
+  font-size: 13px;
+  color: var(--db-text-muted);
+  line-height: 1.6;
+  margin: 8px 0 18px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.later {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: none;
+  background: none;
+  color: var(--db-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.later:hover {
+  color: var(--db-text);
+  text-decoration: underline;
+}
+
+.subscribe {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 9px;
+  border: none;
+  background: var(--db-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.subscribe:hover {
+  background: #0f4fc4;
+}

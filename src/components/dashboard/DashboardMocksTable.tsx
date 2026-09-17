@@ -6,9 +6,12 @@ import { useMemo, useState } from 'react';
 import type { MockSummary, MockType } from '@/dashboard/types';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './DashboardMocksTable.module.css';
+import { StartMockAction } from './StartMockAction';
 
 export interface DashboardMocksTableProps {
   mocks: MockSummary[];
+  /** True once an unsubscribed candidate has used every mock their plan allows — gates "Start Mock" below. */
+  limitReached: boolean;
 }
 
 type Filter = 'all' | Extract<MockType, 'word' | 'excel'>;
@@ -39,7 +42,7 @@ function StatusPill({ mock }: { mock: MockSummary }) {
   }
 }
 
-function ActionCell({ mock }: { mock: MockSummary }) {
+function ActionCell({ mock, limitReached }: { mock: MockSummary; limitReached: boolean }) {
   switch (mock.state) {
     case 'done':
       // Rows here are `publishedTestRows` output, which only marks one 'done'
@@ -69,9 +72,12 @@ function ActionCell({ mock }: { mock: MockSummary }) {
       }
       // Same rule as the All Mocks table — see `src/dashboard/mockRoutes.ts`.
       return mock.testSlug ? (
-        <Link href={startHrefFor(mock)} className={styles.actionFilled}>
-          Start Mock
-        </Link>
+        <StartMockAction
+          href={startHrefFor(mock)}
+          label="Start Mock"
+          className={styles.actionFilled ?? ''}
+          limitReached={limitReached}
+        />
       ) : (
         <span className={styles.actionPending}>Not yet open</span>
       );
@@ -91,7 +97,7 @@ function ActionCell({ mock }: { mock: MockSummary }) {
  * the reference redesign: type filter pills, and a status/action pair that
  * reads at a glance instead of a dense stats row per mock.
  */
-export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
+export function DashboardMocksTable({ mocks, limitReached }: DashboardMocksTableProps) {
   const [filter, setFilter] = useState<Filter>('all');
 
   const visible = useMemo(
@@ -165,7 +171,7 @@ export function DashboardMocksTable({ mocks }: DashboardMocksTableProps) {
                 <StatusPill mock={mock} />
               </span>
               <span className={styles.actionCell}>
-                <ActionCell mock={mock} />
+                <ActionCell mock={mock} limitReached={limitReached} />
               </span>
             </div>
           );

@@ -1,8 +1,8 @@
 import type { CurrentPlan } from '@/db/plans';
 import type { DashboardData, MockSummary } from '@/dashboard/types';
-import { fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
 import { DashboardMocksTable } from './DashboardMocksTable';
 import styles from './DashboardScreen.module.css';
+import { LimitReachedNotice } from './LimitReachedNotice';
 import { PerformanceOverviewCard } from './PerformanceOverviewCard';
 import { PremiumBanner } from './PremiumBanner';
 
@@ -19,6 +19,15 @@ export interface DashboardScreenProps {
    * glance which of the numbers on this page are true.
    */
   mocks: MockSummary[];
+  /** Distinct papers this candidate has actually sat — real, from `test_attempts`, not the fixture calendar. */
+  mocksAttempted: number;
+  /** True once an unsubscribed candidate has used every mock their plan allows — gates "Start Mock" in `DashboardMocksTable`. */
+  mockLimitReached: boolean;
+  /**
+   * Opens the same limit-reached modal on load — set when `/exam` redirected
+   * here because a direct visit tried to start a new mock past the limit.
+   */
+  showLimitReachedModal?: boolean;
 }
 
 /**
@@ -31,9 +40,15 @@ export interface DashboardScreenProps {
  * at `/dashboard/calendar` — nothing was deleted, just moved off the page
  * that was trying to show everything at once.
  */
-export function DashboardScreen({ data, currentPlan, mocks }: DashboardScreenProps) {
+export function DashboardScreen({
+  data,
+  currentPlan,
+  mocks,
+  mocksAttempted,
+  mockLimitReached,
+  showLimitReachedModal = false,
+}: DashboardScreenProps) {
   const firstName = data.candidate.name.split(' ')[0];
-  const completedMocks = fixtureMocksUsedCount(data);
 
   return (
     <>
@@ -44,15 +59,17 @@ export function DashboardScreen({ data, currentPlan, mocks }: DashboardScreenPro
 
       <PerformanceOverviewCard
         performance={data.performance}
-        mocksAttempted={completedMocks}
+        mocksAttempted={mocksAttempted}
         planName={currentPlan?.plan.name ?? null}
       />
 
-      <DashboardMocksTable mocks={mocks} />
+      <DashboardMocksTable mocks={mocks} limitReached={mockLimitReached} />
 
       {currentPlan && !currentPlan.isSubscribed && (
-        <PremiumBanner mocksUsed={completedMocks} mockLimit={currentPlan.plan.mockLimit} />
+        <PremiumBanner mocksUsed={mocksAttempted} mockLimit={currentPlan.plan.mockLimit} />
       )}
+
+      {showLimitReachedModal && <LimitReachedNotice />}
     </>
   );
 }

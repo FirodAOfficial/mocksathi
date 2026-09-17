@@ -1,8 +1,9 @@
-import Link from 'next/link';
+import { BrandLogo } from '@/components/site/BrandLogo';
 import { outcomeOf, type ExamResult } from '@/exam/result';
+import { BackToTestsLink } from './BackToTestsLink';
 import { OverallPerformance } from './OverallPerformance';
 import { PerformanceBreakdown } from './PerformanceBreakdown';
-import { HandNote, MetaIconMark, MockSathiLogo, type MetaIcon } from './ResultArt';
+import { HandNote, MetaIconMark, type MetaIcon } from './ResultArt';
 import { TimeAnalysis } from './TimeAnalysis';
 import { TopperComparison } from './TopperComparison';
 import styles from './ResultScreen.module.css';
@@ -48,8 +49,6 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
   return (
     <div className={styles.page}>
       <header className={styles.topBar}>
-        <MockSathiLogo />
-
         <div className={styles.testName}>
           <span className={styles.testIcon} aria-hidden="true">
             <MetaIconMark name="paper" />
@@ -66,9 +65,9 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
         </div>
 
         <div className={styles.topActions}>
-          <Link href={backHref} className={styles.ghostButton}>
+          <BackToTestsLink href={backHref} className={styles.ghostButton ?? ''}>
             <span aria-hidden="true">←</span> Back to Tests
-          </Link>
+          </BackToTestsLink>
           <ViewSolutionsButton onClick={onViewSolutions} />
         </div>
       </header>
@@ -107,7 +106,7 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
       </section>
 
       <footer className={styles.footer}>
-        <MockSathiLogo compact />
+        <BrandLogo tone="dark" size={24} />
         <ul className={styles.footerPoints}>
           <li>
             <span aria-hidden="true">🎯</span> Real Exam Experience

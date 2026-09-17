@@ -3,7 +3,8 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import { requireVerifiedUser } from '@/auth/cookies';
 import { PortalShell, type PlanWidgetData } from '@/components/dashboard/PortalShell';
-import { dashboardDataFor, fixtureMocksUsedCount } from '@/dashboard/seedDashboard';
+import { dashboardDataFor } from '@/dashboard/seedDashboard';
+import { attemptedTestCountForUser } from '@/db/attempts';
 import { availableExamsForUser } from '@/db/enrollments';
 import { currentPlanForUser } from '@/db/plans';
 
@@ -30,10 +31,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const user = await requireVerifiedUser();
   const simplifiedMenu = user.role !== 'admin';
 
-  const [data, currentPlan] = await Promise.all([
+  const [data, currentPlan, mocksUsed] = await Promise.all([
     dashboardDataFor(user),
     // Only the simplified menu shows the plan widget — skip the query for admins.
     simplifiedMenu ? currentPlanForUser(user.id) : Promise.resolve(null),
+    simplifiedMenu ? attemptedTestCountForUser(user.id) : Promise.resolve(0),
   ]);
   const unreadNotifications = data.notifications.filter((notification) => !notification.read).length;
 
@@ -48,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         isSubscribed: currentPlan.isSubscribed,
         daysRemaining: currentPlan.daysRemaining,
         mockLimit: currentPlan.plan.mockLimit,
-        mocksUsed: fixtureMocksUsedCount(data),
+        mocksUsed,
       }
     : undefined;
 

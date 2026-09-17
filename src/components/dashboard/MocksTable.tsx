@@ -5,6 +5,7 @@ import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './MocksTable.module.css';
+import { StartMockAction } from './StartMockAction';
 
 export interface MocksTableProps {
   heading: string;
@@ -13,6 +14,8 @@ export interface MocksTableProps {
   headerRight?: ReactNode;
   /** Shown instead of rows when there are none — an empty table reads as a broken one. */
   emptyNote?: string;
+  /** True once an unsubscribed candidate has used every mock their plan allows — gates "Start" below. */
+  limitReached: boolean;
 }
 
 function ScoreCells({ mock }: { mock: MockSummary }) {
@@ -35,7 +38,7 @@ function ScoreCells({ mock }: { mock: MockSummary }) {
   );
 }
 
-function ActionCell({ mock }: { mock: MockSummary }) {
+function ActionCell({ mock, limitReached }: { mock: MockSummary; limitReached: boolean }) {
   switch (mock.state) {
     case 'today':
     case 'available':
@@ -48,9 +51,12 @@ function ActionCell({ mock }: { mock: MockSummary }) {
       // A row that names a paper opens that paper; one that does not has
       // nothing of its own to open. See `src/dashboard/mockRoutes.ts`.
       return mock.testSlug ? (
-        <Link href={startHrefFor(mock)} className={styles.actionPrimary}>
-          Start
-        </Link>
+        <StartMockAction
+          href={startHrefFor(mock)}
+          label="Start"
+          className={styles.actionPrimary ?? ''}
+          limitReached={limitReached}
+        />
       ) : (
         <span className={styles.actionPending}>Not yet open</span>
       );
@@ -84,7 +90,7 @@ function ActionCell({ mock }: { mock: MockSummary }) {
   }
 }
 
-function MockRow({ mock }: { mock: MockSummary }) {
+function MockRow({ mock, limitReached }: { mock: MockSummary; limitReached: boolean }) {
   return (
     <div className={mock.state === 'today' ? styles.rowToday : styles.row}>
       <b className={styles.mockNumber}>Mock {mock.mockNumber}</b>
@@ -100,7 +106,7 @@ function MockRow({ mock }: { mock: MockSummary }) {
       </span>
       <span className={styles.dateCell}>{mock.dateLabel}</span>
       <span className={styles.actionCell}>
-        <ActionCell mock={mock} />
+        <ActionCell mock={mock} limitReached={limitReached} />
       </span>
     </div>
   );
@@ -115,7 +121,7 @@ function MockRow({ mock }: { mock: MockSummary }) {
  * rather than unfinished — there is no cohort rank or per-question timing
  * stored anywhere yet.
  */
-export function MocksTable({ heading, mocks, headerRight, emptyNote }: MocksTableProps) {
+export function MocksTable({ heading, mocks, headerRight, emptyNote, limitReached }: MocksTableProps) {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -136,7 +142,7 @@ export function MocksTable({ heading, mocks, headerRight, emptyNote }: MocksTabl
         </div>
 
         {mocks.map((mock) => (
-          <MockRow key={mock.mockNumber} mock={mock} />
+          <MockRow key={mock.mockNumber} mock={mock} limitReached={limitReached} />
         ))}
       </div>
 

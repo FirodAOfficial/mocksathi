@@ -17,7 +17,7 @@ import {
 import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
 import { PassagePreview } from './PassagePreview';
 import { WorkbookPreview } from './WorkbookPreview';
-import { MetaIconMark, MockSathiLogo } from './ResultArt';
+import { MetaIconMark } from './ResultArt';
 import styles from './SolutionsScreen.module.css';
 
 export interface SolutionsScreenProps {
@@ -69,7 +69,6 @@ export function SolutionsScreen({ attempt, result, answers, language, onBack }: 
   return (
     <div className={styles.page}>
       <header className={styles.topBar}>
-        <MockSathiLogo />
         <button type="button" className={styles.ghostButton} onClick={onBack}>
           <span aria-hidden="true">←</span> Back to Result
         </button>

@@ -1,0 +1,35 @@
+.card {
+  background: var(--db-surface);
+  border: 1px dashed var(--db-border);
+  border-radius: 12px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 480px;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--db-accent-soft, #e8effe);
+  color: var(--db-accent);
+  display: grid;
+  place-items: center;
+}
+
+.title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--db-text);
+  margin: 0;
+}
+
+.body {
+  font-size: 13px;
+  color: var(--db-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
