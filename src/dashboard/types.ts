@@ -124,13 +124,21 @@ export interface MockSummary {
 export interface PerformanceSnapshot {
   averageScore: number;
   maxScore: number;
-  scoreDeltaVsLastWeek: number;
+  /** Needs a real week-over-week history to compute — absent for a real (non-fixture) snapshot. */
+  scoreDeltaVsLastWeek?: number;
   accuracyPct: number;
-  accuracyDeltaPts: number;
+  /** Needs a real week-over-week history to compute — absent for a real (non-fixture) snapshot. */
+  accuracyDeltaPts?: number;
   attemptRatePct: number;
-  bestPercentile: number;
-  bestPercentileMockNumber: number;
-  bestPercentileRank: number;
+  /**
+   * Percentile/rank need a real cross-candidate cohort, which doesn't exist
+   * yet (`src/dashboard/realAnalysis.ts`) — all three are absent for a real
+   * snapshot rather than invented. `PerformanceSnapshot` (the component)
+   * shows a real, honest figure (mocks attempted) in that tile instead.
+   */
+  bestPercentile?: number;
+  bestPercentileMockNumber?: number;
+  bestPercentileRank?: number;
   /** Shown on the dashboard-home performance summary; the detailed analysis page doesn't use this one. */
   avgTimePerQuestionSeconds: number;
 }
@@ -141,8 +149,8 @@ export interface SubjectSnapshot {
   maxMarks: number;
   accuracyPct: number;
   avgTimeSeconds: number;
-  /** Top-10% benchmark for this subject, as a percent of `maxMarks`. */
-  benchmarkPct: number;
+  /** Top-10% benchmark for this subject, as a percent of `maxMarks`. Needs a real cohort — absent for a real snapshot. */
+  benchmarkPct?: number;
   /** CSS colour used for this subject's bar, consistent across screens. */
   color: string;
 }

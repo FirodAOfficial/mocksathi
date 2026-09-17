@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { cache } from 'react';
 import type { ExamResult } from '@/exam/result';
 import type { AnswerPayload, Language, Subject } from '@/exam/types';
@@ -89,6 +89,23 @@ export async function recordAttempt(params: {
       set: { ...shared, attemptCount: sql`${testAttempts.attemptCount} + 1` },
     });
 }
+
+/**
+ * Every one of this candidate's stored sittings, newest first.
+ *
+ * The source for real (non-fixture) performance analytics
+ * (`src/dashboard/realAnalysis.ts`) — one row per distinct paper sat, same
+ * set `attemptedTestCountForUser` counts.
+ */
+export const allAttemptsForUser = cache(async (userId: string): Promise<StoredAttempt[]> => {
+  const rows = await db
+    .select()
+    .from(testAttempts)
+    .where(eq(testAttempts.userId, userId))
+    .orderBy(desc(testAttempts.submittedAt));
+
+  return rows.map(fromRow);
+});
 
 /** This candidate's latest attempt at one paper, or null if they have not sat it. */
 export async function attemptFor(userId: string, testId: string): Promise<StoredAttempt | null> {
