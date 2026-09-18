@@ -14,6 +14,10 @@
  * submit route runs and writes back what they are worth now. Nothing is
  * invented; a candidate who left a question blank still gets nothing for it.
  *
+ * Everything that is not a score is carried across untouched — how long the
+ * candidate spent on each question above all, since that is stored only inside
+ * the result being replaced and cannot be recomputed from anything else.
+ *
  * Without `--write` it only reports what would change.
  *
  * `--conditions react-server` is what lets a script import the `server-only`
@@ -29,9 +33,25 @@ import { buildAttempt } from '../src/exam/authoring';
 import { draftFromRow } from '../src/db/questionRow';
 import { excelRubricFor, wordRubricFor } from '../src/server/marking/rubricFromOperations';
 import type { TestQuestion } from '../src/db/schema';
+import {
+  REFERENCE_AVERAGE,
+  REFERENCE_AVERAGE_TIMES,
+  REFERENCE_TOPPER,
+  REFERENCE_TOPPER_TIMES,
+} from '../src/exam/result';
 import type { AnswerPayload, Language } from '../src/exam/types';
 
 const write = process.argv.includes('--write');
+
+/**
+ * Which papers to touch: `--slug=<slug>`, repeatable.
+ *
+ * A re-mark rewrites a stored result, so it defaults to reporting on
+ * everything and changing one named thing at a time.
+ */
+const slugs = process.argv
+  .filter((argument) => argument.startsWith('--slug='))
+  .map((argument) => argument.slice('--slug='.length));
 
 function readEnv(): Record<string, string> {
   const values: Record<string, string> = {};
@@ -48,8 +68,41 @@ function readEnv(): Record<string, string> {
 
 const env = readEnv();
 
-/** Zeroed: the comparison lines are not what this recomputes. */
-const EMPTY_LINE = { score: 0, maxScore: 0, accuracy: 0, correct: 0, wrong: 0, unattempted: 0, timeSeconds: 0 };
+/**
+ * JSON with its keys in a fixed order, for comparing a stored result with a
+ * freshly computed one.
+ *
+ * Postgres `jsonb` does not keep the key order it was given — it stores keys
+ * sorted — so a plain `JSON.stringify` of each side differs on every row, and a
+ * comparison built on that would report every attempt as changed and rewrite
+ * all of them.
+ */
+function stable(value: unknown): string {
+  return JSON.stringify(value, (_key, nested: unknown) => {
+    if (nested === null || typeof nested !== 'object' || Array.isArray(nested)) return nested;
+
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(nested as Record<string, unknown>).sort()) {
+      sorted[key] = (nested as Record<string, unknown>)[key];
+    }
+    return sorted;
+  });
+}
+
+/**
+ * The same reference lines the submit route marks against.
+ *
+ * Not zeroes. Re-marking recomputes the *score*; everything else in a stored
+ * result has to come out the way it went in, or the result screen loses the
+ * comparison the chart is drawn from — which is what a first version of this
+ * script did, silently.
+ */
+const REFERENCE = {
+  topper: REFERENCE_TOPPER,
+  average: REFERENCE_AVERAGE,
+  topperTimePerQuestion: [...REFERENCE_TOPPER_TIMES],
+  averageTimePerQuestion: [...REFERENCE_AVERAGE_TIMES],
+};
 
 const client = new pg.Client({
   connectionString: env.MIGRATION_DATABASE_URL ?? env.DATABASE_URL,
@@ -102,7 +155,24 @@ for (const attempt of attempts) {
   });
 
   const answers = (attempt.answers ?? {}) as Record<number, AnswerPayload>;
-  const previous = attempt.result as { you?: { timeSeconds?: number } } | null;
+  const previous = attempt.result as {
+    you?: { timeSeconds?: number };
+    questions?: { number: number; yourTimeSeconds?: number }[];
+  } | null;
+
+  /*
+   * How long the candidate spent on each question, recovered from the result
+   * being replaced.
+   *
+   * The submission's own per-question timings are not stored anywhere else —
+   * only inside this result — so a re-mark that did not carry them forward
+   * would erase them. It is the one part of a sitting that cannot be
+   * recomputed from the answers.
+   */
+  const timePerQuestion: Record<number, number> = {};
+  for (const question of previous?.questions ?? []) {
+    if (question.yourTimeSeconds) timePerQuestion[question.number] = question.yourTimeSeconds;
+  }
 
   const marked =
     attempt.subject === 'word'
@@ -112,9 +182,10 @@ for (const attempt of attempts) {
           {
             answers,
             language: attempt.language as Language,
+            timePerQuestion,
             totalTimeSeconds: previous?.you?.timeSeconds ?? 0,
           },
-          { topper: EMPTY_LINE, average: EMPTY_LINE, topperTimePerQuestion: [], averageTimePerQuestion: [] },
+          REFERENCE,
           WORD_MARKER,
           {
             testName: attempt.name,
@@ -128,9 +199,10 @@ for (const attempt of attempts) {
           {
             answers,
             language: attempt.language as Language,
+            timePerQuestion,
             totalTimeSeconds: previous?.you?.timeSeconds ?? 0,
           },
-          { topper: EMPTY_LINE, average: EMPTY_LINE, topperTimePerQuestion: [], averageTimePerQuestion: [] },
+          REFERENCE,
           SHEET_MARKER,
           {
             testName: attempt.name,
@@ -141,14 +213,27 @@ for (const attempt of attempts) {
 
   const before = `${attempt.score} / ${attempt.max_score}`;
   const after = `${marked.result.you.score} / ${marked.result.maximumMarks}`;
-  if (before === after) {
+
+  /*
+   * The whole result is compared, not just the score.
+   *
+   * A stored result can be wrong in ways the score does not show — the
+   * comparison lines the time chart is drawn from, or feedback whose wording
+   * has since changed — and a run that only looked at the score would report
+   * "unchanged" over a result that is visibly broken on the review screen.
+   */
+  const changed = stable(attempt.result) !== stable(marked.result);
+  if (!changed) {
     process.stdout.write(`${attempt.slug}: ${before} — unchanged\n`);
     continue;
   }
 
-  process.stdout.write(`${attempt.slug}: ${before} -> ${after}${write ? '' : ' (dry run)'}\n`);
+  const selected = slugs.length === 0 || slugs.includes(String(attempt.slug));
+  const what = before === after ? `${before}, details only` : `${before} -> ${after}`;
+  const note = !write ? ' (dry run)' : selected ? '' : ' (not selected)';
+  process.stdout.write(`${attempt.slug}: ${what}${note}\n`);
 
-  if (write) {
+  if (write && selected) {
     await client.query(
       'UPDATE test_attempts SET score = $1, max_score = $2, accuracy_pct = $3, result = $4, updated_at = now() WHERE id = $5',
       [
