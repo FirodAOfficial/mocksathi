@@ -1,0 +1,133 @@
+/*
+ * Word's Underline split button: the button, its arrow, and the styles menu.
+ *
+ * The same light palette as the rest of the ribbon — the popover already draws
+ * a white panel with a blue-grey border, so nothing here paints a background of
+ * its own; it only styles what sits inside it. Hover and selected states use
+ * the shared amber gradients, which is what every other ribbon control uses.
+ */
+
+.split {
+  border: 1px solid #0000;
+  border-radius: 2px;
+  align-items: stretch;
+  display: inline-flex;
+}
+
+.split:hover {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.main,
+.arrow {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  display: inline-flex;
+}
+
+.main {
+  width: 24px;
+  height: 24px;
+}
+
+.arrow {
+  width: 14px;
+}
+
+/* The button's own pressed state, and the arrow's while its menu is open. */
+.active,
+.arrowOpen {
+  background: linear-gradient(180deg, var(--control-active-top), var(--control-active-bottom));
+  border-radius: 2px;
+}
+
+.menu {
+  flex-direction: column;
+  min-width: 190px;
+  display: flex;
+}
+
+.item,
+.styleItem {
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  color: var(--text);
+  font: inherit;
+  width: 100%;
+  padding: 5px 12px;
+  display: block;
+}
+
+.styleItem {
+  /* The line is the label, so the row is sized by the specimen it holds. */
+  line-height: 1;
+  padding: 7px 12px;
+}
+
+.item:hover,
+.styleItem:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.selected {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.specimen {
+  /* A run of spaces, so the decoration has something to draw under. */
+  white-space: pre;
+  color: var(--text);
+  font-size: 12px;
+  display: inline-block;
+}
+
+.separator {
+  background: var(--control-border);
+  height: 1px;
+  margin: 4px 6px;
+}
+
+.colourHeading {
+  color: var(--text-muted);
+  padding: 5px 12px 2px;
+}
+
+.palette {
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 8px 6px;
+  display: flex;
+}
+
+.swatchRow {
+  gap: 2px;
+  display: flex;
+}
+
+.swatch {
+  cursor: pointer;
+  border: 1px solid #a0a0a0;
+  border-radius: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.swatch:hover,
+.swatchSelected {
+  outline: 2px solid var(--control-hover-border);
+  outline-offset: 0;
+}

@@ -1,3 +1,5 @@
+import { resolveSelections } from '@/editor/functions/selection';
+import { LENGTH_TOLERANCE_PX } from '@/utils/units';
 import type { ParagraphFormatting, RunFormatting } from '@/services/document/types';
 import type {
   BlockSelector,
@@ -40,6 +42,18 @@ export function evaluateCriterion(
       const missing = indices.filter(
         (index) => !hasMark(submitted.chars[index]!.marks, criterion.mark, criterion.value),
       );
+
+      // "Any colour except yellow": the formatting has to be there, and it has
+      // to be something other than what the question ruled out.
+      if (missing.length === 0 && criterion.not) {
+        const excluded = indices.filter((index) =>
+          hasMark(submitted.chars[index]!.marks, criterion.mark, criterion.not),
+        );
+        if (excluded.length > 0) {
+          return fail(`${describeTarget(criterion.target)} uses a value the question ruled out.`);
+        }
+      }
+
       if (missing.length === 0) return pass();
 
       return fail(
@@ -95,7 +109,8 @@ export function evaluateCriterion(
       if (blocks.length === 0) return fail('The expected paragraph is missing.');
 
       const wrong = blocks.filter(
-        (block) => !valuesEqual(block.paragraph[criterion.attr as keyof ParagraphFormatting], criterion.value),
+        (block) =>
+          !attrEqual(criterion.attr, block.paragraph[criterion.attr as keyof ParagraphFormatting], criterion.value),
       );
       return wrong.length === 0 ? pass() : fail(`${criterion.attr} is not set as required.`);
     }
@@ -184,6 +199,28 @@ export function resolveTarget(target: Target, doc: FlatDocument): number[] | nul
       return indicesBetween(block.start, block.end);
     }
 
+    case 'selection': {
+      // Resolved here, against the document as submitted: a selection names its
+      // text ("the fourth paragraph") and the characters that is are whatever
+      // the passage says in the language the paper was sat in.
+      const resolved = resolveSelections(
+        target.selection,
+        doc.blocks.map((entry) => entry.text),
+      );
+
+      const indices: number[] = [];
+      for (const range of resolved) {
+        const block = doc.blocks[range.block];
+        if (!block) continue;
+        const from = block.start + range.from;
+        const to = block.start + range.to;
+        if (to <= from || to > block.end) continue;
+        indices.push(...indicesBetween(from, to));
+      }
+
+      return indices.length > 0 ? indices : null;
+    }
+
     case 'range': {
       const block = doc.blocks[target.block];
       if (!block) return null;
@@ -196,19 +233,21 @@ export function resolveTarget(target: Target, doc: FlatDocument): number[] | nul
     case 'text': {
       // Searched per block, so a match can never straddle a paragraph break.
       const wanted = target.occurrence ?? 1;
+      const everywhere = wanted === 'all';
+      const indices: number[] = [];
       let seen = 0;
 
       for (const block of doc.blocks) {
         let at = block.text.indexOf(target.text);
         while (at !== -1) {
           seen += 1;
-          if (seen === wanted) {
-            return indicesBetween(block.start + at, block.start + at + target.text.length);
-          }
+          const span = indicesBetween(block.start + at, block.start + at + target.text.length);
+          if (everywhere) indices.push(...span);
+          else if (seen === wanted) return span;
           at = block.text.indexOf(target.text, at + 1);
         }
       }
-      return null;
+      return everywhere && indices.length > 0 ? indices : null;
     }
 
     default:
@@ -237,6 +276,30 @@ function selectBlocks(selector: BlockSelector, doc: FlatDocument) {
   if (selector === 'all') return doc.blocks;
   const block = doc.blocks[selector];
   return block ? [block] : [];
+}
+
+/**
+ * Paragraph lengths, in CSS pixels, where a pixel of rounding is not an answer.
+ *
+ * An indent asked for in inches and typed in centimetres lands a pixel away,
+ * and the two are the same indent to anyone looking at the page. Everything
+ * else — a line-spacing multiplier, an alignment, a border — is compared
+ * exactly, because there is no rounding to forgive.
+ */
+const PIXEL_LENGTHS = new Set<keyof ParagraphFormatting>([
+  'indentLeft',
+  'indentRight',
+  'indentFirstLine',
+  'spaceBefore',
+  'spaceAfter',
+  'lineSpacingPt',
+]);
+
+function attrEqual(attr: keyof ParagraphFormatting, actual: unknown, expected: unknown): boolean {
+  if (PIXEL_LENGTHS.has(attr) && typeof actual === 'number' && typeof expected === 'number') {
+    return Math.abs(actual - expected) <= LENGTH_TOLERANCE_PX;
+  }
+  return valuesEqual(actual, expected);
 }
 
 function valuesEqual(a: unknown, b: unknown): boolean {
@@ -326,6 +389,9 @@ function checkUnchanged(
   const allowedMarks = new Map<number, Set<keyof RunFormatting>>();
   /** Block index -> the paragraph properties it was allowed to gain. */
   const allowedParagraph = new Map<number, Set<keyof ParagraphFormatting>>();
+  /** Blocks the question asked to restyle, or to make into a list. */
+  const allowedStyle = new Set<number>();
+  const allowedList = new Set<number>();
 
   const allowAt = (index: number, marks: (keyof RunFormatting)[]): void => {
     const existing = allowedMarks.get(index) ?? new Set<keyof RunFormatting>();
@@ -352,6 +418,8 @@ function checkUnchanged(
       const existing = allowedParagraph.get(block) ?? new Set<keyof ParagraphFormatting>();
       for (const attr of exemption.paragraph ?? []) existing.add(attr);
       allowedParagraph.set(block, existing);
+      if (exemption.style) allowedStyle.add(block);
+      if (exemption.list) allowedList.add(block);
     }
   }
 
@@ -372,8 +440,10 @@ function checkUnchanged(
     const before = start.blocks[index]!;
     const allowed = allowedParagraph.get(index) ?? none;
 
-    if (after.styleId !== before.styleId) return fail('A paragraph style was applied that was not asked for.');
-    if ((after.list?.kind ?? null) !== (before.list?.kind ?? null)) {
+    if (after.styleId !== before.styleId && !allowedStyle.has(index)) {
+      return fail('A paragraph style was applied that was not asked for.');
+    }
+    if ((after.list?.kind ?? null) !== (before.list?.kind ?? null) && !allowedList.has(index)) {
       return fail('A list was applied that was not asked for.');
     }
 

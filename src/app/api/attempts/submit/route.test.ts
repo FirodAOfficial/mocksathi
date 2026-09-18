@@ -1,11 +1,21 @@
 import { Editor } from '@tiptap/core';
 import { NextRequest } from 'next/server';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildEditorExtensions } from '@/editor/extensions';
 import { findQuestion, isWordQuestion } from '@/exam/types';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import type { ExamResult } from '@/exam/result';
 import { POST } from './route';
+
+/*
+ * The route is gated, and a signed-in candidate is a precondition of it rather
+ * than something it is being tested on — `requireUser` reads the session cookie
+ * through `next/headers`, which has no request scope inside a unit test. The
+ * gate itself is covered where it lives, in the auth suite.
+ */
+vi.mock('@/auth/cookies', () => ({
+  requireUser: () => Promise.resolve({ id: '00000000-0000-4000-8000-000000000001', role: 'user' }),
+}));
 
 const editors: Editor[] = [];
 

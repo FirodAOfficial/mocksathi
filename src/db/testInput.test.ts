@@ -83,6 +83,46 @@ describe('parseTestInput', () => {
 });
 
 describe('parseQuestionInput', () => {
+  it('keeps a multi-step question whole through a round trip', () => {
+    // The form does not offer steps yet, but it does send back the ones it was
+    // given. Dropping them here would turn "number the first, second and fourth
+    // paragraphs" into a question about the first paragraph alone, and the
+    // answer key would follow it quietly.
+    const parsed = parseQuestionInput(
+      wordQuestion({
+        passageEn: ['First paragraph here.', 'Second paragraph here.'].join('\n'),
+        steps: [
+          { scope: { select: 'paragraph', index: 1 }, operations: [{ kind: 'list', list: 'ordered' }] },
+          { scope: { select: 'paragraph', index: 2 }, operations: [{ kind: 'list', list: 'ordered' }] },
+        ],
+        initial: [{ scope: { select: 'paragraph', index: 2 }, operations: [{ kind: 'highlight', color: '#ffff00' }] }],
+      }),
+      'word',
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const content = parsed.fields.content as { steps?: unknown[]; initial?: unknown[] };
+    expect(content.steps).toHaveLength(2);
+    expect(content.initial).toEqual([
+      { scope: { select: 'paragraph', index: 2 }, operations: [{ kind: 'highlight', color: '#ffff00' }] },
+    ]);
+  });
+
+  it('refuses a step that names text the passage does not contain', () => {
+    // The selection is checked against the passage as saved, so editing the
+    // passage down to one paragraph cannot leave a step addressing the fourth.
+    expect(
+      parseQuestionInput(
+        wordQuestion({
+          steps: [{ scope: { select: 'paragraph', index: 4 }, operations: [{ kind: 'bold' }] }],
+        }),
+        'word',
+      ),
+    ).toMatchObject({ ok: false, code: 'INVALID_SCOPE' });
+  });
+
   it('accepts a complete Word question', () => {
     const parsed = parseQuestionInput(wordQuestion(), 'word');
     expect(parsed.ok).toBe(true);

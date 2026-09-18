@@ -65,26 +65,51 @@ function locate(index: TextIndex, query: string, startAt: number, options: Searc
   return found === -1 ? haystack.indexOf(needle, 0) : found;
 }
 
-/** Selects the next occurrence after the cursor. Returns false if there is none. */
+/**
+ * Selects the next occurrence after the cursor. Returns false if there is none.
+ *
+ * The match is both selected and highlighted. The selection is what Replace
+ * acts on and where the caret lands when the document is clicked back into; the
+ * highlight is what makes it visible while the keyboard is still in the Find
+ * dialog, since a browser paints a text selection only in the focused element.
+ *
+ * Focus deliberately stays where it is. Find is modeless in Word — you keep
+ * typing in the box and pressing Find Next — and pulling focus into the
+ * document on every press would take the cursor out of the search field.
+ */
 export function findNext(editor: Editor, query: string, options: SearchOptions): boolean {
   if (query === '') return false;
 
   const index = buildTextIndex(editor.state.doc);
   if (index.text === '') return false;
 
+  /*
+   * The first character at or past the end of the current selection.
+   *
+   * Not one past it: with the previous match selected, the next search has to
+   * be able to start at the very next character, or "aa" searched for "a"
+   * would step over the second one.
+   */
   const selectionEnd = editor.state.selection.to;
-  // Start just past the current selection so repeated presses advance.
-  const startAt = Math.max(0, index.positions.findIndex((position) => position >= selectionEnd) + 1);
+  const startAt = index.positions.findIndex((position) => position >= selectionEnd);
 
-  const found = locate(index, query, startAt === 0 ? 0 : startAt, options);
+  const found = locate(index, query, startAt === -1 ? 0 : startAt, options);
   if (found === -1) return false;
 
   const from = index.positions[found];
   const lastChar = index.positions[found + query.length - 1];
   if (from === undefined || lastChar === undefined) return false;
 
-  editor.chain().focus().setTextSelection({ from, to: lastChar + 1 }).run();
+  const to = lastChar + 1;
+  editor.chain().setTextSelection({ from, to }).setSearchHighlight({ from, to }).run();
+  // Word scrolls the match into view even though the dialog keeps the keyboard.
+  editor.commands.scrollIntoView();
   return true;
+}
+
+/** Drops the Find highlight — the dialog closing, or the search being cleared. */
+export function clearSearchHighlight(editor: Editor): void {
+  editor.commands.setSearchHighlight(null);
 }
 
 /** Replaces the current selection if it already matches, then finds the next. */
@@ -97,7 +122,12 @@ export function replaceCurrent(editor: Editor, query: string, replacement: strin
 
   if (!matches) return findNext(editor, query, options);
 
-  editor.chain().focus().insertContentAt({ from, to }, replacement).run();
+  /*
+   * `insertContentAt` and not `insertContent`: the selection is what is being
+   * replaced, and naming the range keeps this correct even when focus is in the
+   * dialog rather than the document.
+   */
+  editor.chain().insertContentAt({ from, to }, replacement).run();
   return findNext(editor, query, options);
 }
 
@@ -127,6 +157,8 @@ export function replaceAll(editor: Editor, query: string, replacement: string, o
     searchFrom = found + replacement.length;
   }
 
-  if (replacements > 0) editor.commands.focus();
+  // The highlight refers to a range that may no longer hold what was searched
+  // for, so it goes; focus stays in the dialog, as Word leaves it.
+  if (replacements > 0) editor.commands.setSearchHighlight(null);
   return replacements;
 }

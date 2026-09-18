@@ -1,4 +1,6 @@
 import type { ExcelOperation, WordOperation, WordScope } from '@/exam/authoring';
+import { WORD_FUNCTIONS, isWordFunctionId } from '@/editor/functions/catalog';
+import { resolveSelection, type SelectionSpec } from '@/editor/functions/selection';
 import type { CellValue } from '@/spreadsheet/model/Cell';
 import type { CellStyle } from '@/spreadsheet/model/styles';
 import {
@@ -153,9 +155,31 @@ export interface QuestionInput {
   /** Word: one paragraph per line. */
   passageEn?: string;
   passageHi?: string;
-  /** Word: the character range of the one line the question names; blank means the whole paragraph. */
+  /**
+   * Word: how the question names its text.
+   *
+   * `selector` is one of `@/editor/functions/selection`'s named selectors, and
+   * the rest are its arguments — which of them matter depends on the selector.
+   * Blank is the whole first paragraph, or the character range in `scopeFrom` /
+   * `scopeTo` for a question that names a wrapped line.
+   */
+  selector?: string;
+  selectorIndex?: string;
+  selectorParagraph?: string;
+  selectorText?: string;
+  selectorOccurrence?: string;
   scopeFrom?: string;
   scopeTo?: string;
+  /**
+   * A multi-step question's steps, and the formatting its passage starts with.
+   *
+   * The form does not yet offer either — both come from a paper loaded by a
+   * migration — but it does send them back untouched when an admin edits such a
+   * question's instruction or marks. They are revalidated here rather than
+   * trusted: a client is a client, whatever it was handed.
+   */
+  steps?: unknown;
+  initial?: unknown;
   /** Excel: one array per row, one string per cell. */
   gridEn?: string[][];
   gridHi?: string[][];
@@ -258,7 +282,22 @@ function parseWordContent(body: QuestionInput): ParseResult<QuestionContentRow> 
   const scope = parseScope(body, en);
   if (!scope.ok) return scope as ParseResult<QuestionContentRow>;
 
-  return { ok: true, fields: { subject: 'word', lines: { en, hi }, scope: scope.fields } };
+  const steps = parseSteps(body.steps, en);
+  if (!steps.ok) return steps as ParseResult<QuestionContentRow>;
+
+  const initial = parseSteps(body.initial, en);
+  if (!initial.ok) return initial as ParseResult<QuestionContentRow>;
+
+  return {
+    ok: true,
+    fields: {
+      subject: 'word',
+      lines: { en, hi },
+      scope: scope.fields,
+      ...(steps.fields.length > 0 ? { steps: steps.fields } : {}),
+      ...(initial.fields.length > 0 ? { initial: initial.fields } : {}),
+    },
+  };
 }
 
 /**
@@ -269,23 +308,141 @@ function parseWordContent(body: QuestionInput): ParseResult<QuestionContentRow> 
  * `BOAT_LINE_TWO` in `seedAttempt.ts` says how to re-measure one. All this can
  * check is that the range lies inside the first paragraph.
  */
+/**
+ * A list of (selection, operations) steps, rebuilt field by field.
+ *
+ * Used for both `steps` — a question that asks for more than one thing — and
+ * `initial`, the formatting the passage starts with. Every operation goes back
+ * through the catalog and every selection has to name something in the passage,
+ * so a round trip through the form cannot quietly turn a two-step question into
+ * a one-step one, or leave a selection pointing at a paragraph that was edited
+ * away underneath it.
+ */
+function parseSteps(
+  raw: unknown,
+  lines: string[],
+): ParseResult<{ scope: WordScope; operations: WordOperation[] }[]> {
+  if (raw === undefined || raw === null) return { ok: true, fields: [] };
+  if (!Array.isArray(raw)) return fail('INVALID_STEPS', 'The question steps are not a list.');
+  if (raw.length > MAX_OPERATIONS) {
+    return fail('TOO_MANY_OPERATIONS', `A question may have at most ${MAX_OPERATIONS} steps.`);
+  }
+
+  const steps: { scope: WordScope; operations: WordOperation[] }[] = [];
+
+  for (const [index, entry] of raw.entries()) {
+    if (!isRecord(entry)) return fail('INVALID_STEPS', `Step ${index + 1} is not a step.`);
+
+    const scope = entry.scope as WordScope | undefined;
+    if (scope === undefined || !resolveSelection(scope, lines)) {
+      return fail('INVALID_SCOPE', `Step ${index + 1} names text the passage does not contain.`);
+    }
+
+    const operations = parseOperations(entry.operations, 'word');
+    if (!operations.ok) return operations as ParseResult<typeof steps>;
+
+    steps.push({ scope, operations: operations.fields as WordOperation[] });
+  }
+
+  return { ok: true, fields: steps };
+}
+
 function parseScope(body: QuestionInput, lines: string[]): ParseResult<WordScope> {
+  const selector = typeof body.selector === 'string' ? body.selector : '';
+  const index = intOrNull(body.selectorIndex);
+  const paragraph = intOrNull(body.selectorParagraph);
   const from = intOrNull(body.scopeFrom);
   const to = intOrNull(body.scopeTo);
+  const text = typeof body.selectorText === 'string' ? body.selectorText.trim() : '';
+  const occurrence = typeof body.selectorOccurrence === 'string' ? body.selectorOccurrence : '';
 
-  if (from === null && to === null) return { ok: true, fields: 'all' };
-  if (from === null || to === null) {
-    return fail('INVALID_SCOPE', 'Give both the start and the end of the range, or leave both blank.');
-  }
-  if (from < 0 || to <= from) {
-    return fail('INVALID_SCOPE', 'The range must start at 0 or more and end after it starts.');
-  }
-  if (to > (lines[0]?.length ?? 0)) {
-    return fail('INVALID_SCOPE', 'The range runs past the end of the first paragraph.');
+  const positive = (value: number | null): boolean => value !== null && value >= 1;
+  let spec: SelectionSpec | null = null;
+
+  switch (selector) {
+    case '':
+    case 'all':
+      // The old two-box form, and what most questions still say: the whole
+      // first paragraph, or a character range measured against the page.
+      if (from === null && to === null) spec = 'all';
+      else if (from === null || to === null) {
+        return fail('INVALID_SCOPE', 'Give both the start and the end of the range, or leave both blank.');
+      } else spec = { from, to };
+      break;
+
+    case 'paragraph':
+      if (!positive(index)) return fail('INVALID_SCOPE', 'Say which paragraph, counting from 1.');
+      spec = { select: 'paragraph', index: index! };
+      break;
+
+    case 'word':
+      if (!positive(index)) return fail('INVALID_SCOPE', 'Say which word, counting from 1.');
+      spec = { select: 'word', index: index!, ...(positive(paragraph) ? { paragraph: paragraph! } : {}) };
+      break;
+
+    case 'words':
+      if (!positive(from) || !positive(to) || to! < from!) {
+        return fail('INVALID_SCOPE', 'Give the first and last word, counting from 1.');
+      }
+      spec = {
+        select: 'words',
+        from: from!,
+        to: to!,
+        ...(positive(paragraph) ? { paragraph: paragraph! } : {}),
+      };
+      break;
+
+    case 'sentence':
+      if (!positive(index)) return fail('INVALID_SCOPE', 'Say which sentence, counting from 1.');
+      spec = { select: 'sentence', index: index!, ...(positive(paragraph) ? { paragraph: paragraph! } : {}) };
+      break;
+
+    case 'text': {
+      if (!text) return fail('INVALID_SCOPE', 'Type the words the question is about.');
+      const which: number | 'all' | null = occurrence === 'all' ? 'all' : intOrNull(occurrence);
+      const selection: Extract<SelectionSpec, { select: 'text' }> = {
+        select: 'text',
+        text: text.slice(0, MAX_LINE_LENGTH),
+      };
+      if (which === 'all' || positive(which)) selection.occurrence = which as number | 'all';
+      if (positive(paragraph)) selection.paragraph = paragraph!;
+      spec = selection;
+      break;
+    }
+
+    case 'range':
+      if (from === null || to === null) {
+        return fail('INVALID_SCOPE', 'Give both the start and the end of the range.');
+      }
+      spec = { select: 'range', from, to, ...(positive(paragraph) ? { paragraph: paragraph! } : {}) };
+      break;
+
+    default:
+      return fail('INVALID_SCOPE', 'That is not a way of naming text this editor knows.');
   }
 
-  return { ok: true, fields: { from, to } };
+  /*
+   * The selection has to name something in the passage as written.
+   *
+   * This is the check the old two-box form could only make for a range, and
+   * the reason a named selection is worth having: "the ninth word" of a
+   * six-word paragraph is a question nobody can answer and nothing can mark,
+   * and it is caught here rather than at marking time.
+   *
+   * Checked against the English passage. The Hindi one is a translation of the
+   * same text, so a selection that names the third word names the third word in
+   * both; a selection that resolves in one and not the other is a translation
+   * that lost a sentence, which is worth failing over.
+   */
+  if (!spec) return fail('INVALID_SCOPE', 'Say which text the question is about.');
+
+  if (!resolveSelection(spec, lines)) {
+    return fail('INVALID_SCOPE', 'That selection does not name anything in the passage.');
+  }
+
+  return { ok: true, fields: spec };
 }
+
 
 function parseExcelContent(body: QuestionInput): ParseResult<QuestionContentRow> {
   const en = normaliseGrid(body.gridEn);
@@ -440,47 +597,75 @@ function cellValueOf(value: unknown): CellValue | undefined {
   return undefined;
 }
 
+/**
+ * One Word operation, rebuilt from the function catalog.
+ *
+ * Not a switch over every kind: the catalog declares each function's parameters
+ * — their type, their range, their options — and this validates against that
+ * declaration. A function added to the catalog is therefore accepted here with
+ * no edit, and one that is *not* in the catalog is rejected however plausible
+ * its `kind` looks, which is the property that matters: what the server stores
+ * is what the marker can mark.
+ */
 function wordOperationOf(raw: unknown): WordOperation | null {
-  if (!isRecord(raw)) return null;
+  if (!isRecord(raw) || !isWordFunctionId(raw.kind)) return null;
 
-  switch (raw.kind) {
-    case 'bold':
-    case 'italic':
-    case 'underline':
-    case 'strike':
-      return { kind: raw.kind };
-    case 'highlight': {
-      const color = colourOf(raw.color);
-      return color ? { kind: 'highlight', color } : null;
+  const spec = WORD_FUNCTIONS[raw.kind];
+  const operation: Record<string, unknown> = { kind: raw.kind };
+
+  for (const param of spec.params) {
+    const value = raw[param.name];
+
+    switch (param.type) {
+      case 'colour': {
+        const colour = colourOf(value);
+        // A colour that is optional on the operation — the underline's — is
+        // allowed to be absent; one the function needs is not, and a value that
+        // is not `#rrggbb` fails the whole question rather than being dropped.
+        if (colour === null) {
+          if (OPTIONAL_PARAMS.has(`${spec.id}.${param.name}`)) continue;
+          return null;
+        }
+        operation[param.name] = colour;
+        break;
+      }
+
+      case 'number': {
+        const number = numberOf(value, param.min, param.max);
+        if (number === null) return null;
+        operation[param.name] = number;
+        break;
+      }
+
+      case 'enum': {
+        if (typeof value !== 'string' || !param.options.some((option) => option.value === value)) return null;
+        operation[param.name] = value;
+        break;
+      }
+
+      case 'text': {
+        const text = typeof value === 'string' ? value.trim().slice(0, param.maxLength) : '';
+        if (!text) return null;
+        operation[param.name] = text;
+        break;
+      }
+
+      case 'boolean':
+        operation[param.name] = value === true;
+        break;
     }
-    case 'fontColor': {
-      const color = colourOf(raw.color);
-      return color ? { kind: 'fontColor', color } : null;
-    }
-    case 'fontFamily': {
-      const family = typeof raw.family === 'string' ? raw.family.trim().slice(0, 100) : '';
-      return family ? { kind: 'fontFamily', family } : null;
-    }
-    case 'fontSize': {
-      const size = numberOf(raw.size, 1, 1638);
-      return size === null ? null : { kind: 'fontSize', size };
-    }
-    case 'align':
-      return typeof raw.align === 'string' && (ALIGNMENTS as readonly string[]).includes(raw.align)
-        ? { kind: 'align', align: raw.align as (typeof ALIGNMENTS)[number] }
-        : null;
-    case 'lineHeight': {
-      const value = numberOf(raw.value, 0.5, 10);
-      return value === null ? null : { kind: 'lineHeight', value };
-    }
-    case 'indent': {
-      const levels = indexOf(raw.levels, 10);
-      return levels === null || levels < 1 ? null : { kind: 'indent', levels };
-    }
-    default:
-      return null;
   }
+
+  return operation as WordOperation;
 }
+
+/**
+ * Parameters a question may leave out.
+ *
+ * Only the underline's colour so far: "double underline" is a complete
+ * instruction, and Word's own Automatic is what an absent colour means.
+ */
+const OPTIONAL_PARAMS = new Set(['underlineStyle.color']);
 
 function excelOperationOf(raw: unknown): ExcelOperation | null {
   if (!isRecord(raw)) return null;

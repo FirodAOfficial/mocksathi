@@ -23,7 +23,38 @@
   background: #14284147;
 }
 
+/*
+ * Word opens Find and Replace near the top of the window, clear of the text it
+ * is searching. A dialog centred there would cover the match it just found.
+ */
+.top {
+  margin-top: 6vh;
+}
+
+/*
+ * A modeless dialog floats over a live document, so it carries its own shadow
+ * and sits above the ribbon's popovers rather than relying on a backdrop.
+ *
+ * Positioned explicitly rather than left to the user agent. A dialog opened
+ * with `show()` is laid out in the page like any other absolutely-positioned
+ * box — against its nearest positioned ancestor, which here is somewhere inside
+ * the editor's panels — so without this it would surface in whatever corner
+ * that happened to put it in.
+ */
+.modeless {
+  position: fixed;
+  top: 6vh;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1100;
+  box-shadow: 0 12px 36px #0f233c66;
+}
+
 .titleBar {
+  /* The drag handle — every Word dialog moves by its title bar. */
+  cursor: move;
+  touch-action: none;
+  user-select: none;
   background: linear-gradient(180deg, var(--frame-top), var(--frame-bottom));
   border-bottom: 1px solid var(--frame-border);
   justify-content: space-between;

@@ -101,3 +101,76 @@
 .primary {
   font-weight: 600;
 }
+
+/* -- The Font dialog's two tabs, and the grid layout they share with the
+      Paragraph dialog. Word lays both out as rows of labelled columns. -- */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #d7e0e9;
+}
+
+.tab {
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  cursor: pointer;
+  font: inherit;
+  padding: 5px 14px;
+}
+
+.tab:hover {
+  background: #eef3f9;
+}
+
+.tabActive {
+  background: #fff;
+  border-color: #d7e0e9;
+  font-weight: 600;
+  color: #17365d;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 150px;
+  min-width: 120px;
+}
+
+.narrow {
+  flex: 0 1 90px;
+  min-width: 80px;
+}
+
+.caption {
+  color: var(--text-muted);
+}
+
+/* Word's Effects block is two columns of checkboxes. */
+.effects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 6px 18px;
+  margin-top: 6px;
+}
+
+.previewBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.previewCaption {
+  color: var(--text-muted);
+}

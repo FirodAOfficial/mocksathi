@@ -44,6 +44,7 @@ function open() {
       onFind={vi.fn()}
       onReplace={vi.fn()}
       onWordCount={vi.fn()}
+      onOpenParagraphDialog={vi.fn()}
       onOpenFontDialog={vi.fn()}
     />,
   );

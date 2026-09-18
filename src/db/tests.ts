@@ -1,12 +1,6 @@
 import 'server-only';
 import { and, asc, count, desc, eq, gt, max, sum } from 'drizzle-orm';
-import {
-  buildAttempt,
-  workbookFromGrid,
-  type ExcelOperation,
-  type QuestionDraft,
-  type WordOperation,
-} from '@/exam/authoring';
+import { buildAttempt } from '@/exam/authoring';
 import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
 import { attemptsForUser, type StoredAttempt } from './attempts';
@@ -16,14 +10,13 @@ import {
   exams,
   testQuestions,
   tests,
-  type ExcelContentRow,
   type NewTest,
   type NewTestQuestion,
   type Test,
   type TestQuestion,
   type TestSubject,
-  type WordContentRow,
 } from './schema';
+import { draftFromRow } from './questionRow';
 import { slugify } from './slug';
 import type { ParsedQuestionFields, ParsedTestFields } from './testInput';
 
@@ -279,47 +272,11 @@ export async function moveQuestion(question: TestQuestion, direction: 'up' | 'do
 /* -- Rows to a paper ------------------------------------------------------- */
 
 /**
- * One stored question as an authoring draft.
- *
- * The casts are the reconciliation the schema's `jsonb` types stand in for.
- * They are safe in one direction only: everything written through
- * `parseQuestionInput` was rebuilt from the closed vocabulary in
- * `testInput.ts`, so a row cannot hold an operation the builders do not know.
- * A row written by hand, or by a future migration, is not covered — which is
- * exactly why the write path validates rather than trusting its caller.
+ * Re-exported from `questionRow.ts`, which is where it moved when it needed
+ * testing: this module is `server-only` and reaches the database client, and a
+ * pure row-to-draft mapping should be checkable without either.
  */
-export function draftFromRow(row: TestQuestion): QuestionDraft {
-  const base = {
-    number: row.position,
-    topic: row.topic,
-    difficulty: row.difficulty,
-    instruction: { en: row.instructionEn, hi: row.instructionHi },
-    solution: { en: row.solutionEn, hi: row.solutionHi },
-    marks: row.marks,
-  };
-
-  if (row.subject === 'word') {
-    const content = row.content as WordContentRow;
-    return {
-      ...base,
-      subject: 'word',
-      lines: content.lines,
-      scope: content.scope,
-      operations: row.operations as WordOperation[],
-    };
-  }
-
-  const content = row.content as ExcelContentRow;
-  return {
-    ...base,
-    subject: 'excel',
-    // The grid is stored, the workbook is built — so an edit to the sheet is
-    // an edit to cells an admin can still see, not to a snapshot no form can
-    // open again.
-    workbook: workbookFromGrid(content.grid, content.startingView),
-    operations: row.operations as ExcelOperation[],
-  };
-}
+export { draftFromRow } from './questionRow';
 
 /**
  * A stored paper as the attempt the player renders.
@@ -373,6 +330,10 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
     .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
     .where(eq(tests.status, 'published'))
     .groupBy(tests.id)
+    // An empty paper is not a mock. It is a paper an admin created and has not
+    // written yet, and listing it offers a candidate a Start button that leads
+    // to a blank page and a running clock.
+    .having(gt(count(testQuestions.id), 0))
     .orderBy(asc(tests.createdAt));
 
   const attempts: Map<string, StoredAttempt> = userId
@@ -397,7 +358,17 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       score: attempt?.score,
       accuracyPct: attempt ? Math.round(attempt.accuracyPct) : undefined,
       timeSpentSeconds: attempt?.result.you.timeSeconds,
-      maxScore: Number(totalMarks ?? 0),
+      /*
+       * A sat paper is shown out of what it was *sat* out of.
+       *
+       * The score and its total have to come from the same sitting: a question
+       * added or removed since changes what the paper is worth now, and
+       * pairing today's total with yesterday's score reads as a mark the
+       * candidate never got — "21 / 17", or a percentage over 100. A paper
+       * nobody has sat is shown out of what it is worth today, which is the
+       * only total it has.
+       */
+      maxScore: attempt ? attempt.maxScore : Number(totalMarks ?? 0),
       mockType: test.subject,
       questionCount: questions,
       dateLabel: `${test.durationMinutes} min`,
@@ -420,19 +391,26 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
  * Oldest rather than newest on purpose: the paper a candidate is shown should
  * not change under them because an admin wrote another one this morning.
  *
+ * A paper with no questions is skipped, published or not. Publishing one is
+ * something an admin does by accident — a paper is created before it is
+ * written — and handing it to a candidate gives them a timer, a blank page and
+ * nothing to do, which is worse than the sample paper they get instead.
+ *
  * Null when no test of that subject has been published yet, which is what a
  * fresh database looks like — `/exam` falls back to the sample paper rather
  * than showing a candidate an error about content that does not exist.
  */
 export async function todaysTest(subject: TestSubject): Promise<Test | null> {
   const [test] = await db
-    .select()
+    .select({ test: tests })
     .from(tests)
+    .innerJoin(testQuestions, eq(testQuestions.testId, tests.id))
     .where(and(eq(tests.subject, subject), eq(tests.status, 'published')))
+    .groupBy(tests.id)
     .orderBy(asc(tests.createdAt))
     .limit(1);
 
-  return test ?? null;
+  return test?.test ?? null;
 }
 
 /**

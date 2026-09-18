@@ -1,3 +1,4 @@
+import type { WordScope } from '@/exam/authoring/types';
 import {
   boolean,
   date,
@@ -462,8 +463,28 @@ export interface WordContentRow {
   subject: 'word';
   /** One paragraph per line, per language. */
   lines: { en: string[]; hi: string[] };
-  /** `'all'`, or the character range of the one line the question names. */
-  scope: 'all' | { from: number; to: number };
+  /**
+   * Which text the question is about.
+   *
+   * A selection from `@/editor/functions/selection` — `'all'`, a named one
+   * ("the fourth paragraph", "the word Strategy wherever it appears"), or the
+   * character range a question naming a wrapped line still needs.
+   */
+  scope: WordScope;
+  /**
+   * A question that asks for more than one thing, each with its own selection.
+   *
+   * Absent for the single-selection questions that are most of a paper, which
+   * use `scope` and the row's `operations` instead.
+   */
+  steps?: { scope: WordScope; operations: QuestionOperationRow[] }[];
+  /**
+   * Formatting the passage starts with, in the same vocabulary.
+   *
+   * What makes "remove the blue from the second paragraph" a question: without
+   * it the paragraph arrives plain and doing nothing is a correct answer.
+   */
+  initial?: { scope: WordScope; operations: QuestionOperationRow[] }[];
 }
 
 export interface ExcelContentRow {

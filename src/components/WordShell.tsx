@@ -17,6 +17,7 @@ import { TitleBar } from './TitleBar';
 import { Dialog } from './dialogs/Dialog';
 import { FindReplaceDialog } from './dialogs/FindReplaceDialog';
 import { FontDialog } from './dialogs/FontDialog';
+import { ParagraphDialog } from './dialogs/ParagraphDialog';
 import { WordCountDialog } from './dialogs/WordCountDialog';
 import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
@@ -61,7 +62,7 @@ export interface WordShellProps {
   testId?: string | null;
 }
 
-type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | null;
+type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
 
 /**
  * Composition root for the application.
@@ -77,7 +78,20 @@ export function WordShell({
   attempt: paper = null,
   testId = null,
 }: WordShellProps) {
-  const { editor, status, error, metadata, retry } = useDocumentEditor(docUrl);
+  const [dialog, setDialog] = useState<OpenDialog>(null);
+
+  /*
+   * Ctrl+F and Ctrl+H open dialogs the shell owns, so the editor is handed a
+   * way to ask for one. `setDialog` is stable for the component's lifetime, so
+   * these close over it directly and never go stale.
+   */
+  const openFind = useCallback(() => setDialog('find'), []);
+  const openReplace = useCallback(() => setDialog('replace'), []);
+
+  const { editor, status, error, metadata, retry } = useDocumentEditor(docUrl, undefined, {
+    onFind: openFind,
+    onReplace: openReplace,
+  });
   const format = useFormatState(editor);
   const clipboard = useClipboard(editor);
 
@@ -103,8 +117,6 @@ export function WordShell({
     enabled: exam && status === 'ready',
     adoptInitialContent: docUrl !== null,
   });
-
-  const [dialog, setDialog] = useState<OpenDialog>(null);
 
   /*
    * Below 768px the three columns cannot coexist: the page alone is wider than
@@ -290,6 +302,7 @@ export function WordShell({
           onReplace={() => setDialog('replace')}
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
+          onOpenParagraphDialog={() => setDialog('paragraph')}
         />
       ) : focusMode ? (
         // Focus hides the ribbon outright rather than reserving its height —
@@ -355,6 +368,10 @@ export function WordShell({
       ) : null}
 
       {editor && dialog === 'font' ? <FontDialog editor={editor} onClose={() => setDialog(null)} /> : null}
+
+      {editor && dialog === 'paragraph' ? (
+        <ParagraphDialog editor={editor} format={format} onClose={() => setDialog(null)} />
+      ) : null}
 
       {editor && dialog === 'wordCount' ? (
         <WordCountDialog

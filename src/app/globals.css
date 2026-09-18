@@ -165,3 +165,43 @@ button {
   height: 0;
 }
 
+
+/*
+ * Word's Hidden text: kept in the document, not shown — and revealed with a
+ * dotted underline when formatting marks are on, which is how a candidate finds
+ * what they hid.
+ */
+.ProseMirror [data-hidden='true'] {
+  display: none;
+}
+
+.marks .ProseMirror [data-hidden='true'] {
+  display: inline;
+  text-decoration: underline dotted;
+  opacity: 0.65;
+}
+
+/*
+ * "Don't add space between paragraphs of the same style": the space is dropped
+ * only where the neighbour really is the same style, which is a question about
+ * siblings and therefore answered here rather than in the node's own attributes.
+ */
+.ProseMirror p[data-contextual-spacing='true'] + p[data-contextual-spacing='true'] {
+  margin-top: 0;
+}
+
+.ProseMirror p[data-contextual-spacing='true']:has(+ p[data-contextual-spacing='true']) {
+  margin-bottom: 0;
+}
+
+/*
+ * The match Find is sitting on.
+ *
+ * Drawn as a decoration rather than as a selection, because the keyboard is in
+ * the Find dialog and a browser paints a text selection only in the focused
+ * element. Word's own colour for this is a grey-blue wash behind the words.
+ */
+.ProseMirror .search-match {
+  background: #b5d5ff;
+  border-radius: 1px;
+}

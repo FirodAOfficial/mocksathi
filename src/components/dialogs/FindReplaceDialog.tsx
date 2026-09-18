@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import type { Editor } from '@tiptap/react';
-import { findNext, replaceAll, replaceCurrent } from '@/editor/findReplace';
+import { useEffect } from 'react';
+import { clearSearchHighlight, findNext, replaceAll, replaceCurrent } from '@/editor/findReplace';
 import { Dialog } from './Dialog';
 import styles from './FindReplaceDialog.module.css';
 
@@ -20,6 +21,9 @@ export function FindReplaceDialog({ editor, mode, onClose }: FindReplaceDialogPr
   const [status, setStatus] = useState('');
 
   const options = { matchCase };
+
+  // The highlight belongs to this dialog; it goes when the dialog does.
+  useEffect(() => () => clearSearchHighlight(editor), [editor]);
 
   const handleFind = (): void => {
     if (query === '') return;
@@ -41,6 +45,14 @@ export function FindReplaceDialog({ editor, mode, onClose }: FindReplaceDialogPr
     <Dialog
       title={mode === 'find' ? 'Find' : 'Find and Replace'}
       onClose={onClose}
+      /*
+       * Modeless, like Word's: the document stays live behind it, which is what
+       * lets the match be selected and scrolled to while the keyboard stays in
+       * the search box. A modal dialog makes the page inert, and the match it
+       * had just found could neither be shown nor scrolled to.
+       */
+      modal={false}
+      placement="top"
       footer={
         <>
           <button type="button" className={styles.button} onClick={handleFind}>

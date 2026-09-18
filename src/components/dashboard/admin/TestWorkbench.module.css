@@ -635,3 +635,19 @@
   padding: 9px 12px;
   margin: 0;
 }
+
+/*
+ * The question preview: a sheet, because that is what the candidate opens.
+ * White on the panel's own background, so the two previews read as documents
+ * rather than as two more fields on a long form.
+ */
+.previewSheet {
+  background: #fff;
+  border: 1px solid #d7e0e9;
+  border-radius: 4px;
+  padding: 12px 14px;
+  min-height: 96px;
+  /* A long passage scrolls rather than pushing the Save button off-screen. */
+  max-height: 260px;
+  overflow: auto;
+}

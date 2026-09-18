@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, type Editor } from '@tiptap/react';
 import { useDrawerLayout, useIsPhone } from '@/hooks/useMediaQuery';
 import { MARGIN_PRESETS, pageSize, useUiStore } from '@/state/uiStore';
@@ -99,6 +100,31 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
     return () => observer.disconnect();
   }, [height, margins.top, margins.bottom, usableHeight, onPageCountChange]);
 
+  /*
+   * A press on the sheet's blank area (margins, below the last line) moves the
+   * caret to the nearest text, as Word does. A bare `focus()` would instead
+   * restore the previous selection, so a Select All could never be dismissed
+   * by clicking the page. Presses inside the text are ProseMirror's to handle.
+   */
+  const placeCaretFromPageClick = (event: MouseEvent<HTMLDivElement>): void => {
+    const { view } = editor;
+    if (event.button !== 0 || view.dom.contains(event.target as Node)) return;
+
+    // Keep the editor focused and stop the browser collapsing the selection.
+    event.preventDefault();
+
+    // Clamp into the text box so a margin press resolves to the closest line.
+    const box = view.dom.getBoundingClientRect();
+    const left = Math.min(Math.max(event.clientX, box.left + 1), box.right - 1);
+    const top = Math.min(Math.max(event.clientY, box.top + 1), box.bottom - 1);
+    const { doc, selection } = view.state;
+    const head = view.posAtCoords({ left, top })?.pos ?? (event.clientY < box.top ? 0 : doc.content.size);
+    const anchor = event.shiftKey ? selection.anchor : head;
+
+    view.dispatch(view.state.tr.setSelection(TextSelection.between(doc.resolve(anchor), doc.resolve(head))));
+    view.focus();
+  };
+
   return (
     <div className={styles.canvas}>
       <div className={styles.scroll} data-page-column ref={scrollRef}>
@@ -133,7 +159,7 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
                 transform: `scale(${zoom})`,
                 ...(pageColor ? { background: pageColor } : {}),
               }}
-              onClick={() => editor.commands.focus()}
+              onMouseDown={placeCaretFromPageClick}
             >
               {/*
                 Drawn behind the text and hidden from the accessibility tree: a

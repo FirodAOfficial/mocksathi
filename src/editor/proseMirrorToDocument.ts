@@ -12,6 +12,7 @@ import type {
   TextRun,
 } from '@/services/document/types';
 import { EMPTY_PARAGRAPH_FORMATTING } from '@/services/document/types';
+import { isUnderlineStyle } from './functions/underline';
 
 /**
  * ProseMirror document JSON -> normalised model.
@@ -119,11 +120,17 @@ function readParagraphFormatting(attrs: Record<string, unknown>): ParagraphForma
     ...EMPTY_PARAGRAPH_FORMATTING,
     align: (attrs.textAlign as ParagraphFormatting['align']) ?? null,
     lineHeight: number(attrs.lineHeight),
+    lineSpacingMode:
+      attrs.lineSpacingMode === 'multiple' || attrs.lineSpacingMode === 'atLeast' || attrs.lineSpacingMode === 'exactly'
+        ? attrs.lineSpacingMode
+        : null,
+    lineSpacingPt: number(attrs.lineSpacingPt),
     indentLeft: number(attrs.indentLeft),
     indentRight: number(attrs.indentRight),
     indentFirstLine: number(attrs.indentFirstLine),
     spaceBefore: number(attrs.spaceBefore),
     spaceAfter: number(attrs.spaceAfter),
+    contextualSpacing: attrs.contextualSpacing === true ? true : null,
     borders: (attrs.borders as ParagraphFormatting['borders']) ?? null,
   };
 }
@@ -154,9 +161,15 @@ function readMarks(marks: NonNullable<JSONContent['marks']>): RunFormatting {
       case 'italic':
         formatting.italic = true;
         break;
-      case 'underline':
+      case 'underline': {
         formatting.underline = true;
+        const attrs = mark.attrs ?? {};
+        // The style and colour ride on the underline mark, so a run is
+        // underlined once, in one style — see `UnderlineFormat`.
+        if (isUnderlineStyle(attrs.style) && attrs.style !== 'single') formatting.underlineStyle = attrs.style;
+        if (typeof attrs.color === 'string') formatting.underlineColor = attrs.color;
         break;
+      }
       case 'strike':
         formatting.strike = true;
         break;
@@ -183,6 +196,9 @@ function readMarks(marks: NonNullable<JSONContent['marks']>): RunFormatting {
         if (typeof attrs.charSpacing === 'number' && Number.isFinite(attrs.charSpacing)) {
           formatting.charSpacing = attrs.charSpacing;
         }
+        if (attrs.doubleStrike === true) formatting.doubleStrike = true;
+        if (attrs.caps === 'small' || attrs.caps === 'all') formatting.caps = attrs.caps;
+        if (attrs.hidden === true) formatting.hidden = true;
         break;
       }
       case 'highlight': {

@@ -1,3 +1,4 @@
+import type { SelectionSpec } from '@/editor/functions/selection';
 import type { NormalizedStyleId, ParagraphFormatting } from '@/services/document/types';
 import type { MarkName } from './flatten';
 
@@ -11,7 +12,15 @@ import type { MarkName } from './flatten';
  */
 export type Target =
   | { by: 'range'; block: number; from: number; to: number }
-  | { by: 'text'; text: string; occurrence?: number }
+  /**
+   * A named selection — the third word, the second sentence, a phrase.
+   *
+   * Resolved against the document being marked rather than stored as offsets,
+   * so one key is correct for every language the passage is offered in.
+   */
+  | { by: 'selection'; selection: SelectionSpec }
+  /** `occurrence: 'all'` is "wherever it appears in the document". */
+  | { by: 'text'; text: string; occurrence?: number | 'all' }
   | { by: 'block'; block: number }
   /** Everything in one table cell, addressed by its coordinates. */
   | { by: 'cell'; table?: number; row: number; column: number }
@@ -30,6 +39,15 @@ export interface Exemption {
   marks?: MarkName[];
   /** Paragraph formatting the question asked for. */
   paragraph?: (keyof ParagraphFormatting)[];
+  /**
+   * The paragraph style, and list membership.
+   *
+   * Both are checked by `unchanged` on their own rather than as paragraph
+   * properties — applying Heading 1 changes the node type, not an attribute —
+   * so a question that asks for one needs its own licence to change it.
+   */
+  style?: boolean;
+  list?: boolean;
 }
 
 /** Which blocks a paragraph-level criterion applies to. */
@@ -58,8 +76,19 @@ export interface TextExpectation {
  * brown*" — not as an internal assertion name.
  */
 export type Criterion = { label: string } & (
-  /** `value` may list alternatives, e.g. either of Word's two reds. */
-  | { kind: 'marked'; target: Target; mark: MarkName; value?: string | number | (string | number)[] }
+  /**
+   * `value` may list alternatives, e.g. either of Word's two reds. `not` is the
+   * other half of that: "highlight it in any colour except yellow" is a real
+   * question, and it is the formatting being present *and* different that makes
+   * it right.
+   */
+  | {
+      kind: 'marked';
+      target: Target;
+      mark: MarkName;
+      value?: string | number | (string | number)[];
+      not?: (string | number)[];
+    }
   /** Carries no formatting at all — what "remove formatting" must achieve. */
   | { kind: 'plain'; target: Target }
   /** One column repeats another, row for row. */

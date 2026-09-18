@@ -20,6 +20,8 @@ import {
   setParagraphStyle,
   sortParagraphs,
   setTextColor,
+  setUnderlineColor,
+  setUnderlineStyle,
   stepFontSize,
   toggleBulletList,
   toggleOrderedList,
@@ -34,6 +36,7 @@ import { NumberCombo } from '../controls/NumberCombo';
 import { SelectMenu } from '../controls/SelectMenu';
 import { ToolbarButton } from '../controls/ToolbarButton';
 import { Popover } from '../controls/Popover';
+import { UnderlinePicker } from '../controls/UnderlinePicker';
 import { Icon } from '../icons/Icon';
 import { RibbonColumn, RibbonGroup, RibbonRow } from './RibbonGroup';
 import styles from './HomeTab.module.css';
@@ -46,6 +49,8 @@ export interface HomeTabProps {
   onReplace: () => void;
   /** Opens the Font dialog, where the effects and character spacing live. */
   onOpenFontDialog: () => void;
+  /** Opens the Paragraph dialog, from the Paragraph group's launcher arrow. */
+  onOpenParagraphDialog: () => void;
 }
 
 // `noUncheckedIndexedAccess` makes CSS-module lookups optional; the class is
@@ -77,7 +82,15 @@ const BORDER_OPTIONS: { label: string; value: ParagraphBorders | null }[] = [
  * itself holds no editing logic, which keeps it readable at this size and means
  * the command behaviour is testable without mounting the ribbon.
  */
-export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFontDialog }: HomeTabProps) {
+export function HomeTab({
+  editor,
+  format,
+  clipboard,
+  onFind,
+  onReplace,
+  onOpenFontDialog,
+  onOpenParagraphDialog,
+}: HomeTabProps) {
   const showFormattingMarks = useUiStore((state) => state.showFormattingMarks);
   const toggleFormattingMarks = useUiStore((state) => state.toggleFormattingMarks);
 
@@ -182,11 +195,18 @@ export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFo
               active={format.italic}
               onClick={() => editor.chain().focus().toggleItalic().run()}
             />
-            <ToolbarButton
-              label="Underline"
-              glyph={<u>U</u>}
+            {/*
+              Word's split button: the left half underlines, the arrow offers
+              the styles, their colour, and the way through to the Font dialog.
+            */}
+            <UnderlinePicker
               active={format.underline}
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              style={format.underlineStyle}
+              color={format.underlineColor}
+              onToggle={() => editor.chain().focus().toggleUnderline().run()}
+              onSelectStyle={(style) => setUnderlineStyle(editor, style)}
+              onSelectColour={(color) => setUnderlineColor(editor, color)}
+              onMoreUnderlines={onOpenFontDialog}
             />
             <ToolbarButton
               label="Strikethrough"
@@ -236,7 +256,7 @@ export function HomeTab({ editor, format, clipboard, onFind, onReplace, onOpenFo
         </RibbonColumn>
       </RibbonGroup>
 
-      <RibbonGroup label="Paragraph">
+      <RibbonGroup label="Paragraph" onLaunch={onOpenParagraphDialog} launchLabel="Paragraph dialog">
         <RibbonColumn>
           <RibbonRow>
             <ToolbarButton label="Bullets" icon="bullet-list" active={format.bulletList} onClick={() => toggleBulletList(editor)} />

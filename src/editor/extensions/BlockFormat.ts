@@ -16,11 +16,14 @@ export { INDENT_STEP_PX, MAX_INDENT_PX } from '@/utils/indent';
 
 export interface BlockFormatAttributes {
   lineHeight: number | null;
+  lineSpacingMode: 'multiple' | 'atLeast' | 'exactly' | null;
+  lineSpacingPt: number | null;
   indentLeft: number | null;
   indentRight: number | null;
   indentFirstLine: number | null;
   spaceBefore: number | null;
   spaceAfter: number | null;
+  contextualSpacing: boolean | null;
   borders: ParagraphBorders | null;
 }
 
@@ -30,8 +33,16 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     blockFormat: {
       setLineHeight: (lineHeight: number | null) => ReturnType;
+      /** The Paragraph dialog's At least / Exactly, measured in points. */
+      setLineSpacingAt: (mode: 'atLeast' | 'exactly' | null, points: number | null) => ReturnType;
       setParagraphSpacing: (spacing: { before?: number | null; after?: number | null }) => ReturnType;
-      setParagraphIndents: (indents: { left?: number | null; right?: number | null }) => ReturnType;
+      /** "Don't add space between paragraphs of the same style". */
+      setContextualSpacing: (on: boolean) => ReturnType;
+      setParagraphIndents: (indents: {
+        left?: number | null;
+        right?: number | null;
+        firstLine?: number | null;
+      }) => ReturnType;
       setParagraphBorders: (borders: ParagraphBorders | null) => ReturnType;
       changeIndent: (direction: 1 | -1) => ReturnType;
       clearBlockFormat: () => ReturnType;
@@ -51,7 +62,7 @@ function parsePx(raw: string | null | undefined): number | null {
 
 function borderCss(borders: ParagraphBorders | null): Record<string, string> {
   if (!borders) return {};
-  const edge = '1px solid #000000';
+  const edge = `1px solid ${borders.color ?? '#000000'}`;
   const styles: Record<string, string> = {};
   if (borders.top) styles['border-top'] = edge;
   if (borders.bottom) styles['border-bottom'] = edge;
@@ -94,6 +105,39 @@ export const BlockFormat = Extension.create({
             renderHTML: (attributes) =>
               attributes.lineHeight ? { style: `line-height: ${String(attributes.lineHeight)}` } : {},
           },
+
+          /**
+           * Word's three line-spacing modes.
+           *
+           * `multiple` is the multiplier in `lineHeight`; `atLeast` and
+           * `exactly` are a measurement in points, so they are carried
+           * separately rather than folded into the same number. CSS has no "at
+           * least": a `line-height` is what the line gets, and a taller glyph
+           * overflows it instead of pushing the line open. The mode is recorded
+           * exactly and marked on, and both render as the measurement — noted
+           * here rather than left to be discovered.
+           */
+          lineSpacingMode: {
+            default: null,
+            parseHTML: (element) => element.getAttribute('data-line-spacing-mode'),
+            renderHTML: (attributes) =>
+              attributes.lineSpacingMode
+                ? { 'data-line-spacing-mode': String(attributes.lineSpacingMode) }
+                : {},
+          },
+          lineSpacingPt: {
+            default: null,
+            parseHTML: (element) => {
+              const raw = element.getAttribute('data-line-spacing-pt');
+              const value = raw === null ? Number.NaN : Number.parseFloat(raw);
+              return Number.isFinite(value) ? value : null;
+            },
+            renderHTML: (attributes) => {
+              const points = attributes.lineSpacingPt as number | null;
+              if (!points) return {};
+              return { 'data-line-spacing-pt': String(points), style: `line-height: ${points}pt` };
+            },
+          },
           indentLeft: {
             default: null,
             parseHTML: (element) => parsePx(element.style.marginLeft),
@@ -134,6 +178,19 @@ export const BlockFormat = Extension.create({
               return value ? { style: `margin-bottom: ${value}` } : {};
             },
           },
+          /*
+           * Word's "Don't add space between paragraphs of the same style".
+           * Rendered as a data attribute and a CSS hook rather than by zeroing
+           * the margins here: which neighbours share this paragraph's style is
+           * a question only the page can answer, and `:has()` in `globals.css`
+           * is where it is answered.
+           */
+          contextualSpacing: {
+            default: null,
+            parseHTML: (element) => (element.getAttribute('data-contextual-spacing') === 'true' ? true : null),
+            renderHTML: (attributes) =>
+              attributes.contextualSpacing ? { 'data-contextual-spacing': 'true' } : {},
+          },
           borders: {
             default: null,
             parseHTML: (element) => {
@@ -143,13 +200,21 @@ export const BlockFormat = Extension.create({
                 left: element.style.borderLeftStyle === 'solid',
                 right: element.style.borderRightStyle === 'solid',
               };
-              return Object.values(borders).some(Boolean) ? borders : null;
+              const edges = [borders.top, borders.bottom, borders.left, borders.right];
+              if (!edges.some(Boolean)) return null;
+
+              const colour = element.getAttribute('data-border-color');
+              return colour ? { ...borders, color: colour } : borders;
             },
             renderHTML: (attributes) => {
-              const styles = borderCss(attributes.borders as ParagraphBorders | null);
+              const borders = attributes.borders as ParagraphBorders | null;
+              const styles = borderCss(borders);
               const entries = Object.entries(styles);
               if (entries.length === 0) return {};
-              return { style: entries.map(([key, value]) => `${key}: ${value}`).join('; ') };
+              return {
+                ...(borders?.color ? { 'data-border-color': borders.color } : {}),
+                style: entries.map(([key, value]) => `${key}: ${value}`).join('; '),
+              };
             },
           },
         },
@@ -190,8 +255,26 @@ export const BlockFormat = Extension.create({
           const attributes: Record<string, unknown> = {};
           if ('left' in indents) attributes.indentLeft = indents.left;
           if ('right' in indents) attributes.indentRight = indents.right;
+          if ('firstLine' in indents) attributes.indentFirstLine = indents.firstLine;
           return applyToBlocks(attributes)({ commands: commands as never });
         },
+
+      // The measurement and the mode move together: a paragraph set to
+      // "Exactly" with no measurement is not a state Word's dialog can produce.
+      setLineSpacingAt:
+        (mode, points) =>
+        ({ commands }) =>
+          applyToBlocks({
+            lineSpacingMode: mode,
+            lineSpacingPt: mode === null ? null : points,
+            // A measured spacing replaces a multiplier rather than joining it.
+            ...(mode === null ? {} : { lineHeight: null }),
+          })({ commands: commands as never }),
+
+      setContextualSpacing:
+        (on) =>
+        ({ commands }) =>
+          applyToBlocks({ contextualSpacing: on ? true : null })({ commands: commands as never }),
 
       setParagraphBorders:
         (borders) =>
@@ -226,11 +309,14 @@ export const BlockFormat = Extension.create({
         ({ commands }) =>
           applyToBlocks({
             lineHeight: null,
+            lineSpacingMode: null,
+            lineSpacingPt: null,
             indentLeft: null,
             indentRight: null,
             indentFirstLine: null,
             spaceBefore: null,
             spaceAfter: null,
+            contextualSpacing: null,
             borders: null,
           })({ commands: commands as never }),
     };
