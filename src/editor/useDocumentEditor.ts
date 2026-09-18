@@ -37,7 +37,17 @@ interface LoadOutcome {
   metadata: DocumentMetadata;
 }
 
-export function useDocumentEditor(docUrl: string | null, loader?: DocumentLoader): DocumentEditorState {
+export function useDocumentEditor(
+  docUrl: string | null,
+  loader?: DocumentLoader,
+  /**
+   * What Ctrl+F and Ctrl+H should do.
+   *
+   * The dialogs belong to the shell, so the editor is handed a way to ask for
+   * one. Read once, when the editor is built — pass stable handlers.
+   */
+  shortcuts?: { onFind: () => void; onReplace: () => void },
+): DocumentEditorState {
   const [outcome, setOutcome] = useState<LoadOutcome | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -45,7 +55,7 @@ export function useDocumentEditor(docUrl: string | null, loader?: DocumentLoader
   const documentLoader = useMemo(() => loader ?? new UrlDocumentLoader(), [loader]);
 
   const editor = useEditor({
-    extensions: buildEditorExtensions(),
+    extensions: buildEditorExtensions(shortcuts),
     content: '',
     // Next renders this tree on the server first; deferring the initial render
     // avoids a hydration mismatch against ProseMirror's generated DOM.

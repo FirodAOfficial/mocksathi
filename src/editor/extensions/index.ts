@@ -21,17 +21,26 @@ import { BLOCK_FORMAT_TYPES, BlockFormat } from './BlockFormat';
 import { CharacterFormat } from './CharacterFormat';
 import { UnderlineFormat } from './UnderlineFormat';
 import { RibbonOnlyShortcuts, ribbonOnly } from './ribbonOnlyShortcuts';
+import { SearchHighlight } from './SearchHighlight';
+import { WordShortcuts, type WordShortcutsOptions } from './WordShortcuts';
 
 /**
  * The editor's schema and behaviour, assembled by hand.
  *
  * `StarterKit` is deliberately not used: it bundles its own keymaps and input
- * rules, and the point of this build is that every formatting trigger is
- * explicit. Listing the extensions individually is also what makes the
- * shortcut-stripping in `ribbonOnly` auditable — you can see exactly which
- * extensions are in the schema and what each was allowed to keep.
+ * rules, and the point of this build is that every trigger is *explicit*.
+ * Listing the extensions individually is what makes that auditable — you can
+ * see exactly which extensions are in the schema and what each was allowed to
+ * keep.
+ *
+ * Each extension arrives through `ribbonOnly`, which strips its keymap and its
+ * input rules. The input rules stay gone for good: Word does not turn `**x**`
+ * into bold as you type, and a second, quieter way to format would be a way to
+ * format without meaning to. The keymap is then put back deliberately, in
+ * `WordShortcuts` — one file listing every key that does something, rather than
+ * whatever each extension happened to bind.
  */
-export function buildEditorExtensions(): AnyExtension[] {
+export function buildEditorExtensions(shortcuts: Partial<WordShortcutsOptions> = {}): AnyExtension[] {
   return [
     // Structure
     Document,
@@ -50,8 +59,9 @@ export function buildEditorExtensions(): AnyExtension[] {
      * Enter falls through to the base keymap, which adds a paragraph inside the
      * current bullet, so the next bullet only appeared on a second press.
      *
-     * Tab and Shift-Tab stay stripped: nesting a list item is formatting, and
-     * formatting comes from the ribbon.
+     * Tab and Shift-Tab stay stripped: in Word, Tab in a list indents only at
+     * the start of an item, and a candidate tabbing mid-sentence expects a tab.
+     * Changing the list level has its own buttons, and its own shortcut.
      */
     ribbonOnly(BulletList),
     ribbonOnly(OrderedList),
@@ -60,10 +70,10 @@ export function buildEditorExtensions(): AnyExtension[] {
     /*
      * Tables keep Tab and Shift-Tab.
      *
-     * That is the one place the no-shortcuts rule bends, and deliberately: Tab
-     * in a table moves the cursor between cells. It is navigation, in the same
-     * category as the arrow keys, not a formatting command — and without it a
-     * table cannot be filled in at all.
+     * Tab in a table moves the cursor between cells: navigation, in the same
+     * category as the arrow keys, and without it a table cannot be filled in at
+     * all. It stays with the extension rather than being restated in
+     * `WordShortcuts`, because it is not a command — it is how you move.
      */
     ribbonOnly(Table.configure({ resizable: false }), ['Tab', 'Shift-Tab']),
     ribbonOnly(TableRow),
@@ -105,6 +115,15 @@ export function buildEditorExtensions(): AnyExtension[] {
     CharacterCount,
     Placeholder.configure({ placeholder: 'Type here to begin your document.' }),
 
+    // Find's current match, drawn while the keyboard is in the dialog.
+    SearchHighlight,
+
+    /*
+     * Word's keyboard shortcuts, listed one by one, ahead of the guard that
+     * swallows everything else. The extensions' own keymaps stay stripped, so
+     * this file plus `WordShortcuts` is the whole list of what a key does.
+     */
+    WordShortcuts.configure({ onFind: shortcuts.onFind ?? null, onReplace: shortcuts.onReplace ?? null }),
     RibbonOnlyShortcuts,
   ];
 }

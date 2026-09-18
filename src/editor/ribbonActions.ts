@@ -4,6 +4,7 @@ import type { Editor } from '@tiptap/react';
 import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { CapsMode, TextEffect } from './extensions/CharacterFormat';
 import type { UnderlineStyle } from './functions/underline';
+import { DEFAULT_FONT_SIZE_PT, steppedFontSize } from './fontSizes';
 import { applyCase, type LetterCase } from '@/utils/letterCase';
 import type { NormalizedStyleId, ParagraphBorders, TextAlignment } from '@/services/document/types';
 
@@ -16,19 +17,15 @@ import type { NormalizedStyleId, ParagraphBorders, TextAlignment } from '@/servi
  * without rendering anything.
  */
 
-/** The size ladder Word's Grow/Shrink Font buttons step through. */
-export const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72] as const;
-
-export const DEFAULT_FONT_SIZE_PT = 11;
-
-/**
- * The range the size box accepts, matching Word.
- *
- * `FONT_SIZES` is only the drop-down's shortlist — it skips 13 and 15, so a
- * question asking for either is answered by typing into the box.
- */
-export const MIN_FONT_SIZE_PT = 1;
-export const MAX_FONT_SIZE_PT = 1638;
+// The ladder moved to its own module when the keyboard learned to step along
+// it too; re-exported so the ribbon's importers do not have to care.
+export {
+  DEFAULT_FONT_SIZE_PT,
+  FONT_SIZES,
+  MAX_FONT_SIZE_PT,
+  MIN_FONT_SIZE_PT,
+  steppedFontSize,
+} from './fontSizes';
 
 export const FONT_FAMILIES = [
   'Calibri',
@@ -61,12 +58,7 @@ export function setFontSize(editor: Editor, points: number): void {
 
 /** Moves one step along the size ladder rather than by a fixed increment. */
 export function stepFontSize(editor: Editor, direction: 1 | -1): void {
-  const current = currentFontSize(editor);
-  const sizes = [...FONT_SIZES];
-  const index = sizes.findIndex((size) => size >= current);
-  const base = index === -1 ? sizes.length - 1 : index;
-  const nextIndex = Math.min(sizes.length - 1, Math.max(0, base + direction));
-  setFontSize(editor, sizes[nextIndex] ?? DEFAULT_FONT_SIZE_PT);
+  setFontSize(editor, steppedFontSize(currentFontSize(editor), direction));
 }
 
 export function setFontFamily(editor: Editor, family: string): void {

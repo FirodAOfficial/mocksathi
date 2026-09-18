@@ -78,7 +78,20 @@ export function WordShell({
   attempt: paper = null,
   testId = null,
 }: WordShellProps) {
-  const { editor, status, error, metadata, retry } = useDocumentEditor(docUrl);
+  const [dialog, setDialog] = useState<OpenDialog>(null);
+
+  /*
+   * Ctrl+F and Ctrl+H open dialogs the shell owns, so the editor is handed a
+   * way to ask for one. `setDialog` is stable for the component's lifetime, so
+   * these close over it directly and never go stale.
+   */
+  const openFind = useCallback(() => setDialog('find'), []);
+  const openReplace = useCallback(() => setDialog('replace'), []);
+
+  const { editor, status, error, metadata, retry } = useDocumentEditor(docUrl, undefined, {
+    onFind: openFind,
+    onReplace: openReplace,
+  });
   const format = useFormatState(editor);
   const clipboard = useClipboard(editor);
 
@@ -104,8 +117,6 @@ export function WordShell({
     enabled: exam && status === 'ready',
     adoptInitialContent: docUrl !== null,
   });
-
-  const [dialog, setDialog] = useState<OpenDialog>(null);
 
   /*
    * Below 768px the three columns cannot coexist: the page alone is wider than

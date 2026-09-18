@@ -330,6 +330,10 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
     .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
     .where(eq(tests.status, 'published'))
     .groupBy(tests.id)
+    // An empty paper is not a mock. It is a paper an admin created and has not
+    // written yet, and listing it offers a candidate a Start button that leads
+    // to a blank page and a running clock.
+    .having(gt(count(testQuestions.id), 0))
     .orderBy(asc(tests.createdAt));
 
   const attempts: Map<string, StoredAttempt> = userId
@@ -354,7 +358,17 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       score: attempt?.score,
       accuracyPct: attempt ? Math.round(attempt.accuracyPct) : undefined,
       timeSpentSeconds: attempt?.result.you.timeSeconds,
-      maxScore: Number(totalMarks ?? 0),
+      /*
+       * A sat paper is shown out of what it was *sat* out of.
+       *
+       * The score and its total have to come from the same sitting: a question
+       * added or removed since changes what the paper is worth now, and
+       * pairing today's total with yesterday's score reads as a mark the
+       * candidate never got — "21 / 17", or a percentage over 100. A paper
+       * nobody has sat is shown out of what it is worth today, which is the
+       * only total it has.
+       */
+      maxScore: attempt ? attempt.maxScore : Number(totalMarks ?? 0),
       mockType: test.subject,
       questionCount: questions,
       dateLabel: `${test.durationMinutes} min`,
@@ -377,19 +391,26 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
  * Oldest rather than newest on purpose: the paper a candidate is shown should
  * not change under them because an admin wrote another one this morning.
  *
+ * A paper with no questions is skipped, published or not. Publishing one is
+ * something an admin does by accident — a paper is created before it is
+ * written — and handing it to a candidate gives them a timer, a blank page and
+ * nothing to do, which is worse than the sample paper they get instead.
+ *
  * Null when no test of that subject has been published yet, which is what a
  * fresh database looks like — `/exam` falls back to the sample paper rather
  * than showing a candidate an error about content that does not exist.
  */
 export async function todaysTest(subject: TestSubject): Promise<Test | null> {
   const [test] = await db
-    .select()
+    .select({ test: tests })
     .from(tests)
+    .innerJoin(testQuestions, eq(testQuestions.testId, tests.id))
     .where(and(eq(tests.subject, subject), eq(tests.status, 'published')))
+    .groupBy(tests.id)
     .orderBy(asc(tests.createdAt))
     .limit(1);
 
-  return test ?? null;
+  return test?.test ?? null;
 }
 
 /**

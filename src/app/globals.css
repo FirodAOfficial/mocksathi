@@ -193,3 +193,15 @@ button {
 .ProseMirror p[data-contextual-spacing='true']:has(+ p[data-contextual-spacing='true']) {
   margin-bottom: 0;
 }
+
+/*
+ * The match Find is sitting on.
+ *
+ * Drawn as a decoration rather than as a selection, because the keyboard is in
+ * the Find dialog and a browser paints a text selection only in the focused
+ * element. Word's own colour for this is a grey-blue wash behind the words.
+ */
+.ProseMirror .search-match {
+  background: #b5d5ff;
+  border-radius: 1px;
+}
