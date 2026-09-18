@@ -19,6 +19,13 @@ import type { WordQuestionDraft } from '@/exam/authoring';
  *
  * ## Two constraints these papers are written around
  *
+ * **Each paper is marked out of 25.** Every question is worth 1, 2 or 3, by how
+ * much it asks for: one operation on named text is 1, a harder operation or a
+ * second one is 2, and 3 goes to the questions that are really two — a
+ * replacement *and* the formatting of what replaced it, or a list applied to
+ * three separate paragraphs. The pass mark is 10, the same proportion the
+ * sample papers use.
+ *
  * **A paper is sat in one language, and marked by one key.** So a question that
  * names text by its words — "wherever 'MSP' appears" — has to name something
  * that reads the same in both passages. The papers use codes and terms that
@@ -115,7 +122,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 1,
     topic: 'Find and Replace, Font',
     difficulty: 'Hard',
-    marks: 2,
+    marks: 3,
     instruction: bilingual(
       "Replace 'MSP' with 'MRP' wherever it appears in the document, then make it bold and give it a wavy underline.",
       "डॉक्यूमेंट में जहाँ भी 'MSP' हो उसे 'MRP' में बदलें, फिर उसे बोल्ड और वेव (wavy) अंडरलाइन करें।",
@@ -143,7 +150,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 2,
     topic: 'Font colour',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       'Remove the blue colour from the text of the second paragraph.',
       'दूसरे पैराग्राफ के टेक्स्ट का नीला (blue) रंग दूर करें।',
@@ -163,7 +170,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 3,
     topic: 'Paragraph borders',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     // Stands in for "add a blank column to the table": the document model has
     // no table structure operations, so that question cannot be marked.
     instruction: bilingual(
@@ -198,7 +205,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 5,
     topic: 'Highlight',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       'Highlight the first paragraph in any colour except yellow.',
       'पहले पैराग्राफ को किसी भी रंग से हाईलाइट करें, लेकिन पीले (yellow) रंग का उपयोग न करें।',
@@ -261,7 +268,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 9,
     topic: 'Underline styles',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       'Apply a wave underline to the fourth paragraph.',
       'चौथे पैराग्राफ को वेव अंडरलाइन (wave underline) करें।',
@@ -292,7 +299,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 11,
     topic: 'Indentation',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     // Stands in for "indent the cell at row 2, column 1 by 0.5 inches".
     instruction: bilingual(
       'Give the second paragraph a left indent of 0.5 inches.',
@@ -311,7 +318,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 12,
     topic: 'Bold and underline',
     difficulty: 'Easy',
-    marks: 1,
+    marks: 2,
     // Stands in for "bold and underline the table's fifth row".
     instruction: bilingual(
       'Make the fifth paragraph bold and underlined.',
@@ -345,7 +352,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 14,
     topic: 'Paragraph borders',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     // Stands in for "put a page border on the first page only": page settings
     // are not part of the document the marker sees.
     instruction: bilingual(
@@ -365,7 +372,7 @@ const PAPER_4_QUESTIONS: WordQuestionDraft[] = [
     number: 15,
     topic: 'Styles',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     // Stands in for the two header questions.
     instruction: bilingual(
       'Apply the Heading 1 style to the first paragraph.',
@@ -389,7 +396,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 1,
     topic: 'Subscript',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       "Apply the subscript effect to the word 'Strategy' wherever it appears in the document.",
       "डॉक्यूमेंट में जहाँ भी 'Strategy' शब्द हो, उस पर सबस्क्रिप्ट प्रभाव लगाएँ।",
@@ -425,7 +432,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 3,
     topic: 'Highlight',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       'Remove the highlight from the third paragraph.',
       'तीसरे पैराग्राफ का हाईलाइट हटाएँ।',
@@ -461,7 +468,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 5,
     topic: 'Underline styles',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       "Apply a double underline to the word 'Innovation' wherever it occurs.",
       "जहाँ भी 'Innovation' शब्द आए, उस पर डबल अंडरलाइन लगाएँ।",
@@ -479,7 +486,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 6,
     topic: 'Indentation',
     difficulty: 'Medium',
-    marks: 1,
+    marks: 2,
     instruction: bilingual(
       'Set the left indent of the first paragraph to 1.1 inches.',
       'पहले पैराग्राफ का बायाँ इंडेंट 1.1 इंच सेट करें।',
@@ -535,7 +542,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 9,
     topic: 'Paragraph borders',
     difficulty: 'Hard',
-    marks: 2,
+    marks: 3,
     instruction: bilingual(
       'Apply an outside border to the second paragraph and set its colour to red.',
       'दूसरे पैराग्राफ पर बाहरी बॉर्डर लगाकर उसका रंग लाल (red) करें।',
@@ -553,7 +560,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 10,
     topic: 'Line spacing',
     difficulty: 'Hard',
-    marks: 1,
+    marks: 2,
     // Stands in for "set the table's border width to 3 pt".
     instruction: bilingual(
       'Set the line spacing of the fifth paragraph to exactly 18 pt.',
@@ -610,7 +617,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 13,
     topic: 'Indentation',
     difficulty: 'Hard',
-    marks: 1,
+    marks: 2,
     // Stands in for "set the gutter margin to the top, 0.5 inches".
     instruction: bilingual(
       'Give the third paragraph a hanging indent of 0.5 inches.',
@@ -629,7 +636,7 @@ const PAPER_5_QUESTIONS: WordQuestionDraft[] = [
     number: 14,
     topic: 'Lists',
     difficulty: 'Hard',
-    marks: 2,
+    marks: 3,
     instruction: bilingual(
       'Apply a numbered list format to the first, second and fourth paragraphs.',
       'पहले, दूसरे और चौथे पैराग्राफ पर क्रमांकित (numbered) सूची लगाएँ।',
@@ -672,7 +679,7 @@ export const WORD_EFFICIENCY_4: WordPaper = {
   tagline: 'Formatting drill on a district notice — replace, highlight, underline, indent.',
   sectionName: 'Word Processing',
   durationMinutes: 20,
-  qualifyingMarks: 7,
+  qualifyingMarks: 10,
   questions: PAPER_4_QUESTIONS,
 };
 
@@ -682,7 +689,7 @@ export const WORD_EFFICIENCY_5: WordPaper = {
   tagline: 'Formatting drill on a company circular — effects, borders, spacing, lists.',
   sectionName: 'Word Processing',
   durationMinutes: 20,
-  qualifyingMarks: 8,
+  qualifyingMarks: 10,
   questions: PAPER_5_QUESTIONS,
 };
 

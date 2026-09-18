@@ -47,6 +47,25 @@ function attemptFor(paper: WordPaper) {
 describe.each(WORD_EFFICIENCY_PAPERS)('$name', (paper) => {
   const numbers = paper.questions.map((draft) => draft.number);
 
+  it('is marked out of 25, in marks of 1 to 3', () => {
+    // The figure the result screen and the mock list both show. Every question
+    // carries some of it, and no question is worth more than three — a paper
+    // where one question is half the marks is a paper about one question.
+    expect(paper.questions.reduce((total, draft) => total + draft.marks, 0)).toBe(25);
+
+    for (const draft of paper.questions) {
+      expect(draft.marks).toBeGreaterThanOrEqual(1);
+      expect(draft.marks).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('can be passed, and not by accident', () => {
+    // A pass mark above the total could never be reached; one at or below zero
+    // would pass a candidate who did nothing.
+    expect(paper.qualifyingMarks).toBeGreaterThan(0);
+    expect(paper.qualifyingMarks).toBeLessThan(25);
+  });
+
   it('numbers its questions 1..n with no gaps', () => {
     // The palette, the instructions screen and the result all call the
     // questions by these numbers; a gap reads as a question that failed to load.
