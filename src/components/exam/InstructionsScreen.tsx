@@ -13,6 +13,7 @@ import {
   TERMS,
 } from '@/exam/instructions';
 import { LANGUAGES, allQuestions, localised, type ExamAttempt, type Language } from '@/exam/types';
+import { enterFullscreen } from '@/utils/fullscreen';
 import { MetaIconMark, MockSathiLogo } from '../result/ResultArt';
 import styles from './InstructionsScreen.module.css';
 
@@ -226,6 +227,8 @@ export function InstructionsScreen({
             className={styles.primaryButton}
             disabled={!agreed}
             onClick={() => {
+              // Here rather than in the editor: fullscreen needs this click.
+              enterFullscreen();
               const editor = isExcel ? '/spreadsheet' : '/editor';
               const test = testSlug ? `&test=${encodeURIComponent(testSlug)}` : '';
               router.push(`${editor}?mode=exam&lang=${sittingIn}${test}`);
