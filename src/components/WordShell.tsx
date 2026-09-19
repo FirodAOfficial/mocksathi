@@ -12,6 +12,7 @@ import { elapsedSeconds, selectIsLocked, useExamStore } from '@/state/examStore'
 import type { DocumentMetadata } from '@/services/document/types';
 import type { ExamAttempt, Language } from '@/exam/types';
 import { useUiStore } from '@/state/uiStore';
+import { exitFullscreen } from '@/utils/fullscreen';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
 import { Dialog } from './dialogs/Dialog';
@@ -211,6 +212,9 @@ export function WordShell({
    */
   useEffect(() => {
     if (!submittedBy) return;
+
+    // The sitting is over, whether the candidate submitted or the clock did.
+    exitFullscreen();
 
     const controller = new AbortController();
     void (async () => {

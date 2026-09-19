@@ -17,6 +17,7 @@ import { useQuestionWorkbooks } from '@/spreadsheet/useQuestionWorkbooks';
 import { WorkbookProvider, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { elapsedSeconds, useExamStore } from '@/state/examStore';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
+import { exitFullscreen } from '@/utils/fullscreen';
 import { FormulaBar } from './FormulaBar';
 import { SheetTabs } from './SheetTabs';
 import { SpreadsheetGrid } from './grid/SpreadsheetGrid';
@@ -170,6 +171,9 @@ function ShellBody({
    */
   useEffect(() => {
     if (!submittedBy) return;
+
+    // The sitting is over, whether the candidate submitted or the clock did.
+    exitFullscreen();
 
     const controller = new AbortController();
     void (async () => {
