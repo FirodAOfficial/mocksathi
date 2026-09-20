@@ -156,9 +156,13 @@ export function DashboardMocksTable({ mocks, limitReached }: DashboardMocksTable
                 <span className={`${styles.typeBadge} ${type.className}`}>{type.letter}</span>
                 {type.label}
               </span>
-              <span className={styles.right}>{mock.questionCount}</span>
-              <span className={styles.right}>{mock.maxScore ?? '—'}</span>
-              <span className={styles.right}>
+              <span className={styles.right} data-label="Questions">
+                {mock.questionCount}
+              </span>
+              <span className={styles.right} data-label="Total Marks">
+                {mock.maxScore ?? '—'}
+              </span>
+              <span className={styles.right} data-label="Your Marks">
                 {mock.score !== undefined ? (
                   <b className={styles.marks}>
                     {mock.score.toFixed(0)} / {mock.maxScore}
@@ -167,7 +171,7 @@ export function DashboardMocksTable({ mocks, limitReached }: DashboardMocksTable
                   <span className={styles.muted}>—</span>
                 )}
               </span>
-              <span>
+              <span data-label="Status">
                 <StatusPill mock={mock} />
               </span>
               <span className={styles.actionCell}>

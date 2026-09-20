@@ -219,3 +219,95 @@
   color: var(--db-text-muted);
   margin: 0;
 }
+
+/* ---------------------------------------------------------------------- *
+ * Phones and small tablets.
+ *
+ * The row is 766px of columns, so anywhere narrower it was a sideways
+ * scroller: the score and the Start button sat off the right-hand edge, out
+ * of sight unless the candidate thought to drag the table. Below this width
+ * each row becomes its own card and every figure carries the label the
+ * column header used to give it.
+ * ---------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .card {
+    padding: 16px;
+  }
+
+  .table {
+    overflow-x: visible;
+  }
+
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px 14px;
+    min-width: 0;
+    padding: 14px 0;
+    font-size: 13px;
+  }
+
+  /* The column headings are the labels now — see `[data-label]` below. */
+  .headRow {
+    display: none;
+  }
+
+  .rowToday {
+    margin: 0;
+    padding: 14px 8px;
+    border-radius: 8px;
+  }
+
+  .mockNumber,
+  .paper,
+  .actionCell {
+    grid-column: 1 / -1;
+  }
+
+  .paper {
+    flex-wrap: wrap;
+    white-space: normal;
+    overflow: visible;
+    font-weight: 600;
+  }
+
+  /* A figure and the heading it belonged to, stacked — left-aligned, because
+     a right-aligned column of two only reads as a column on a wide screen. */
+  .row > [data-label] {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .row > [data-label]::before {
+    content: attr(data-label);
+    color: var(--db-text-faint);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Thumb-sized, and across the card rather than tucked into a 150px column. */
+  .actionCell {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2px;
+  }
+
+  .actionPrimary {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .actionLocked,
+  .actionPending {
+    padding: 9px 14px;
+    font-size: 12.5px;
+  }
+}

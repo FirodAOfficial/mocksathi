@@ -253,3 +253,83 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------------- *
+ * Phones and small tablets: one card per mock instead of an 800px row that
+ * hid its marks, its status and its button off the right-hand edge.
+ * ---------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .card {
+    padding: 16px;
+  }
+
+  .table {
+    overflow-x: visible;
+  }
+
+  .headRow {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px 14px;
+    min-width: 0;
+    padding: 14px 2px;
+  }
+
+  .mockNumber,
+  .paper,
+  .type,
+  .actionCell {
+    grid-column: 1 / -1;
+  }
+
+  /* "1" alone means nothing without the "#" column heading above it. */
+  .mockNumber::before {
+    content: 'Mock ';
+  }
+
+  .mockNumber {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .paper {
+    font-size: 14px;
+  }
+
+  .row > [data-label] {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .row > [data-label]::before {
+    content: attr(data-label);
+    color: var(--db-text-faint);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .actionCell {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2px;
+  }
+
+  .actionFilled,
+  .actionOutline {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 13px;
+    text-align: center;
+  }
+}
