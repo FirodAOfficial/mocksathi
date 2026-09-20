@@ -5,18 +5,31 @@
   background: linear-gradient(#fff, #f3f7fc);
   border-radius: 3px;
   /*
-   * `min-width` alone overflowed a 320px phone. The dialog now asks for its
-   * comfortable width but never more than the viewport can show, and scrolls
-   * inside itself rather than off the bottom of the screen.
+   * Sized to its contents, between a comfortable minimum and what the viewport
+   * can show. A flat 340px was narrower than the Font dialog's own fieldsets
+   * (360px) and the submit summary (320px + padding), so those dialogs were
+   * cut off at their right edge and had to be scrolled sideways to be read.
+   *
+   * `min-width` alone overflowed a 320px phone, hence the viewport cap on both
+   * the floor and the ceiling.
    */
-  width: min(340px, calc(100vw - 1.5rem));
-  min-width: 0;
-  max-width: calc(100vw - 1.5rem);
+  width: fit-content;
+  min-width: min(340px, calc(100vw - 1.5rem));
+  max-width: min(calc(100vw - 1.5rem), 720px);
   max-height: calc(100dvh - 1.5rem);
   padding: 0;
-  overflow: auto;
+  /* A column so the title bar and the buttons stay put and the middle
+     scrolls — on a 768px-tall screen a tall dialog otherwise scrolled its own
+     OK button out of reach. The `display` goes on `[open]` alone, so a closed
+     dialog stays hidden as the user agent intends. */
+  flex-direction: column;
+  overflow: hidden;
   font-size: 12px;
   box-shadow: 0 10px 32px #0f233c59;
+}
+
+.dialog[open] {
+  display: flex;
 }
 
 .dialog::backdrop {
@@ -29,6 +42,8 @@
  */
 .top {
   margin-top: 6vh;
+  /* Opened 6vh down, so it may only be that much shorter than the viewport. */
+  max-height: calc(100dvh - 6vh - 1.5rem);
 }
 
 /*
@@ -47,11 +62,13 @@
   left: 50%;
   translate: -50% 0;
   z-index: 1100;
+  max-height: calc(100dvh - 6vh - 1.5rem);
   box-shadow: 0 12px 36px #0f233c66;
 }
 
 .titleBar {
   /* The drag handle — every Word dialog moves by its title bar. */
+  flex: none;
   cursor: move;
   touch-action: none;
   user-select: none;
@@ -88,10 +105,14 @@
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   padding: 14px 16px;
+  overflow: auto;
 }
 
 .footer {
+  flex: none;
   justify-content: flex-end;
   gap: 6px;
   padding: 10px 16px 14px;

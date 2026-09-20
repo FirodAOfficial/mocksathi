@@ -68,3 +68,13 @@
   font-size: 11px;
   color: #a4262c;
 }
+
+@media (min-width: 768px) and (max-height: 820px) {
+  .strip {
+    padding: 1px 6px;
+  }
+
+  .tab {
+    padding: 2px 12px;
+  }
+}

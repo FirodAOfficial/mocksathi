@@ -62,3 +62,9 @@
     width: 76px;
   }
 }
+
+@media (min-width: 768px) and (max-height: 820px) {
+  .bar {
+    padding: 2px 6px;
+  }
+}

@@ -156,250 +156,256 @@ export function SheetHomeTab() {
       </RibbonGroup>
 
       <RibbonGroup label="Font">
-        <RibbonRow>
-          <SelectMenu
-            label="Font"
-            value={style.fontFamily ?? DEFAULT_FONT_FAMILY}
-            options={FONT_FAMILIES.map((family) => ({
-              value: family,
-              label: family,
-              optionStyle: { fontFamily: family },
-            }))}
-            width={128}
-            onChange={(family) => apply({ fontFamily: family }, 'Font', 'home.font.family')}
-          />
-          <NumberCombo
-            label="Font Size"
-            value={style.fontSize ?? DEFAULT_FONT_SIZE_PT}
-            options={FONT_SIZES}
-            min={1}
-            max={409}
-            width={52}
-            onChange={(size) => apply({ fontSize: size }, 'Font Size', 'home.font.size')}
-          />
-        </RibbonRow>
-        <RibbonRow>
-          <ToolbarButton
-            label="Bold"
-            glyph={<strong>B</strong>}
-            disabled={readOnly}
-            disabledReason={protectedReason}
-            active={Boolean(style.bold)}
-            onClick={() => toggle('bold', 'Bold', 'home.font.bold')}
-          />
-          <ToolbarButton
-            label="Italic"
-            glyph={<em>I</em>}
-            disabled={readOnly}
-            disabledReason={protectedReason}
-            active={Boolean(style.italic)}
-            onClick={() => toggle('italic', 'Italic', 'home.font.italic')}
-          />
-          <ToolbarButton
-            label="Underline"
-            glyph={<u>U</u>}
-            disabled={readOnly}
-            disabledReason={protectedReason}
-            active={Boolean(style.underline)}
-            onClick={() => toggle('underline', 'Underline', 'home.font.underline')}
-          />
-          <ToolbarButton
-            label="Subscript"
-            glyph={
-              <span>
-                x<sub>2</sub>
-              </span>
-            }
-            disabled={readOnly}
-            disabledReason={protectedReason}
-            active={style.textEffect === 'subscript'}
-            onClick={() =>
-              apply(
-                { textEffect: style.textEffect === 'subscript' ? undefined : 'subscript' },
-                'Subscript',
-                'home.font.subscript',
-              )
-            }
-          />
-          <ToolbarButton
-            label="Superscript"
-            glyph={
-              <span>
-                x<sup>2</sup>
-              </span>
-            }
-            disabled={readOnly}
-            disabledReason={protectedReason}
-            active={style.textEffect === 'superscript'}
-            onClick={() =>
-              apply(
-                { textEffect: style.textEffect === 'superscript' ? undefined : 'superscript' },
-                'Superscript',
-                'home.font.superscript',
-              )
-            }
-          />
-          <SelectMenu
-            label="Borders"
-            value={null}
-            placeholder="Borders"
-            width={104}
-            disabled={readOnly}
-            options={BORDER_PRESETS.map((preset) => ({ value: preset.value, label: preset.label }))}
-            onChange={(preset) =>
-              applyBorders(
-                preset,
-                BORDER_PRESETS.find((item) => item.value === preset)?.label ?? 'Borders',
-              )
-            }
-          />
-          <ColorPicker
-            label="Fill Color"
-            icon="highlight"
-            currentColor={style.fillColor ?? null}
-            defaultColor="#ffff00"
-            clearLabel="No Fill"
-            onSelect={(color) =>
-              apply({ fillColor: color ?? undefined }, 'Fill Color', 'home.font.fill')
-            }
-          />
-          <ColorPicker
-            label="Font Color"
-            icon="text-color"
-            currentColor={style.fontColor ?? null}
-            defaultColor="#c00000"
-            clearLabel="Automatic"
-            onSelect={(color) =>
-              apply({ fontColor: color ?? undefined }, 'Font Color', 'home.font.color')
-            }
-          />
-        </RibbonRow>
+        <RibbonColumn>
+          <RibbonRow>
+            <SelectMenu
+              label="Font"
+              value={style.fontFamily ?? DEFAULT_FONT_FAMILY}
+              options={FONT_FAMILIES.map((family) => ({
+                value: family,
+                label: family,
+                optionStyle: { fontFamily: family },
+              }))}
+              width={128}
+              onChange={(family) => apply({ fontFamily: family }, 'Font', 'home.font.family')}
+            />
+            <NumberCombo
+              label="Font Size"
+              value={style.fontSize ?? DEFAULT_FONT_SIZE_PT}
+              options={FONT_SIZES}
+              min={1}
+              max={409}
+              width={52}
+              onChange={(size) => apply({ fontSize: size }, 'Font Size', 'home.font.size')}
+            />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton
+              label="Bold"
+              glyph={<strong>B</strong>}
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              active={Boolean(style.bold)}
+              onClick={() => toggle('bold', 'Bold', 'home.font.bold')}
+            />
+            <ToolbarButton
+              label="Italic"
+              glyph={<em>I</em>}
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              active={Boolean(style.italic)}
+              onClick={() => toggle('italic', 'Italic', 'home.font.italic')}
+            />
+            <ToolbarButton
+              label="Underline"
+              glyph={<u>U</u>}
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              active={Boolean(style.underline)}
+              onClick={() => toggle('underline', 'Underline', 'home.font.underline')}
+            />
+            <ToolbarButton
+              label="Subscript"
+              glyph={
+                <span>
+                  x<sub>2</sub>
+                </span>
+              }
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              active={style.textEffect === 'subscript'}
+              onClick={() =>
+                apply(
+                  { textEffect: style.textEffect === 'subscript' ? undefined : 'subscript' },
+                  'Subscript',
+                  'home.font.subscript',
+                )
+              }
+            />
+            <ToolbarButton
+              label="Superscript"
+              glyph={
+                <span>
+                  x<sup>2</sup>
+                </span>
+              }
+              disabled={readOnly}
+              disabledReason={protectedReason}
+              active={style.textEffect === 'superscript'}
+              onClick={() =>
+                apply(
+                  { textEffect: style.textEffect === 'superscript' ? undefined : 'superscript' },
+                  'Superscript',
+                  'home.font.superscript',
+                )
+              }
+            />
+            <SelectMenu
+              label="Borders"
+              value={null}
+              placeholder="Borders"
+              width={104}
+              disabled={readOnly}
+              options={BORDER_PRESETS.map((preset) => ({ value: preset.value, label: preset.label }))}
+              onChange={(preset) =>
+                applyBorders(
+                  preset,
+                  BORDER_PRESETS.find((item) => item.value === preset)?.label ?? 'Borders',
+                )
+              }
+            />
+            <ColorPicker
+              label="Fill Color"
+              icon="highlight"
+              currentColor={style.fillColor ?? null}
+              defaultColor="#ffff00"
+              clearLabel="No Fill"
+              onSelect={(color) =>
+                apply({ fillColor: color ?? undefined }, 'Fill Color', 'home.font.fill')
+              }
+            />
+            <ColorPicker
+              label="Font Color"
+              icon="text-color"
+              currentColor={style.fontColor ?? null}
+              defaultColor="#c00000"
+              clearLabel="Automatic"
+              onSelect={(color) =>
+                apply({ fontColor: color ?? undefined }, 'Font Color', 'home.font.color')
+              }
+            />
+          </RibbonRow>
+        </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Alignment">
-        <RibbonRow>
-          <ToolbarButton
-            label="Top Align"
-            glyph="⬒"
-            active={style.verticalAlignment === 'top'}
-            onClick={() => apply({ verticalAlignment: 'top' }, 'Top Align', 'home.alignment.top')}
-          />
-          <ToolbarButton
-            label="Middle Align"
-            glyph="⬓"
-            active={style.verticalAlignment === 'middle'}
-            onClick={() => apply({ verticalAlignment: 'middle' }, 'Middle Align', 'home.alignment.middle')}
-          />
-          <ToolbarButton
-            label="Bottom Align"
-            glyph="⬔"
-            active={style.verticalAlignment === 'bottom'}
-            onClick={() => apply({ verticalAlignment: 'bottom' }, 'Bottom Align', 'home.alignment.bottom')}
-          />
-        </RibbonRow>
-        <RibbonRow>
-          <ToolbarButton
-            label="Align Left"
-            glyph="≡"
-            active={style.horizontalAlignment === 'left'}
-            onClick={() => apply({ horizontalAlignment: 'left' }, 'Align Left', 'home.alignment.left')}
-          />
-          <ToolbarButton
-            label="Center"
-            glyph="≣"
-            active={style.horizontalAlignment === 'center'}
-            onClick={() => apply({ horizontalAlignment: 'center' }, 'Center', 'home.alignment.center')}
-          />
-          <ToolbarButton
-            label="Align Right"
-            glyph="≡"
-            active={style.horizontalAlignment === 'right'}
-            onClick={() => apply({ horizontalAlignment: 'right' }, 'Align Right', 'home.alignment.right')}
-          />
-          <ToolbarButton
-            label="Wrap Text"
-            glyph="↵"
-            active={Boolean(style.wrapText)}
-            onClick={() => apply({ wrapText: style.wrapText ? undefined : true }, 'Wrap Text', 'home.alignment.wrap')}
-          />
-          <ToolbarButton
-            label="Merge Across"
-            glyph="⬍"
-            disabled={readOnly || merged}
-            disabledReason={protectedReason ?? (merged ? 'these cells are already merged' : undefined)}
-            onClick={() => {
-              if (!store.mergeAcross()) {
-                setNotice('Those rows cannot be merged — one of them overlaps an existing merge.');
-              }
-            }}
-          />
-          <ToolbarButton
-            label={merged ? 'Unmerge Cells' : 'Merge & Center'}
-            glyph="⬌"
-            active={merged}
-            onClick={() => {
-              if (merged) {
-                store.unmergeSelection();
-                return;
-              }
-              if (store.mergeSelection()) {
-                store.applyStyle({ horizontalAlignment: 'center' }, 'Merge & Center', 'home.alignment.merge');
-                return;
-              }
-              setNotice('That range cannot be merged — it overlaps an existing merge.');
-            }}
-          />
-        </RibbonRow>
+        <RibbonColumn>
+          <RibbonRow>
+            <ToolbarButton
+              label="Top Align"
+              glyph="⬒"
+              active={style.verticalAlignment === 'top'}
+              onClick={() => apply({ verticalAlignment: 'top' }, 'Top Align', 'home.alignment.top')}
+            />
+            <ToolbarButton
+              label="Middle Align"
+              glyph="⬓"
+              active={style.verticalAlignment === 'middle'}
+              onClick={() => apply({ verticalAlignment: 'middle' }, 'Middle Align', 'home.alignment.middle')}
+            />
+            <ToolbarButton
+              label="Bottom Align"
+              glyph="⬔"
+              active={style.verticalAlignment === 'bottom'}
+              onClick={() => apply({ verticalAlignment: 'bottom' }, 'Bottom Align', 'home.alignment.bottom')}
+            />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton
+              label="Align Left"
+              glyph="≡"
+              active={style.horizontalAlignment === 'left'}
+              onClick={() => apply({ horizontalAlignment: 'left' }, 'Align Left', 'home.alignment.left')}
+            />
+            <ToolbarButton
+              label="Center"
+              glyph="≣"
+              active={style.horizontalAlignment === 'center'}
+              onClick={() => apply({ horizontalAlignment: 'center' }, 'Center', 'home.alignment.center')}
+            />
+            <ToolbarButton
+              label="Align Right"
+              glyph="≡"
+              active={style.horizontalAlignment === 'right'}
+              onClick={() => apply({ horizontalAlignment: 'right' }, 'Align Right', 'home.alignment.right')}
+            />
+            <ToolbarButton
+              label="Wrap Text"
+              glyph="↵"
+              active={Boolean(style.wrapText)}
+              onClick={() => apply({ wrapText: style.wrapText ? undefined : true }, 'Wrap Text', 'home.alignment.wrap')}
+            />
+            <ToolbarButton
+              label="Merge Across"
+              glyph="⬍"
+              disabled={readOnly || merged}
+              disabledReason={protectedReason ?? (merged ? 'these cells are already merged' : undefined)}
+              onClick={() => {
+                if (!store.mergeAcross()) {
+                  setNotice('Those rows cannot be merged — one of them overlaps an existing merge.');
+                }
+              }}
+            />
+            <ToolbarButton
+              label={merged ? 'Unmerge Cells' : 'Merge & Center'}
+              glyph="⬌"
+              active={merged}
+              onClick={() => {
+                if (merged) {
+                  store.unmergeSelection();
+                  return;
+                }
+                if (store.mergeSelection()) {
+                  store.applyStyle({ horizontalAlignment: 'center' }, 'Merge & Center', 'home.alignment.merge');
+                  return;
+                }
+                setNotice('That range cannot be merged — it overlaps an existing merge.');
+              }}
+            />
+          </RibbonRow>
+        </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Number">
-        <RibbonRow>
-          <SelectMenu
-            label="Number Format"
-            value={style.numberFormat ?? NUMBER_FORMATS.general}
-            options={NUMBER_FORMAT_OPTIONS}
-            width={128}
-            onChange={(format) =>
-              apply({ numberFormat: format }, 'Number Format', 'home.number.format')
-            }
-          />
-        </RibbonRow>
-        <RibbonRow>
-          <ToolbarButton
-            label="Percent Style"
-            glyph="%"
-            active={style.numberFormat === NUMBER_FORMATS.percent}
-            onClick={() => apply({ numberFormat: NUMBER_FORMATS.percent }, 'Percent Style', 'home.number.percent')}
-          />
-          <ToolbarButton
-            label="Comma Style"
-            glyph=","
-            active={style.numberFormat === NUMBER_FORMATS.thousands}
-            onClick={() => apply({ numberFormat: NUMBER_FORMATS.thousands }, 'Comma Style', 'home.number.comma')}
-          />
-          <ToolbarButton
-            label="Increase Decimal"
-            glyph=".0→"
-            onClick={() =>
-              apply(
-                { numberFormat: withDecimals(style.numberFormat, 1) },
-                'Increase Decimal',
-                'home.number.increaseDecimal',
-              )
-            }
-          />
-          <ToolbarButton
-            label="Decrease Decimal"
-            glyph="←.0"
-            onClick={() =>
-              apply(
-                { numberFormat: withDecimals(style.numberFormat, -1) },
-                'Decrease Decimal',
-                'home.number.decreaseDecimal',
-              )
-            }
-          />
-        </RibbonRow>
+        <RibbonColumn>
+          <RibbonRow>
+            <SelectMenu
+              label="Number Format"
+              value={style.numberFormat ?? NUMBER_FORMATS.general}
+              options={NUMBER_FORMAT_OPTIONS}
+              width={128}
+              onChange={(format) =>
+                apply({ numberFormat: format }, 'Number Format', 'home.number.format')
+              }
+            />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton
+              label="Percent Style"
+              glyph="%"
+              active={style.numberFormat === NUMBER_FORMATS.percent}
+              onClick={() => apply({ numberFormat: NUMBER_FORMATS.percent }, 'Percent Style', 'home.number.percent')}
+            />
+            <ToolbarButton
+              label="Comma Style"
+              glyph=","
+              active={style.numberFormat === NUMBER_FORMATS.thousands}
+              onClick={() => apply({ numberFormat: NUMBER_FORMATS.thousands }, 'Comma Style', 'home.number.comma')}
+            />
+            <ToolbarButton
+              label="Increase Decimal"
+              glyph=".0→"
+              onClick={() =>
+                apply(
+                  { numberFormat: withDecimals(style.numberFormat, 1) },
+                  'Increase Decimal',
+                  'home.number.increaseDecimal',
+                )
+              }
+            />
+            <ToolbarButton
+              label="Decrease Decimal"
+              glyph="←.0"
+              onClick={() =>
+                apply(
+                  { numberFormat: withDecimals(style.numberFormat, -1) },
+                  'Decrease Decimal',
+                  'home.number.decreaseDecimal',
+                )
+              }
+            />
+          </RibbonRow>
+        </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Cells">

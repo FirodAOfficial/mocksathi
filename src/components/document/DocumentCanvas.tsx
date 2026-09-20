@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, type Editor } from '@tiptap/react';
-import { useDrawerLayout, useIsPhone } from '@/hooks/useMediaQuery';
+import { useIsPhone } from '@/hooks/useMediaQuery';
 import { MARGIN_PRESETS, pageSize, useUiStore } from '@/state/uiStore';
 import { Ruler } from './Ruler';
 import styles from './DocumentCanvas.module.css';
@@ -58,31 +58,38 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
    * wrap — and the answer key — hold at every screen size.
    */
   const isPhone = useIsPhone();
-  const isNarrow = useDrawerLayout();
-  const setZoom = useUiStore((state) => state.setZoom);
+  const fitZoom = useUiStore((state) => state.fitZoom);
 
   useEffect(() => {
-    // Only where the panels have collapsed to drawers. On a full desktop the
-    // zoom is the candidate's to choose, and a sheet a few pixels wider than
-    // its column scrolls, exactly as it always has.
-    if (!isNarrow) return;
-
     const element = scrollRef.current;
     if (!element) return;
 
     const fit = (): void => {
       // A little breathing room either side, as the sheet has on desktop.
       const available = element.clientWidth - 16;
-      // Only when the sheet cannot be shown whole. On a wide screen the zoom is
-      // the candidate's to choose and nothing here touches it.
-      if (available > 0 && available < width) setZoom(available / width);
+      if (available <= 0) return;
+
+      /*
+       * Fit the sheet to its column, but never enlarge past 100%: a 1366px
+       * screen leaves the middle column a little under the sheet's 816px once
+       * both exam panels have taken their share, and the page was being cut
+       * off at its right edge rather than shown whole.
+       *
+       * Stops the moment the candidate sets a zoom of their own — from then on
+       * the number is theirs, and a sheet wider than its column scrolls.
+       */
+      const { zoom: current, zoomChosen } = useUiStore.getState();
+      if (zoomChosen) return;
+
+      const target = Math.min(1, available / width);
+      if (Math.abs(target - current) > 0.005) fitZoom(target);
     };
 
     fit();
     const observer = new ResizeObserver(fit);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [isNarrow, width, setZoom]);
+  }, [width, fitZoom]);
 
   useEffect(() => {
     const element = pageRef.current;

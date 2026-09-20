@@ -7,6 +7,18 @@
   display: flex;
 }
 
+@media (min-width: 768px) and (max-height: 820px) {
+  .group {
+    min-height: 72px;
+    padding: 2px 5px 0;
+  }
+
+  .label {
+    padding: 0 0 2px;
+    font-size: 10px;
+  }
+}
+
 .body {
   flex: 1;
   align-items: flex-start;

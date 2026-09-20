@@ -117,3 +117,12 @@
     font-size: 0.625rem;
   }
 }
+
+/* A short laptop screen: the button keeps its width and its caption, and
+   stops reserving the empty row beneath it. */
+@media (min-width: 768px) and (max-height: 820px) and (pointer: fine) {
+  .large {
+    min-height: 50px;
+    padding: 2px 2px 1px;
+  }
+}

@@ -54,22 +54,56 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
       if (!anchor) return;
 
       const rect = anchor.getBoundingClientRect();
+
+      /*
+       * The panel's own width, not the trigger's. Clamping by the trigger let a
+       * menu wider than the button it hangs from — the font list, the styles
+       * gallery — run off the right of the screen with its last column cut
+       * off. The panel is only there to measure from the second pass onwards,
+       * so the trigger stands in for the first paint and the correction lands
+       * before anyone can read it.
+       */
+      const panelWidth = panelRef.current?.offsetWidth ?? rect.width;
+      const panelHeight = panelRef.current?.offsetHeight ?? 0;
+
+      const below = window.innerHeight - rect.bottom - VIEWPORT_MARGIN * 2;
+      const above = rect.top - VIEWPORT_MARGIN * 2;
+      /*
+       * Word's menus open downwards, and on a 768px-tall screen a long one
+       * opened from low down had a couple of items and a scrollbar. It flips
+       * above its trigger only when that is the roomier side by a clear
+       * margin, so a menu does not jump sides over a few pixels of scroll.
+       */
+      const flip = panelHeight > below && above > below + 40;
+
       setPosition({
         position: 'fixed',
-        top: rect.bottom + 1,
+        ...(flip ? { bottom: window.innerHeight - rect.top + 1 } : { top: rect.bottom + 1 }),
         ...(align === 'end'
           ? { right: Math.max(VIEWPORT_MARGIN, window.innerWidth - rect.right) }
-          : { left: Math.min(rect.left, window.innerWidth - rect.width - VIEWPORT_MARGIN) }),
+          : {
+              left: Math.max(
+                VIEWPORT_MARGIN,
+                Math.min(rect.left, window.innerWidth - panelWidth - VIEWPORT_MARGIN),
+              ),
+            }),
         minWidth: rect.width,
-        maxHeight: window.innerHeight - rect.bottom - VIEWPORT_MARGIN * 2,
+        maxWidth: window.innerWidth - VIEWPORT_MARGIN * 2,
+        maxHeight: Math.max(flip ? above : below, 120),
       });
     };
 
     measure();
+    /*
+     * A second pass once the panel exists, so its real width and height are the
+     * ones clamped against the viewport rather than the trigger's stand-in.
+     */
+    const frame = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     // Capture phase, so scrolling of any ancestor container is picked up.
     window.addEventListener('scroll', measure, true);
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
     };

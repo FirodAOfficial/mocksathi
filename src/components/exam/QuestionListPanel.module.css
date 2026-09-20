@@ -3,7 +3,12 @@
   border-right: 1px solid #a9ccd6;
   flex-direction: column;
   flex: none;
-  width: clamp(210px, 19vw, 300px);
+  /*
+   * Narrow enough that the 816px sheet still fits beside it on a 1366px
+   * screen: both columns together may take no more than about 450px there, or
+   * the page is cut off at its right edge and has to be scrolled to be read.
+   */
+  width: clamp(196px, 15vw, 280px);
   min-height: 0;
   padding: 14px 0 10px 14px;
   display: flex;
@@ -140,6 +145,22 @@
 
 .itemSelected .number {
   font-size: 24px;
+}
+
+/* A 768px-tall laptop: every row the list gives back is a row of the page. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .panel {
+    padding: 10px 0 8px 12px;
+  }
+
+  .heading {
+    margin-bottom: 10px;
+    font-size: 21px;
+  }
+
+  .item, .itemInner {
+    min-height: 48px;
+  }
 }
 
 @media print {
