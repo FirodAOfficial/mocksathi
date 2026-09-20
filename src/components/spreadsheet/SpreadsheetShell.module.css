@@ -4,6 +4,14 @@
      keeps an `auto` minimum and would let the sheet push the shell taller than
      the viewport instead of scrolling inside it. */
   grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  /*
+   * One column, and it may not be wider than the shell. The implicit `auto`
+   * column took its minimum from the widest row — the ribbon, whose groups are
+   * wider than the window — so the whole shell stretched past the viewport and
+   * the candidate summary was pushed off the right-hand edge, behind the
+   * shell's own `overflow: hidden`. The ribbon scrolls inside itself instead.
+   */
+  grid-template-columns: minmax(0, 1fr);
   height: 100dvh;
   min-height: 0;
   overflow: hidden;

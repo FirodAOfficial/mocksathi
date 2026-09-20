@@ -58,6 +58,14 @@ export const MAX_ZOOM = 2;
 interface UiState {
   activeTab: RibbonTabId;
   zoom: number;
+  /**
+   * True once the candidate has set the zoom themselves.
+   *
+   * Until they do, the canvas keeps the sheet fitted to its column so the page
+   * is never cut off at the right edge on a narrower screen. After they do, the
+   * number is theirs and nothing adjusts it behind their back.
+   */
+  zoomChosen: boolean;
   orientation: PageOrientation;
   paper: PaperSize;
   margins: MarginPreset;
@@ -82,6 +90,8 @@ interface UiState {
 
   setActiveTab: (tab: RibbonTabId) => void;
   setZoom: (zoom: number) => void;
+  /** The canvas fitting the sheet to its column — not a choice the candidate made. */
+  fitZoom: (zoom: number) => void;
   stepZoom: (direction: 1 | -1) => void;
   setOrientation: (orientation: PageOrientation) => void;
   setPaper: (paper: PaperSize) => void;
@@ -105,6 +115,7 @@ const clampZoom = (value: number): number =>
 export const useUiStore = create<UiState>((set) => ({
   activeTab: 'home',
   zoom: 1,
+  zoomChosen: false,
   orientation: 'portrait',
   paper: 'letter',
   margins: 'normal',
@@ -121,7 +132,8 @@ export const useUiStore = create<UiState>((set) => ({
   notice: null,
 
   setActiveTab: (activeTab) => set({ activeTab }),
-  setZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
+  setZoom: (zoom) => set({ zoom: clampZoom(zoom), zoomChosen: true }),
+  fitZoom: (zoom) => set({ zoom: clampZoom(zoom) }),
   stepZoom: (direction) =>
     set((state) => {
       // Step along the preset ladder so the buttons land on round percentages
@@ -130,7 +142,7 @@ export const useUiStore = create<UiState>((set) => ({
       const index = levels.findIndex((level) => level >= state.zoom - 0.001);
       const base = index === -1 ? levels.length - 1 : index;
       const next = levels[Math.min(levels.length - 1, Math.max(0, base + direction))];
-      return { zoom: clampZoom(next ?? state.zoom) };
+      return { zoom: clampZoom(next ?? state.zoom), zoomChosen: true };
     }),
   setOrientation: (orientation) => set({ orientation }),
   setPaper: (paper) => set({ paper }),

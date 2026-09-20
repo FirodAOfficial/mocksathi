@@ -85,3 +85,10 @@
     display: none;
   }
 }
+
+/* A 768px-tall laptop: the bar keeps every figure, two pixels shorter. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .bar {
+    height: 22px;
+  }
+}

@@ -22,18 +22,24 @@ function ScoreCells({ mock }: { mock: MockSummary }) {
   if (mock.score === undefined) {
     return (
       <>
-        <span className={styles.muted}>—</span>
-        <span className={styles.muted}>—</span>
-        <span className={styles.muted}>—</span>
+        <span className={styles.muted} data-label="Score">—</span>
+        <span className={styles.muted} data-label="Accuracy">—</span>
+        <span className={styles.muted} data-label="Rank">—</span>
       </>
     );
   }
 
   return (
     <>
-      <span className={mock.isBestScore ? styles.monoBest : styles.monoStrong}>{mock.score.toFixed(1)}</span>
-      <span className={styles.mono}>{mock.accuracyPct !== undefined ? `${mock.accuracyPct}%` : '—'}</span>
-      <span className={styles.mono}>{mock.rank !== undefined ? `#${mock.rank.toLocaleString('en-IN')}` : '—'}</span>
+      <span className={mock.isBestScore ? styles.monoBest : styles.monoStrong} data-label="Score">
+        {mock.score.toFixed(1)}
+      </span>
+      <span className={styles.mono} data-label="Accuracy">
+        {mock.accuracyPct !== undefined ? `${mock.accuracyPct}%` : '—'}
+      </span>
+      <span className={styles.mono} data-label="Rank">
+        {mock.rank !== undefined ? `#${mock.rank.toLocaleString('en-IN')}` : '—'}
+      </span>
     </>
   );
 }
@@ -101,10 +107,12 @@ function MockRow({ mock, limitReached }: { mock: MockSummary; limitReached: bool
         {mock.unlockNote && <span className={styles.paperNote}>{mock.unlockNote}</span>}
       </span>
       <ScoreCells mock={mock} />
-      <span className={styles.muted}>
+      <span className={styles.muted} data-label="Time">
         {mock.timeSpentSeconds !== undefined ? formatMinutesSeconds(mock.timeSpentSeconds) : '—'}
       </span>
-      <span className={styles.dateCell}>{mock.dateLabel}</span>
+      <span className={styles.dateCell} data-label="Date">
+        {mock.dateLabel}
+      </span>
       <span className={styles.actionCell}>
         <ActionCell mock={mock} limitReached={limitReached} />
       </span>

@@ -158,6 +158,13 @@
   color: #3f7fd0;
 }
 
+/* A 768px-tall laptop: the gap under the sheet is slack the page can have. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .scroll {
+    padding-bottom: 12px;
+  }
+}
+
 /*
  * The ruler is a pointer instrument — it exists to be dragged. On a phone it
  * only costs vertical space, so the sheet gets it back.

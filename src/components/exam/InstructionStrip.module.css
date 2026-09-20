@@ -36,3 +36,14 @@
   font-size: 11px;
   color: #5f7387;
 }
+
+/* A 768px-tall laptop: the task stays legible, the sheet gets the rows. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .strip {
+    padding: 6px 14px;
+  }
+
+  .instruction {
+    font-size: 13px;
+  }
+}

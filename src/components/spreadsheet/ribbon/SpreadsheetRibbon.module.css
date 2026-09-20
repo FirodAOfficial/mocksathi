@@ -149,3 +149,25 @@
     padding: 2px 4px;
   }
 }
+
+/*
+ * A 768px-tall laptop. Nothing leaves the ribbon — it is drawn tighter, and
+ * the rows it gives back go to the grid.
+ */
+@media (min-width: 768px) and (max-height: 820px) {
+  .tabstrip {
+    padding: 1px 6px 0;
+  }
+
+  .tabButton {
+    padding: 3px 12px;
+  }
+
+  .panel {
+    padding: 2px 4px;
+  }
+
+  .tab {
+    min-height: 70px;
+  }
+}
