@@ -3,7 +3,9 @@ import type { CommandSource } from './commands/Operation';
 import { DependencyGraph, nodeId, parseNodeId } from './calc/DependencyGraph';
 import { loadFormulaEngine } from './calc/FastFormulaEngine';
 import type { FormulaEngine } from './calc/FormulaEngine';
-import { coerceInput, type Cell } from './model/Cell';
+import type { Cell } from './model/Cell';
+import { formatCellValue, isDateTimeFormat } from './model/format';
+import { completeFormula, parseCellInput } from './model/parseInput';
 import { DEFAULT_STYLE_ID, type CellStyle, type StyleId } from './model/styles';
 import { isSingleCell, type CellAddress, type RangeAddress } from './model/address';
 import { fillSeries } from './model/fillSeries';
@@ -157,6 +159,21 @@ export class WorkbookStore {
     if (!cell) return '';
     if (cell.formula !== undefined) return cell.formula;
     if (cell.value === null) return '';
+
+    const style = this.workbook.styles.get(cell.styleId);
+
+    // A date is a number, and the formula bar showing `46288` for a cell
+    // reading `23-09-2026` would be true and useless — worse, re-committing
+    // that text would turn the date into the number.
+    if (typeof cell.value === 'number' && isDateTimeFormat(style.numberFormat)) {
+      return formatCellValue(cell.value, style.numberFormat);
+    }
+
+    // The apostrophe is part of what was typed, not of the text, so it comes
+    // back the way it went in: re-committing the cell must not re-read `007`
+    // as a number.
+    if (style.quotePrefix) return `'${String(cell.value)}`;
+
     return String(cell.value);
   }
 
@@ -196,13 +213,18 @@ export class WorkbookStore {
   setCellInput(row: number, col: number, input: string, source: CommandSource = 'grid'): void {
     const sheet = this.activeSheet();
     const existing = sheet.getCell(row, col);
-    const styleId = existing?.styleId ?? DEFAULT_STYLE_ID;
+    const baseStyleId = existing?.styleId ?? DEFAULT_STYLE_ID;
 
     const isFormula = input.startsWith('=') && input.length > 1;
 
-    const cell: Cell | undefined = isFormula
-      ? { value: null, formula: input, styleId }
-      : buildValueCell(input, styleId);
+    const cell = isFormula
+      ? // A formula replaces whatever the apostrophe said about the old text.
+        {
+          value: null,
+          formula: completeFormula(input),
+          styleId: this.workbook.styles.derive(baseStyleId, { quotePrefix: undefined }),
+        }
+      : this.buildValueCell(input, baseStyleId);
 
     this.commit({ label: isFormula ? 'Enter Formula' : 'Type', source }, (mutator) => {
       mutator.setCell(sheet.id, row, col, cell);
@@ -210,6 +232,28 @@ export class WorkbookStore {
 
     if (isFormula) void this.ensureEngine();
     else this.graph.clear(nodeId(sheet.id, row, col));
+  }
+
+  /**
+   * A cell from a typed entry, with the format that entry implies.
+   *
+   * The style is derived rather than reused because typing `23/09/2026` into a
+   * General cell has to *do* something visible: storing the serial 46288 and
+   * leaving the format alone would show the candidate a five-digit number and
+   * look like the date had been thrown away.
+   */
+  private buildValueCell(input: string, baseStyleId: StyleId): Cell | undefined {
+    const parsed = parseCellInput(input, this.workbook.styles.get(baseStyleId).numberFormat);
+
+    const styleId = this.workbook.styles.derive(baseStyleId, {
+      quotePrefix: parsed.quotePrefix ? true : undefined,
+      // Absent means "leave the cell's format alone", so it must not be spread
+      // in as an explicit `undefined` — that would clear the format instead.
+      ...(parsed.numberFormat === undefined ? {} : { numberFormat: parsed.numberFormat }),
+    });
+
+    if (parsed.value === null && styleId === DEFAULT_STYLE_ID) return undefined;
+    return { value: parsed.value, styleId };
   }
 
   /** Delete/Backspace on a selection: clears contents, keeps formatting. */
@@ -824,8 +868,3 @@ interface ClipboardContents {
   cut: boolean;
 }
 
-function buildValueCell(input: string, styleId: StyleId): Cell | undefined {
-  const value = coerceInput(input);
-  if (value === null && styleId === DEFAULT_STYLE_ID) return undefined;
-  return { value, styleId };
-}

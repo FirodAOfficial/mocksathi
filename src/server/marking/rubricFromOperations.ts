@@ -318,6 +318,12 @@ function excelPiece(operation: ExcelOperation): ExcelPiece {
         exemptions: operation.cells.map((cell) => ({
           target: { by: 'cell' as const, row: cell.row, col: cell.col },
           content: true,
+          // Typing is what changes the format here, not the candidate: entering
+          // `23/09/2026` or `50%` makes the cell a date or a percentage, in
+          // this editor as in Excel (`parseCellInput`). Failing that under
+          // "nothing else changed" would fail every correct answer to a
+          // question that asks for a date to be typed in.
+          style: ['numberFormat' as const],
         })),
       };
 

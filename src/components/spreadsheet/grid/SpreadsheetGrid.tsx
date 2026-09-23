@@ -26,7 +26,12 @@ import {
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
-import { CellEditor } from './CellEditor';
+import {
+  CellEditor,
+  type CellEditorHandle,
+  type CommitMove,
+  type EditorMode,
+} from './CellEditor';
 import styles from './SpreadsheetGrid.module.css';
 
 /**
@@ -77,7 +82,13 @@ interface Size {
   height: number;
 }
 
-type Editing = { row: number; col: number; initial: string; selectAll: boolean } | null;
+type Editing = {
+  row: number;
+  col: number;
+  initial: string;
+  selectAll: boolean;
+  mode: EditorMode;
+} | null;
 
 /** A fill-handle drag in progress: where it began and where it is now. */
 type Filling = { source: RangeAddress; to: CellAddress } | null;
@@ -102,6 +113,21 @@ export function SpreadsheetGrid() {
   const [editing, setEditing] = useState<Editing>(null);
   const resizing = useRef<Resizing>(null);
   const [filling, setFilling] = useState<Filling>(null);
+
+  /**
+   * The open editor, reached imperatively.
+   *
+   * Point mode has to ask the editor a question mid-gesture — "is this click a
+   * reference or a commit?" — and then hand it a range. Doing that through
+   * props would mean the formula text lived in grid state and every keystroke
+   * re-rendered every visible cell.
+   */
+  const editorRef = useRef<CellEditorHandle>(null);
+
+  /** The reference being pointed at, outlined on the sheet while it is picked. */
+  const [pointed, setPointed] = useState<RangeAddress | null>(null);
+  /** The corner a point-drag started from, or null when no drag is running. */
+  const pointAnchor = useRef<CellAddress | null>(null);
 
   const sheet = store.activeSheet();
 
@@ -191,6 +217,17 @@ export function SpreadsheetGrid() {
     // A fill drag is in progress; the cell layer must not steal it.
     if (filling) return;
 
+    // A formula is open and waiting for an operand: this click names the cell
+    // it refers to. The selection must not move and the editor must not close —
+    // `preventDefault` is what keeps the focus in it.
+    if (editorRef.current?.isPointing()) {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      pointAnchor.current = address;
+      editorRef.current.point({ start: address, end: address });
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
     setEditing(null);
 
@@ -209,6 +246,17 @@ export function SpreadsheetGrid() {
 
     const address = pointToCell(event.clientX, event.clientY);
     if (!address) return;
+
+    // Dragging while pointing widens the reference into a range, which is how
+    // `=SUM(` becomes `=SUM(B2:B6`.
+    const anchor = pointAnchor.current;
+    if (anchor) {
+      editorRef.current?.point({
+        start: { row: Math.min(anchor.row, address.row), col: Math.min(anchor.col, address.col) },
+        end: { row: Math.max(anchor.row, address.row), col: Math.max(anchor.col, address.col) },
+      });
+      return;
+    }
 
     if (filling) {
       setFilling({ ...filling, to: address });
@@ -245,6 +293,9 @@ export function SpreadsheetGrid() {
 
   const onCellDoubleClick = (event: ReactPointerEvent<HTMLDivElement>): void => {
     if (readOnly) return;
+    // The second click of a double-click while pointing has already gone into
+    // the formula; it must not also open an editor on the cell it landed on.
+    if (pointAnchor.current) return;
 
     const address = pointToCell(event.clientX, event.clientY);
     if (!address) return;
@@ -254,6 +305,7 @@ export function SpreadsheetGrid() {
       col: address.col,
       initial: store.editText(address.row, address.col),
       selectAll: false,
+      mode: 'edit',
     });
   };
 
@@ -291,7 +343,9 @@ export function SpreadsheetGrid() {
   /* -- Keyboard ----------------------------------------------------------- */
 
   const beginTyping = (initial: string): void => {
-    setEditing({ row: active.row, col: active.col, initial, selectAll: false });
+    // Typing opens the editor in Excel's Enter mode: arrow keys and clicks
+    // still reach the sheet, so `=` followed by an arrow points at a cell.
+    setEditing({ row: active.row, col: active.col, initial, selectAll: false, mode: 'enter' });
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
@@ -334,6 +388,7 @@ export function SpreadsheetGrid() {
           col: active.col,
           initial: store.editText(active.row, active.col),
           selectAll: false,
+          mode: 'edit',
         });
         break;
       case 'Delete':
@@ -361,14 +416,17 @@ export function SpreadsheetGrid() {
 
   /* -- Committing an edit -------------------------------------------------- */
 
-  const commitEdit = (text: string, move: 'down' | 'right' | 'none'): void => {
+  const commitEdit = (text: string, move: CommitMove): void => {
     if (!editing) return;
 
     store.setCellInput(editing.row, editing.col, text);
     setEditing(null);
+    setPointed(null);
 
     if (move === 'down') store.selection.moveBy(1, 0);
+    else if (move === 'up') store.selection.moveBy(-1, 0);
     else if (move === 'right') store.selection.moveBy(0, 1);
+    else if (move === 'left') store.selection.moveBy(0, -1);
 
     scrollerRef.current?.focus();
   };
@@ -501,7 +559,10 @@ export function SpreadsheetGrid() {
         onPointerDown={onCellPointerDown}
         onPointerMove={onCellPointerMove}
         onDoubleClick={onCellDoubleClick}
-        onPointerUp={(event) => endFill(event)}
+        onPointerUp={(event) => {
+          pointAnchor.current = null;
+          endFill(event);
+        }}
       >
         <div className={styles.content} style={contentStyle}>
           <div className={styles.layer} style={layerStyle}>
@@ -631,10 +692,23 @@ export function SpreadsheetGrid() {
               />
             ) : null}
 
+            {/*
+              The cells a half-written formula is pointing at. Excel outlines
+              them while you pick, and without it there is no way to tell which
+              cell `=A1+` is about to take from.
+            */}
+            {pointed ? (
+              <div className={styles.pointRange} aria-hidden="true" style={geometry.rectOf(pointed)} />
+            ) : null}
+
             {editing ? (
               <CellEditor
                 initial={editing.initial}
                 selectAll={editing.selectAll}
+                mode={editing.mode}
+                origin={{ row: editing.row, col: editing.col }}
+                handleRef={editorRef}
+                onPointChange={setPointed}
                 left={geometry.offsetOfColumn(editing.col)}
                 top={geometry.offsetOfRow(editing.row)}
                 width={geometry.columnWidth(editing.col)}
@@ -643,6 +717,7 @@ export function SpreadsheetGrid() {
                 onCommit={commitEdit}
                 onCancel={() => {
                   setEditing(null);
+                  setPointed(null);
                   scrollerRef.current?.focus();
                 }}
               />
