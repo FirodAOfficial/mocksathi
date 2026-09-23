@@ -135,6 +135,20 @@ describe('what the derived key says', () => {
     }
   });
 
+  it('lets a typed date carry the format typing it applies', () => {
+    // A question that asks for a date to be typed in is answered by typing it,
+    // and typing it makes the cell a date — the editor applies the format, the
+    // same way Excel does. Without this licence the closing criterion would
+    // fail every correct answer to such a question.
+    const draft = EXCEL_DRAFTS.find((entry) =>
+      entry.operations.some((operation) => operation.kind === 'values'),
+    )!;
+    const closing = excelRubricFor(draft).criteria.at(-1)!;
+    if (closing.kind !== 'unchanged') throw new Error('expected an unchanged criterion');
+
+    expect(closing.except[0]).toMatchObject({ content: true, style: ['numberFormat'] });
+  });
+
   it('licenses exactly the formatting the question asked for, and no more', () => {
     const draft = WORD_DRAFTS.find((entry) => entry.number === 1)!;
     const closing = wordRubricFor(draft).criteria.at(-1)!;

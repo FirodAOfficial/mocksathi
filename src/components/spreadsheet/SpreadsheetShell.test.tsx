@@ -187,6 +187,87 @@ describe('SpreadsheetShell', () => {
   });
 });
 
+/**
+ * Building a formula by pointing at cells.
+ *
+ * The way almost nobody writes a formula is by typing `A1` out. They type `=`,
+ * press an arrow or click the cell, type `+`, and pick the next one — so an
+ * editor where the arrow keys only move a caret is one where formulas have to
+ * be spelled from memory.
+ */
+describe('point mode', () => {
+  function editorFor(address: string): HTMLElement {
+    return screen.getByRole('textbox', { name: `Edit ${address}` });
+  }
+
+  it('picks up the cell an arrow key lands on', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('10{Enter}20{Enter}');
+
+    await typeIntoActiveCell('=');
+    await userEvent.keyboard('{ArrowUp}');
+    expect(editorFor('A3')).toHaveValue('=A2');
+
+    // A second arrow walks the reference on rather than adding another one.
+    await userEvent.keyboard('{ArrowUp}');
+    expect(editorFor('A3')).toHaveValue('=A1');
+  });
+
+  it('starts the next reference over after an operator', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('10{Enter}20{Enter}');
+
+    await typeIntoActiveCell('=');
+    await userEvent.keyboard('{ArrowUp}+{ArrowUp}{ArrowUp}');
+
+    // `+` closes the first reference off: the next arrow starts from the cell
+    // being edited again, not from where the last one got to.
+    expect(editorFor('A3')).toHaveValue('=A2+A1');
+
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('gridcell', { name: /^30$/ })).toBeInTheDocument();
+  });
+
+  it('drags out a range with Shift', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('10{Enter}20{Enter}');
+
+    await typeIntoActiveCell('=SUM(');
+    await userEvent.keyboard('{ArrowUp}{Shift>}{ArrowUp}{/Shift}');
+
+    expect(editorFor('A3')).toHaveValue('=SUM(A1:A2');
+
+    // The closing bracket is the one thing pointing never types, so committing
+    // adds it — as Excel does, rather than failing to parse.
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByRole('gridcell', { name: /^30$/ })).toBeInTheDocument();
+  });
+
+  it('commits a plain entry and moves on when an arrow is pressed', async () => {
+    // How a column of numbers is typed: no reaching for Enter between cells.
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('5{ArrowDown}');
+
+    expect(screen.getByRole('gridcell')).toHaveTextContent('5');
+    expect(screen.getByLabelText('Name Box')).toHaveValue('A2');
+  });
+
+  it('gives the arrows back to the caret once F2 opens the text', async () => {
+    // F2 is Excel's Edit mode: the point of it is fixing a character in the
+    // middle of a formula, which an arrow that pointed at cells would prevent.
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('7{Enter}=A1{Enter}');
+
+    const grid = screen.getByRole('grid');
+    grid.focus();
+    // Up to A2, F2 to open it, then an arrow that must move the caret through
+    // `=A1` rather than append a second reference to it.
+    await userEvent.keyboard('{ArrowUp}{F2}{ArrowUp}{Enter}{ArrowUp}');
+
+    expect(screen.getByRole('textbox', { name: /^Formula bar/ })).toHaveValue('=A1');
+  });
+});
+
 describe('the controls the new tabs actually wire', () => {
   async function openTab(name: string): Promise<void> {
     await userEvent.click(

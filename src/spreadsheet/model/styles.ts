@@ -69,6 +69,15 @@ export interface CellStyle {
   borders?: CellBorders;
   /** An Excel number-format code, e.g. `0.00`, `#,##0`, `dd/mm/yyyy`. */
   numberFormat?: string;
+  /**
+   * The cell's text was forced with a leading apostrophe.
+   *
+   * A format flag rather than part of the value, exactly as a workbook file
+   * has it: the apostrophe is not in the text, it is a note that the text was
+   * meant to stay text. Keeping it on the style is also what makes it survive
+   * a snapshot — styles travel by value, and a flag on the cell would not.
+   */
+  quotePrefix?: boolean;
 }
 
 export type StyleId = number;

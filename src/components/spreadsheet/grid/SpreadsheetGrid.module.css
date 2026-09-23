@@ -196,6 +196,21 @@
   pointer-events: none;
 }
 
+/*
+ * The reference a half-written formula is pointing at.
+ *
+ * Blue rather than Excel's green selection, because it is answering a different
+ * question: not "what is selected" but "what will this formula read".
+ */
+.pointRange {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  border: 1px dashed #1f6feb;
+  background: rgb(31 111 235 / 8%);
+  pointer-events: none;
+}
+
 .cell {
   position: absolute;
   display: flex;

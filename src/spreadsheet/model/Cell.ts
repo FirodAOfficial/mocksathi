@@ -77,31 +77,9 @@ export function isBlank(cell: Cell | undefined): boolean {
   return !cell || (cell.value === null && cell.formula === undefined);
 }
 
-/**
- * Reads a typed value out of what the user typed.
- *
- * Deliberately narrow. Excel's real coercion also recognises dates, times,
- * currency, percentages and fractions from their punctuation; those arrive with
- * the number-format work rather than being half-guessed here. Anything not
- * recognised stays text, which is the safe direction — a mis-parsed number is a
- * wrong answer, whereas text that should have been a number is visibly wrong.
+/*
+ * Reading a typed entry lives in `parseInput.ts`, not here: what the user typed
+ * decides the cell's number format as well as its value — `23/09/2026` is a
+ * number wearing a date format — and that needs the format vocabulary, which
+ * this module deliberately does not depend on.
  */
-export function coerceInput(input: string): CellValue {
-  if (input.length === 0) return null;
-
-  if (isErrorValue(input)) return input;
-
-  const upper = input.toUpperCase();
-  if (upper === 'TRUE') return true;
-  if (upper === 'FALSE') return false;
-
-  // A leading zero or apostrophe means the user wants text: `00123` is a
-  // reference number, not one hundred and twenty-three.
-  if (input.startsWith("'")) return input.slice(1);
-  if (/^0[0-9]/.test(input)) return input;
-
-  const trimmed = input.trim();
-  if (trimmed.length > 0 && Number.isFinite(Number(trimmed))) return Number(trimmed);
-
-  return input;
-}

@@ -30,6 +30,45 @@ describe('WorkbookStore', () => {
     expect(sheet.getValue(0, 3)).toBe('00123');
   });
 
+  it('gives a typed date the format that makes it a date', () => {
+    const store = new WorkbookStore();
+
+    store.setCellInput(0, 0, '01/03/2024');
+
+    // The serial is the value; the format is what stops it reading as 45352.
+    expect(store.activeSheet().getValue(0, 0)).toBe(45352);
+    expect(store.styleAt(0, 0).numberFormat).toBe('dd-mm-yyyy');
+    // And it comes back as a date, not as its serial, when the cell is
+    // re-opened — otherwise pressing F2 and Enter would destroy it.
+    expect(store.editText(0, 0)).toBe('01-03-2024');
+  });
+
+  it('keeps a format the candidate chose when they type into it', () => {
+    const store = new WorkbookStore();
+
+    store.applyStyle({ numberFormat: '₹#,##0.00' }, 'Number Format');
+    store.setCellInput(0, 0, '250');
+
+    expect(store.styleAt(0, 0).numberFormat).toBe('₹#,##0.00');
+    expect(store.activeSheet().getValue(0, 0)).toBe(250);
+  });
+
+  it('keeps an apostrophe’s text as text, and offers the apostrophe back', () => {
+    const store = new WorkbookStore();
+
+    store.setCellInput(0, 0, "'007");
+
+    expect(store.activeSheet().getValue(0, 0)).toBe('007');
+    expect(store.styleAt(0, 0).quotePrefix).toBe(true);
+    // Re-committing what the formula bar shows has to be a no-op; without the
+    // apostrophe coming back, F2 then Enter would turn `007` into 7.
+    expect(store.editText(0, 0)).toBe("'007");
+
+    store.setCellInput(0, 0, '7');
+    expect(store.activeSheet().getValue(0, 0)).toBe(7);
+    expect(store.styleAt(0, 0).quotePrefix).toBeUndefined();
+  });
+
   it('shows the formula source in the formula bar and the value in the cell', async () => {
     const store = await storeWithEngine();
 
