@@ -61,6 +61,10 @@ mark, or an entry for an operation nobody can author.
   Be *tight*: plain `underline` licenses `underline` and not `underlineStyle`, so a candidate who
   reached for a wavy line when asked for an underline is marked as having done something extra.
 - **`describe`** — one line of English, for solution steps and the admin's summary.
+- **Its topic** — `WORD_TOPIC_OF` in `src/exam/authoring/topics.ts`, typed as one entry per
+  `WordOperation` kind, so a new operation without a topic **does not compile**. The per-question
+  editor ticks the Topic dropdown from it. Pick an existing topic from `DOCUMENT_TOPICS` if one fits;
+  see [Adding a topic](#adding-a-topic) otherwise.
 - **`rewritesText: true`** — only for a function that changes the *wording*. It tells the rubric
   builder to leave out `unchanged`, which compares character by character against the starting
   document and would fail every correct answer to a replacement question.
@@ -135,7 +139,11 @@ Spacing", "Bullets & Numbering".
   data update to `word_doc_questions.topic`.
 - The server accepts only topics on the list (`parseDocumentQuestionFields`), so a new topic is
   usable as soon as it is in `DOCUMENT_TOPICS` — no form or validation change.
-- Add the property → topic pair to the `it.each` tables in `src/exam/document/topics.test.ts`.
+- Add the property → topic pair to the `it.each` tables in `src/exam/document/topics.test.ts`, and
+  a catalog operation → topic pair to `src/exam/authoring/topics.test.ts`.
+- **The per-question papers use the same Word list.** `TopicMultiSelect`
+  (`src/components/authoring/`) is the one dropdown both editors render, so a topic added to
+  `DOCUMENT_TOPICS` appears in both at once.
 
 ## Naming the text: selections
 

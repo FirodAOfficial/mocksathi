@@ -1,49 +1,48 @@
 'use client';
 
 import { Popover } from '../controls/Popover';
-import { DOCUMENT_TOPICS, orderTopics, type DocumentTopic } from '@/exam/document/topics';
-import styles from './DocumentAuthoringShell.module.css';
+import { orderIn } from '@/exam/document/topics';
+import styles from './TopicMultiSelect.module.css';
 
 export interface TopicMultiSelectProps {
+  /** The topics on offer, in the order they are shown and stored. */
+  options: readonly string[];
   /** What is ticked. */
-  value: DocumentTopic[];
-  onChange: (topics: DocumentTopic[]) => void;
+  value: string[];
+  onChange: (topics: string[]) => void;
   /**
-   * True while the selection is still the one read off the recorded operation.
-   * Shown beside the field, so the admin knows the ticks were made for them —
-   * and that changing any of them is theirs to do.
+   * True while the ticks are still the ones read off the question's operation.
+   * The "use detected topics again" link appears once the admin has changed
+   * them, so getting back to the automatic choice is one click.
    */
   automatic: boolean;
-  /** Puts the detected topics back after the admin has changed them. */
   onReset: () => void;
+  /** For a `<label htmlFor>` outside the control. */
+  id?: string;
+  /** Outlined as missing; the caller says why in text beside it. */
+  invalid?: boolean;
 }
 
 /**
  * A dropdown of checkboxes for a question's topics.
  *
- * Built on the ribbon's `Popover`, so it dismisses, positions and returns focus
- * exactly as the editor's own menus do on the same screen.
+ * Built on the ribbon's `Popover`, so it dismisses, positions and returns
+ * focus exactly as the editor's own menus do. The label is the caller's, so it
+ * sits in whichever form layout it is placed in.
  */
-export function TopicMultiSelect({ value, onChange, automatic, onReset }: TopicMultiSelectProps) {
-  const toggle = (topic: DocumentTopic): void => {
-    onChange(value.includes(topic) ? value.filter((entry) => entry !== topic) : orderTopics([...value, topic]));
+export function TopicMultiSelect({ options, value, onChange, automatic, onReset, id, invalid }: TopicMultiSelectProps) {
+  const toggle = (topic: string): void => {
+    onChange(value.includes(topic) ? value.filter((entry) => entry !== topic) : orderIn(options, [...value, topic]));
   };
 
   return (
-    <div className={styles.field}>
-      <span>
-        Topic{' '}
-        <span className={styles.hint}>
-          {automatic ? 'Selected from the detected operation — change it if you like.' : 'Chosen by you.'}
-        </span>
-      </span>
-
+    <div className={styles.wrap}>
       <Popover
-        trigger={({ open, toggle: toggleOpen, id, controls }) => (
+        trigger={({ open, toggle: toggleOpen, id: popoverId, controls }) => (
           <button
             type="button"
-            id={id}
-            className={styles.multiTrigger}
+            id={id ?? popoverId}
+            className={`${styles.multiTrigger} ${invalid ? styles.invalid : ''}`}
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-controls={controls}
@@ -67,7 +66,7 @@ export function TopicMultiSelect({ value, onChange, automatic, onReset }: TopicM
       >
         {() => (
           <div className={styles.multiMenu} role="listbox" aria-multiselectable="true" aria-label="Topics">
-            {DOCUMENT_TOPICS.map((topic) => (
+            {options.map((topic) => (
               <label className={styles.multiOption} key={topic}>
                 <input type="checkbox" checked={value.includes(topic)} onChange={() => toggle(topic)} />
                 {topic}

@@ -23,6 +23,11 @@ export const DOCUMENT_TOPICS = [
   'Borders',
   'Styles',
   'Bullets & Numbering',
+  // Never detected in the single-document flow — wording is fixed there, and
+  // Clear Formatting reads as the removals it is made of — but asked for by
+  // the per-question papers' operations of the same names.
+  'Find & Replace',
+  'Clear Formatting',
 ] as const;
 
 export type DocumentTopic = (typeof DOCUMENT_TOPICS)[number];
@@ -73,10 +78,15 @@ export function isDocumentTopic(value: unknown): value is DocumentTopic {
   return typeof value === 'string' && (DOCUMENT_TOPICS as readonly string[]).includes(value);
 }
 
-/** Puts topics in the list's own order, without repeats. */
+/** Puts topics in a list's own order, without repeats or strays. */
+export function orderIn<T extends string>(list: readonly T[], topics: Iterable<string>): T[] {
+  const chosen = new Set<string>(topics);
+  return list.filter((topic) => chosen.has(topic));
+}
+
+/** Puts topics in the Word list's own order, without repeats. */
 export function orderTopics(topics: Iterable<DocumentTopic>): DocumentTopic[] {
-  const chosen = new Set(topics);
-  return DOCUMENT_TOPICS.filter((topic) => chosen.has(topic));
+  return orderIn(DOCUMENT_TOPICS, topics);
 }
 
 /** The topics a recorded operation exercises — what the form selects for the admin. */
@@ -104,5 +114,13 @@ export function joinTopics(topics: readonly DocumentTopic[]): string {
  * carrying text the dropdown has no way to show.
  */
 export function splitTopics(value: string): DocumentTopic[] {
-  return orderTopics(value.split(TOPIC_SEPARATOR).map((part) => part.trim()).filter(isDocumentTopic));
+  return splitTopicsIn(DOCUMENT_TOPICS, value);
+}
+
+/** `splitTopics`, against any topic list. */
+export function splitTopicsIn<T extends string>(list: readonly T[], value: string): T[] {
+  return orderIn(
+    list,
+    value.split(TOPIC_SEPARATOR).map((part) => part.trim()),
+  );
 }

@@ -15,7 +15,7 @@ import { project, replay } from '@/exam/document/apply';
 import { describeChanges, describeStep, suggestInstruction } from '@/exam/document/describe';
 import { detectChanges, hasVisibleChange, type Detection } from '@/exam/document/detect';
 import { overlapWarnings, partialWordWarnings } from '@/exam/document/overlap';
-import { splitTopics, topicsFor, type DocumentTopic } from '@/exam/document/topics';
+import { DOCUMENT_TOPICS, splitTopics, topicsFor, type DocumentTopic } from '@/exam/document/topics';
 import type { DocumentStep } from '@/exam/document/types';
 import { createBlankDocument } from '@/services/document/types';
 import { useUiStore } from '@/state/uiStore';
@@ -572,12 +572,21 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
                   />
                 </label>
 
-                <TopicMultiSelect
-                  value={topics}
-                  automatic={!form.topicsChosen}
-                  onChange={(next) => setForm({ ...form, topics: next, topicsChosen: true })}
-                  onReset={() => setForm({ ...form, topics: [], topicsChosen: false })}
-                />
+                <div className={styles.field}>
+                  <span>
+                    Topic{' '}
+                    <span className={styles.hint}>
+                      {form.topicsChosen ? 'Chosen by you.' : 'Selected from the detected operation — change it if you like.'}
+                    </span>
+                  </span>
+                  <TopicMultiSelect
+                    options={DOCUMENT_TOPICS}
+                    value={topics}
+                    automatic={!form.topicsChosen}
+                    onChange={(next) => setForm({ ...form, topics: next as DocumentTopic[], topicsChosen: true })}
+                    onReset={() => setForm({ ...form, topics: [], topicsChosen: false })}
+                  />
+                </div>
 
                 <div className={styles.fieldRow}>
                   <label className={styles.field}>
