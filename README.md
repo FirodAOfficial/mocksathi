@@ -84,10 +84,10 @@ npm run db:up               # starts Postgres + Drizzle Gateway via docker compo
 npm run db:migrate          # applies db/migrations/ to it
 ```
 
-`DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `1`)
-controls how long a session lasts before its cookie/DB row expires and the holder is redirected to
-`/login`; `MAX_CONCURRENT_SESSIONS` (default `5`) caps how many devices/browsers one user can be
-signed into at once — signing in past the cap quietly signs the oldest one out. Every page requires
+`DATABASE_URL` in `.env` points the app at that database. `SESSION_DURATION_HOURS` (default `120`,
+five days) controls how long a session lasts before its cookie/DB row expires and the holder is
+redirected to `/login`; `MAX_CONCURRENT_SESSIONS` (default `2`) caps how many devices/browsers one
+user can be signed into at once — signing in on a third device signs the oldest one out. Every page requires
 a session except `/login`, `/signup`, `/about`, and the three legal documents (Terms, Privacy,
 Refund & Cancellation Policy — `/legal/terms`, `/legal/privacy`, `/legal/refund-policy`), all linked
 from `SiteFooter` (`src/components/site/`) on the auth pages. The same legal content also opens as a

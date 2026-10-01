@@ -14,7 +14,13 @@ import { sessions, users, type User } from '@/db/schema';
  * browser's cookie, set by `src/auth/cookies.ts`.
  */
 
-const DEFAULT_SESSION_DURATION_HOURS = 1;
+/**
+ * Five days. Long enough that a candidate working through mocks over a week is
+ * not sent back to /login every hour, which is what the earlier one-hour
+ * default did; short enough that a forgotten session on a shared computer does
+ * not live for a month. Overridable with `SESSION_DURATION_HOURS`.
+ */
+const DEFAULT_SESSION_DURATION_HOURS = 5 * 24;
 
 /**
  * How long a session lasts, read fresh on every call rather than cached at
@@ -27,7 +33,16 @@ export function sessionDurationMs(): number {
   return (Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_SESSION_DURATION_HOURS) * 60 * 60 * 1000;
 }
 
-const DEFAULT_MAX_CONCURRENT_SESSIONS = 5;
+/**
+ * Two: a candidate's own phone and laptop, say, but no more.
+ *
+ * Signing in on a third device signs the oldest of the two out —
+ * `createSession` evicts the oldest live session as it creates the new one, and
+ * that device is sent to /login on its next request. Enough for one person on
+ * two devices; too few for an account shared around a group. Overridable with
+ * `MAX_CONCURRENT_SESSIONS`.
+ */
+const DEFAULT_MAX_CONCURRENT_SESSIONS = 2;
 
 /** How many *live* sessions one user may hold at once — same "read fresh" reasoning as `sessionDurationMs`. */
 export function maxConcurrentSessions(): number {
@@ -47,8 +62,8 @@ export interface CreatedSession {
 
 /**
  * Creates a session, evicting the user's oldest live session(s) first if
- * they're already at the cap — signing in on a sixth device (default cap: 5)
- * quietly signs the oldest one out, rather than growing the sessions table
+ * they're already at the cap — with the default cap of two, signing in on a
+ * third device signs the oldest one out, rather than growing the sessions table
  * without bound or refusing the new login outright. Already-expired sessions
  * don't count against the cap (or get touched here) — they're dead weight,
  * not a live session occupying a slot; nothing currently sweeps them, same

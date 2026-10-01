@@ -108,6 +108,14 @@ work — see the backlog at the bottom.
       so the total never grows past it. A sixth login (default cap) quietly signs the oldest device
       out rather than refusing the new login or letting the table grow without bound.
 - [x] `tsc --noEmit` and `eslint` clean on everything touched.
+- [x] **Update — five-day sessions, two devices at a time.** Defaults are now
+      `SESSION_DURATION_HOURS=120` and `MAX_CONCURRENT_SESSIONS=2` (`src/auth/session.ts`, and
+      `.env.example`). The hour-long sessions logged candidates out mid-week; five days keeps them
+      signed in across a week of mocks. A cap of two allows a candidate's own phone and laptop; a
+      third sign-in makes `createSession` evict the oldest live session as it creates the new one —
+      on every sign-in path (password, Google, signup, password reset), since all four go through
+      it — so that device is sent to `/login` on its next request. Both are still environment variables: **a deployment that sets them explicitly keeps
+      its own values** and must be updated there. Covered by `src/auth/session.test.ts`.
 
 ## Not done / deferred
 
