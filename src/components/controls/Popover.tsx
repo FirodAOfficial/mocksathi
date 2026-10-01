@@ -7,12 +7,14 @@ import styles from './Popover.module.css';
 /**
  * The dismissal and positioning behaviour shared by every ribbon menu.
  *
- * The panel is rendered into `document.body` rather than beside its trigger.
+ * The panel is rendered into a portal rather than beside its trigger.
  * An absolutely-positioned child is clipped by any ancestor that establishes a
  * scroll container, and the ribbon is full of them — a menu opened from the
  * Font group would be cut off at the group's edge instead of floating over the
  * document. A portal plus fixed positioning takes the panel out of that
  * hierarchy entirely, so it always overlays the page.
+ *
+ * Where the portal goes depends on where the trigger is. See `portalHost`.
  */
 export interface PopoverProps {
   /** Renders the trigger. `open` lets it show a pressed state. */
@@ -25,6 +27,24 @@ export interface PopoverProps {
 
 /** Breathing room kept between a menu and the bottom of the viewport. */
 const VIEWPORT_MARGIN = 8;
+
+/**
+ * Where the panel is portalled to.
+ *
+ * `document.body` for a menu in the page, which is what takes it out of the
+ * ribbon's scroll containers. But a menu opened from inside a modal `<dialog>`
+ * — the Font dialog's Size box — must go into *that dialog*: a modal dialog is
+ * painted in the browser's top layer, above everything in the body, so a panel
+ * portalled to the body opens behind the dialog that asked for it. It is
+ * there, it is positioned, and it is invisible.
+ *
+ * The dialog is the nearest open one above the trigger, so a menu lands in the
+ * top layer with the dialog rather than under it. Nothing here needs z-index:
+ * the top layer is above the page by definition.
+ */
+function portalHost(anchor: HTMLElement | null): HTMLElement {
+  return anchor?.closest('dialog[open]') ?? document.body;
+}
 
 export function Popover({ trigger, children, align = 'start', className }: PopoverProps) {
   const [open, setOpen] = useState(false);
@@ -171,7 +191,7 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
             >
               {children({ close })}
             </div>,
-            document.body,
+            portalHost(containerRef.current),
           )
         : null}
     </div>
