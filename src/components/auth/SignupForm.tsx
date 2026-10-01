@@ -1,5 +1,6 @@
 'use client';
 
+import { BrandMark } from '@/components/site/BrandLogo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -113,7 +114,7 @@ export function SignupForm({
         <div className={styles.centerColumn}>
           <div className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
-              <div className={cardStyles.logoMark}>M</div>
+              <BrandMark size={32} tone="dark" />
               <div>
                 <div className={cardStyles.logoName}>Mocksathi</div>
               </div>
