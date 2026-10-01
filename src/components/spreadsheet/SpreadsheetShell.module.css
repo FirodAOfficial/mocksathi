@@ -120,3 +120,15 @@
     text-align: left;
   }
 }
+
+/*
+ * A landscape phone. This bar is the window title and three decorative window
+ * buttons — nothing a candidate acts on — so on a 390px-tall screen it goes and
+ * the grid takes the rows. The Word paper's title bar stays, because its
+ * quick-access commands are real.
+ */
+@media (max-height: 500px) {
+  .titleBar {
+    display: none;
+  }
+}

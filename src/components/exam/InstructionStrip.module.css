@@ -47,3 +47,16 @@
     font-size: 13px;
   }
 }
+
+/* A landscape phone. The task is the one thing that cannot shrink away, so it
+   loses its padding rather than its words. */
+@media (max-height: 500px) {
+  .strip {
+    gap: 8px;
+    padding: 4px 10px;
+  }
+
+  .instruction {
+    font-size: 12px;
+  }
+}

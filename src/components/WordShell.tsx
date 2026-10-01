@@ -26,6 +26,7 @@ import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
 import { QuestionListPanel } from './exam/QuestionListPanel';
 import { ExamDrawerBar, ExamPanel, type DrawerSide } from './exam/ExamPanels';
+import { RotateGate } from './exam/RotateGate';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
 import { ResultView } from './result/ResultView';
@@ -378,6 +379,13 @@ export function WordShell({
           onToggle={(side) => setDrawer((current) => (current === side ? null : side))}
         />
       ) : null}
+
+      {/*
+        A phone held upright has the pixels for the three columns and is holding
+        them the wrong way round, so the paper asks for the turn rather than
+        folding the panels into drawers. Dismissible — see `RotateGate`.
+      */}
+      {exam && !focusMode ? <RotateGate /> : null}
 
       <StatusBar pages={pages} words={format.words} readOnly={readOnly || locked} />
 

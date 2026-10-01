@@ -163,6 +163,64 @@
   }
 }
 
+/*
+ * A landscape phone, a tablet, a split-screen window.
+ *
+ * The columns do fit below 1024px, but only if they ask for less: at the
+ * desktop widths the document column on a 852px landscape phone would be left
+ * under half the screen. 150px still holds a two-digit number and its dots.
+ */
+@media (max-width: 1023px) {
+  .panel {
+    width: clamp(150px, 19vw, 200px);
+    padding: 10px 0 8px 10px;
+  }
+
+  .heading {
+    margin-bottom: 8px;
+    font-size: 18px;
+  }
+
+  .itemSelected .itemInner {
+    padding-right: 18px;
+  }
+}
+
+/*
+ * Short: a landscape phone is about 390px tall, and the ribbon, instruction
+ * strip and status bar are all ahead of this list in the column.
+ */
+@media (max-height: 500px) {
+  .panel {
+    padding: 8px 0 6px 10px;
+  }
+
+  .heading {
+    margin-bottom: 6px;
+    font-size: 16px;
+  }
+
+  .item, .itemInner {
+    min-height: 40px;
+  }
+
+  .itemInner {
+    padding: 5px 10px;
+  }
+
+  .number {
+    font-size: 16px;
+  }
+
+  .itemSelected .number {
+    font-size: 18px;
+  }
+
+  .prompt {
+    display: none;
+  }
+}
+
 @media print {
   .panel {
     display: none;

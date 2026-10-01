@@ -57,3 +57,13 @@
   border-color: #c96b6b;
 }
 
+
+/*
+ * A landscape phone. The bar keeps its quick-access commands — undo, redo and
+ * print are part of what the paper tests — and gives up its height instead.
+ */
+@media (max-height: 500px) {
+  .bar {
+    height: 24px;
+  }
+}

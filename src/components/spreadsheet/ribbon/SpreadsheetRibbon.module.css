@@ -171,3 +171,24 @@
     min-height: 70px;
   }
 }
+
+/* A landscape phone, as in `ribbon/Ribbon.module.css`: the grid takes the rows. */
+@media (max-height: 500px) {
+  .tabstrip {
+    padding: 0 4px;
+  }
+
+  .tabButton {
+    padding: 2px 9px;
+    font-size: 11px;
+  }
+
+  .panel {
+    padding: 1px 3px;
+  }
+
+  .tab {
+    min-height: 0;
+    max-height: 4.25rem;
+  }
+}

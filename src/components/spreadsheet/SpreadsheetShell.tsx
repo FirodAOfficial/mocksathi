@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { ExamDrawerBar, ExamPanel, type DrawerSide } from '@/components/exam/ExamPanels';
+import { RotateGate } from '@/components/exam/RotateGate';
 import { ExamSummaryPanel } from '@/components/exam/ExamSummaryPanel';
 import { InstructionStrip } from '@/components/exam/InstructionStrip';
 import { QuestionListPanel } from '@/components/exam/QuestionListPanel';
@@ -375,6 +376,9 @@ function ShellBody({
           onToggle={(side) => setDrawer((current) => (current === side ? null : side))}
         />
       ) : null}
+
+      {/* The same request the Word paper makes, for the same reason. */}
+      {exam ? <RotateGate /> : null}
 
       <SheetTabs />
       <SpreadsheetStatusBar />

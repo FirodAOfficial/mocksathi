@@ -13,9 +13,14 @@
 }
 
 /* ---------------------------------------------------------------------- *
- * Below 768px the columns cannot coexist — the page alone is 816px wide —
- * so the panels become drawers over the document and the document keeps the
- * whole width to itself.
+ * Below 640px the columns cannot coexist: the two panels alone ask for 424px
+ * and the document would be left under 220px. There the panels become drawers
+ * over the document and the document keeps the whole width to itself.
+ *
+ * Above it they are columns at every size — tablet, split-screen window and
+ * landscape phone included. The document is scaled to its column rather than
+ * reflowed (`DocumentCanvas`), so a narrow middle column shows the whole page
+ * smaller instead of rewrapping it, and the grid scrolls.
  * ---------------------------------------------------------------------- */
 
 .drawerBar {
@@ -133,8 +138,8 @@
 }
 
 
-/* Drawers appear wherever the columns do not fit — tablets included. */
-@media (max-width: 1279px) {
+/* Drawers appear only where the columns genuinely do not fit. */
+@media (max-width: 639px) {
   .drawerBar {
     display: flex;
   }
