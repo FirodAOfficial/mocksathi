@@ -113,3 +113,13 @@ Work down this list; it is ordered by how often each one is the cause.
 
 Check a claim against the code before repeating it. The document's whole value is that every line in
 it was read out of the source rather than assumed, and one guessed sentence costs it that.
+
+## Topics
+
+The Topic field is a multi-select dropdown of `EXCEL_TOPICS` (`src/exam/authoring/topics.ts`),
+ticked automatically from the question's operations by `excelTopicOf` — whose `switch` over
+`ExcelOperation['kind']` must cover a new operation kind (the function's return type makes a missing
+case a compile error). Prefer an existing topic; add one to `EXCEL_TOPICS` only for a new ribbon
+group or dialog, never with a comma in its name (topics are stored joined with `, ` in
+`test_questions.topic`). Add the case to `src/exam/authoring/topics.test.ts`.
+

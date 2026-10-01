@@ -1,5 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 import { normaliseDocument, project } from '@/exam/document/apply';
+import { DOCUMENT_TOPICS, isDocumentTopic, joinTopics } from '@/exam/document/topics';
 import { QUESTION_DIFFICULTIES, type QuestionDifficulty } from './schema';
 import { MAX_MARKS, MAX_SOLUTION_STEPS, type ParseResult } from './testInput';
 
@@ -20,7 +21,8 @@ export const MAX_DOCUMENT_CHARACTERS = 60_000;
 export const MAX_DOCUMENT_QUESTIONS = 100;
 
 export interface DocumentQuestionInput {
-  topic?: string;
+  /** One or more of `DOCUMENT_TOPICS`. */
+  topics?: unknown;
   difficulty?: string;
   marks?: string | number;
   instructionEn?: string;
@@ -59,9 +61,13 @@ function isDifficulty(value: string): value is QuestionDifficulty {
 }
 
 export function parseDocumentQuestionFields(body: DocumentQuestionInput): ParseResult<ParsedDocumentQuestionFields> {
-  const topic = typeof body.topic === 'string' ? body.topic.trim() : '';
-  if (!topic) return fail('TOPIC_REQUIRED', 'Enter the topic this question exercises.');
-  if (topic.length > 200) return fail('TOPIC_TOO_LONG', 'Keep the topic under 200 characters.');
+  // Picked from a fixed list, so anything off it is a crafted request, not a typo.
+  const topics = Array.isArray(body.topics) ? body.topics : [];
+  if (topics.length === 0) return fail('TOPIC_REQUIRED', 'Choose at least one topic this question exercises.');
+  if (!topics.every(isDocumentTopic)) {
+    return fail('INVALID_TOPIC', `Topics must be chosen from the list: ${DOCUMENT_TOPICS.join(', ')}.`);
+  }
+  const topic = joinTopics(topics);
 
   const instructionEn = typeof body.instructionEn === 'string' ? body.instructionEn.trim() : '';
   if (!instructionEn) return fail('INSTRUCTION_REQUIRED', 'Enter the question, in English.');

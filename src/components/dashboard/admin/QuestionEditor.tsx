@@ -16,6 +16,9 @@ import {
   type SelectorName,
 } from '@/editor/functions/selection';
 import styles from './TestWorkbench.module.css';
+import { TopicMultiSelect } from '@/components/authoring/TopicMultiSelect';
+import { topicOptions, topicsForOperations } from '@/exam/authoring/topics';
+import { TOPIC_SEPARATOR, splitTopicsIn } from '@/exam/document/topics';
 
 /**
  * Writing one question.
@@ -95,7 +98,13 @@ interface OperationDraft {
 }
 
 interface EditorState {
-  topic: string;
+  /** Ticked in the topic dropdown, from `topicOptions(subject)`. */
+  topics: string[];
+  /**
+   * True once the admin has changed the ticks. Until then the topics follow
+   * the operations as they are picked (`topicsForOperations`).
+   */
+  topicsChosen: boolean;
   difficulty: string;
   marks: string;
   instructionEn: string;
@@ -210,7 +219,8 @@ function gridForEditing(stored: string[][] | undefined, rows: number, columns: n
 
 function blankState(subject: TestSubject): EditorState {
   return {
-    topic: '',
+    topics: [],
+    topicsChosen: false,
     difficulty: 'Easy',
     marks: '3',
     instructionEn: '',
@@ -390,9 +400,13 @@ function startingFormattingFields(
 }
 
 function stateFromQuestion(question: TestQuestion): EditorState {
+  // A topic typed before the dropdown existed matches nothing on the list; the
+  // question then opens with the topics its operations imply.
+  const topics = splitTopicsIn(topicOptions(question.subject), question.topic);
   const base: EditorState = {
     ...blankState(question.subject),
-    topic: question.topic,
+    topics,
+    topicsChosen: topics.length > 0,
     difficulty: question.difficulty,
     marks: String(question.marks),
     instructionEn: question.instructionEn,
@@ -668,6 +682,17 @@ export interface QuestionEditorProps {
 
 export function QuestionEditor({ testId, subject, question, onSaved, onCancel }: QuestionEditorProps) {
   const [values, setValues] = useState<EditorState>(() => (question ? stateFromQuestion(question) : blankState(subject)));
+
+  /*
+   * Ticked for the admin from what the question asks for — its operations, and
+   * a multi-step question's carried-through steps — until they change the
+   * ticks themselves.
+   */
+  const detectedTopics = topicsForOperations(subject, [
+    ...values.operations.map(operationFrom),
+    ...((values.steps ?? []) as { operations?: unknown[] }[]).flatMap((step) => step?.operations ?? []),
+  ]);
+  const topics = values.topicsChosen ? values.topics : detectedTopics;
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -697,7 +722,7 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
     setSaving(true);
 
     const payload = {
-      topic: values.topic,
+      topic: topics.join(TOPIC_SEPARATOR),
       difficulty: values.difficulty,
       marks: values.marks,
       instructionEn: values.instructionEn,
@@ -763,7 +788,7 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
    * a real thing an admin wants and not an omission to nag about.
    */
   const missing = {
-    topic: values.topic.trim() === '',
+    topic: topics.length === 0,
     instruction: values.instructionEn.trim() === '',
     marks: numberOrUndefined(values.marks) === undefined,
     passage: subject === 'word' && values.passageEn.trim() === '',
@@ -809,17 +834,19 @@ export function QuestionEditor({ testId, subject, question, onSaved, onCancel }:
       <div className={styles.grid3}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor={id('topic')}>
-            Topic
+            Topic{' '}
+            <span className={styles.optional}>
+              · {values.topicsChosen ? 'chosen by you' : 'from the operations — change if you like'}
+            </span>
           </label>
-          <input
+          <TopicMultiSelect
             id={id('topic')}
-            name="topic"
-            className={styles.input + mark(missing.topic)}
-            placeholder={subject === 'word' ? 'Character Formatting' : 'Merge & Center'}
-            value={values.topic}
-            onChange={handleChange}
-            aria-invalid={missing.topic}
-            required
+            options={topicOptions(subject)}
+            value={topics}
+            automatic={!values.topicsChosen}
+            invalid={missing.topic}
+            onChange={(next) => setValues((current) => ({ ...current, topics: next, topicsChosen: true }))}
+            onReset={() => setValues((current) => ({ ...current, topics: [], topicsChosen: false }))}
           />
           {missing.topic && <p className={styles.requiredNote}>Required</p>}
         </div>

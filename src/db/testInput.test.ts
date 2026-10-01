@@ -16,7 +16,7 @@ const EXAM_ID = '11111111-2222-3333-4444-555555555555';
 
 function wordQuestion(overrides: Partial<QuestionInput> = {}): QuestionInput {
   return {
-    topic: 'Character Formatting',
+    topic: 'Font Style',
     difficulty: 'Easy',
     marks: '3',
     instructionEn: 'Make the paragraph bold.',
@@ -162,6 +162,31 @@ describe('parseQuestionInput', () => {
     expect(parseQuestionInput(wordQuestion({ operations: [] }), 'word')).toMatchObject({
       ok: false,
       code: 'OPERATIONS_REQUIRED',
+    });
+  });
+
+  describe('topics', () => {
+    it('stores topics from the list, in the list’s order', () => {
+      const parsed = parseQuestionInput(wordQuestion({ topic: 'Alignment, Font Style' }), 'word');
+      expect(parsed.ok && parsed.fields.topic).toBe('Font Style, Alignment');
+    });
+
+    it('refuses a topic that is not on the list', () => {
+      const parsed = parseQuestionInput(wordQuestion({ topic: 'Font Style, Character Formatting' }), 'word');
+      expect(parsed).toMatchObject({ ok: false, code: 'INVALID_TOPIC' });
+      expect(!parsed.ok && parsed.detail).toContain('“Character Formatting” is not a topic');
+    });
+
+    it('refuses the other subject’s topics', () => {
+      expect(parseQuestionInput(wordQuestion({ topic: 'Merge & Center' }), 'word')).toMatchObject({
+        ok: false,
+        code: 'INVALID_TOPIC',
+      });
+    });
+
+    it('ignores stray separators', () => {
+      const parsed = parseQuestionInput(wordQuestion({ topic: 'Font Style, , ' }), 'word');
+      expect(parsed.ok && parsed.fields.topic).toBe('Font Style');
     });
   });
 
