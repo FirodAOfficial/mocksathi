@@ -112,23 +112,22 @@
 }
 
 @media (width <= 767px) {
-  .windowButtons {
-    display: none;
-  }
-
   .title {
     text-align: left;
   }
 }
 
 /*
- * A landscape phone. This bar is the window title and three decorative window
- * buttons — nothing a candidate acts on — so on a 390px-tall screen it goes and
- * the grid takes the rows. The Word paper's title bar stays, because its
- * quick-access commands are real.
+ * A landscape phone. The bar cannot go: ✕ submits the paper. It gives up its
+ * height and its title instead — the paper's name is on the instruction strip
+ * and the question list, so losing it here costs the candidate nothing.
  */
 @media (max-height: 500px) {
   .titleBar {
-    display: none;
+    padding: 1px 6px;
+  }
+
+  .title {
+    font-size: 11px;
   }
 }

@@ -310,6 +310,7 @@ export function WordShell({
         canUndo={format.canUndo}
         canRedo={format.canRedo}
         readOnly={readOnly}
+        onSaveAnswer={exam ? questionAnswers.saveCurrent : undefined}
       />
 
       {editor && !focusMode ? (
