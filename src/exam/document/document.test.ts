@@ -7,7 +7,7 @@ import { documentRubricFor } from '@/server/marking/documentRubric';
 import { applySteps, faithful, normaliseDocument, project, replay } from './apply';
 import { describeStep, suggestInstruction } from './describe';
 import { detectChanges, hasVisibleChange } from './detect';
-import { overlapWarnings } from './overlap';
+import { overlapWarnings, partialWordWarnings } from './overlap';
 import type { DocumentStep, TimelineEntry } from './types';
 
 /*
@@ -304,5 +304,107 @@ describe('overlap between questions', () => {
     const second = detect(red, blue);
     expect(overlapWarnings(second, [{ number: 1, steps: first }])).toHaveLength(1);
     expect(overlapWarnings(detect(PASSAGE, AFTER_Q1), [{ number: 2, steps: detect(AFTER_Q1, AFTER_Q2) }])).toEqual([]);
+  });
+});
+
+describe('selection edges are not what is tested', () => {
+  const SENTENCE = 'He promoted the "Gujarat Model" of development.';
+  const passage = doc(paragraph([text(SENTENCE)]));
+  const NEW_ROMAN: Mark = { type: 'textStyle', attrs: { fontFamily: 'Times New Roman', fontSize: '14pt' } };
+  const UNDERLINE: Mark = { type: 'underline', attrs: { style: 'single', color: null } };
+
+  // The admin's drag stopped one letter short: "Gujarat Mode".
+  const authorUnderline = doc(
+    paragraph([text('He promoted the "'), text('Gujarat Mode', [UNDERLINE]), text('l" of development.')]),
+  );
+  const authorFont = doc(
+    paragraph([
+      text('He promoted the "', [NEW_ROMAN]),
+      text('Gujarat Mode', [UNDERLINE, NEW_ROMAN]),
+      text('l" of development.', [NEW_ROMAN]),
+    ]),
+  );
+  const underlineSteps = detect(passage, authorUnderline);
+  const fontSteps = detect(authorUnderline, authorFont);
+
+  const attempt: ExamAttempt = {
+    candidateName: 'Candidate',
+    subject: 'word',
+    durationSeconds: 900,
+    sharedDocument: passage,
+    sections: [
+      {
+        name: 'Word',
+        questions: [1, 2].map((number) => ({
+          subject: 'word' as const,
+          number,
+          topic: 'Formatting',
+          difficulty: 'Easy' as const,
+          instruction: { en: '', hi: '' },
+          solution: { en: [], hi: [] },
+          passage: { en: passage, hi: passage },
+          modelAnswer: { scope: 'all' as const },
+          marks: 1,
+          bookmarked: false,
+        })),
+      },
+    ],
+  };
+
+  function outcomes(rubrics: ReturnType<typeof documentRubricFor>[], timeline: TimelineEntry[]) {
+    const answers: Record<number, AnswerPayload> = {};
+    for (const [number, list] of segmentsByQuestion(passage, timeline)) {
+      answers[number] = { segments: list } as unknown as AnswerPayload;
+    }
+    const { marks } = markAttempt(
+      attempt,
+      rubrics,
+      { answers, language: 'en', totalTimeSeconds: 0 },
+      { topper: {}, average: {}, topperTimePerQuestion: [], averageTimePerQuestion: [] } as never,
+      documentMarker(),
+      { testName: '', tagline: '', qualifyingMarks: 0 },
+    );
+    return marks.map((mark) => mark.outcome);
+  }
+
+  const rubrics = [
+    documentRubricFor(1, underlineSteps, project(passage)),
+    documentRubricFor(2, fontSteps, project(passage)),
+  ];
+
+  it('accepts the whole word when the admin selected one letter short, after the paragraph question', () => {
+    const fontFirst = doc(paragraph([text(SENTENCE, [NEW_ROMAN])]));
+    const thenUnderline = doc(
+      paragraph([
+        text('He promoted the "', [NEW_ROMAN]),
+        text('Gujarat Model', [UNDERLINE, NEW_ROMAN]),
+        text('" of development.', [NEW_ROMAN]),
+      ]),
+    );
+    expect(
+      outcomes(rubrics, [
+        { question: 2, document: fontFirst },
+        { question: 1, document: thenUnderline },
+      ]),
+    ).toEqual(['correct', 'correct']);
+  });
+
+  it('still refuses formatting that reaches into the next word', () => {
+    const tooFar = doc(
+      paragraph([text('He promoted the "'), text('Gujarat Model" of', [UNDERLINE]), text(' development.')]),
+    );
+    expect(outcomes(rubrics, [{ question: 1, document: tooFar }])[0]).toBe('incorrect');
+  });
+
+  it('accepts a sentence selected with or without its full stop', () => {
+    const withStop = doc(paragraph([text(SENTENCE, [BOLD])]));
+    const withoutStop = doc(paragraph([text(SENTENCE.slice(0, -1), [BOLD]), text('.')]));
+    const recorded = [documentRubricFor(1, detect(passage, withStop), project(passage))];
+    expect(outcomes(recorded, [{ question: 1, document: withoutStop }])[0]).toBe('correct');
+  });
+
+  it('warns the admin about a selection that stops inside a word', () => {
+    expect(partialWordWarnings(underlineSteps, project(passage))[0]).toMatch(/“Gujarat Mode” ends in the middle of a word/);
+    expect(partialWordWarnings(detect(PASSAGE, AFTER_Q1), project(PASSAGE))).toEqual([]);
   });
 });
