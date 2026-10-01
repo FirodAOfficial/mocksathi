@@ -14,6 +14,8 @@ import type { ExamAttempt, Language } from '@/exam/types';
 import { useDrawerLayout } from '@/hooks/useMediaQuery';
 import { WorkbookStore } from '@/spreadsheet/WorkbookStore';
 import { useQuestionWorkbooks } from '@/spreadsheet/useQuestionWorkbooks';
+import { useSharedWorkbookAnswers } from '@/spreadsheet/useSharedWorkbookAnswers';
+import { useSharedDocumentStore } from '@/state/sharedDocumentStore';
 import { WorkbookProvider, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { elapsedSeconds, useExamStore } from '@/state/examStore';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
@@ -121,7 +123,15 @@ function ShellBody({
   // drawer open on a screen that has none.
   const openDrawer = isMobile ? drawer : null;
 
-  const questionWorkbooks = useQuestionWorkbooks(store, exam);
+  /*
+   * A workbook per question, or — for a paper written on one workbook — one
+   * workbook for the whole sitting, recorded visit by visit. Exactly one of the
+   * two is enabled.
+   */
+  const shared = attempt.sharedWorkbook !== undefined;
+  const perQuestionWorkbooks = useQuestionWorkbooks(store, exam && !shared);
+  const sharedWorkbooks = useSharedWorkbookAnswers(store, exam && shared);
+  const questionWorkbooks = shared ? sharedWorkbooks : perQuestionWorkbooks;
 
   /*
    * Opening the exam shell starts a sitting: the clock runs from here.
@@ -178,9 +188,13 @@ function ShellBody({
     const controller = new AbortController();
     void (async () => {
       try {
+        // A shared-workbook paper is marked from its timeline alone; the
+        // per-question workbooks in `answers` would only double the payload.
+        const timeline = shared ? useSharedDocumentStore.getState().timeline : undefined;
         const marked = await submitAttempt(
           {
-            answers,
+            answers: shared ? {} : answers,
+            ...(timeline ? { timeline } : {}),
             subject: 'excel',
             testId,
             language,

@@ -1,11 +1,17 @@
 'use client';
 
-import type { JSONContent } from '@tiptap/core';
 import { create } from 'zustand';
-import type { TimelineEntry } from '@/exam/document/types';
+import type { AnswerPayload } from '@/exam/types';
+
+/** A visit's end state: a Word document, or an Excel workbook. */
+export interface SharedTimelineEntry {
+  question: number;
+  document: AnswerPayload;
+}
 
 /**
- * The sitting of a single-document Word paper, visit by visit.
+ * The sitting of a single-document Word paper or a single-workbook Excel
+ * paper, visit by visit.
  *
  * Its own store rather than more fields on `examStore`, which serves every
  * paper: this exists only while a single-document paper is open, and removing
@@ -15,7 +21,7 @@ import type { TimelineEntry } from '@/exam/document/types';
  */
 
 interface SharedDocumentState {
-  timeline: TimelineEntry[];
+  timeline: SharedTimelineEntry[];
   /** Starts a sitting over: nothing recorded yet. */
   reset: () => void;
   /**
@@ -25,9 +31,9 @@ interface SharedDocumentState {
    * so the later one replaces the earlier rather than adding a segment whose
    * before is the same question's own work.
    */
-  record: (question: number, document: JSONContent) => void;
+  record: (question: number, document: AnswerPayload) => void;
   /** Puts back a timeline taken earlier — how Clear undoes a visit. */
-  restore: (timeline: TimelineEntry[]) => void;
+  restore: (timeline: SharedTimelineEntry[]) => void;
 }
 
 export const useSharedDocumentStore = create<SharedDocumentState>((set) => ({

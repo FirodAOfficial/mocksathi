@@ -31,6 +31,15 @@ import { documentMarker, lastDocuments, segmentsByQuestion } from '@/exam/markin
 import { allQuestions } from '@/exam/types';
 import type { JSONContent } from '@tiptap/core';
 import type { Test } from '@/db/schema';
+import {
+  attemptFromWorkbookPaper,
+  getWorkbookPaper,
+  workbookPaperIdentity,
+  workbookRubrics,
+} from '@/db/workbookPapers';
+import { loadFormulaEvaluator, workbookMarker } from '@/exam/marking/sheet/workbookMarker';
+import { parseWorkbookTimeline } from '@/exam/workbook/record';
+import type { WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
 
 /**
  * Marks a submitted paper.
@@ -94,6 +103,8 @@ interface Paper {
    * `answers` — see `answersFromTimeline`.
    */
   passage?: JSONContent;
+  /** The same for a single-workbook Excel paper: the sheet its timeline starts from. */
+  startWorkbook?: WorkbookSnapshot;
 }
 
 /**
@@ -115,6 +126,7 @@ async function paperForTest(testId: string): Promise<Paper | null> {
 
   const questions = await questionsForTest(test.id);
   if (questions.length === 0 && test.subject === 'word') return documentPaperForTest(test);
+  if (questions.length === 0 && test.subject === 'excel') return workbookPaperForTest(test);
   if (questions.length === 0) return null;
 
   const identity = paperIdentityFor(test, questions);
@@ -150,26 +162,46 @@ async function documentPaperForTest(test: Test): Promise<Paper | null> {
 }
 
 /**
- * What `markAttempt` is given for a single-document paper, and what is stored.
+ * A single-workbook Excel paper. Its marker evaluates formulas itself, on the
+ * candidate's own sheet, so the calculation engine is loaded for the request.
+ */
+async function workbookPaperForTest(test: Test): Promise<Paper | null> {
+  const paper = await getWorkbookPaper(test.id);
+  if (!paper || paper.questions.length === 0) return null;
+
+  return {
+    attempt: attemptFromWorkbookPaper(test, paper),
+    rubrics: workbookRubrics(paper) as unknown as QuestionRubric<never>[],
+    marker: workbookMarker(await loadFormulaEvaluator()) as unknown as SubjectMarker<unknown, never>,
+    identity: workbookPaperIdentity(test, paper),
+    subject: 'excel',
+    testId: test.id,
+    startWorkbook: paper.workbook,
+  };
+}
+
+/**
+ * What `markAttempt` is given for a single-document or single-workbook paper,
+ * and what is stored.
  *
  * Marked: each question's visits, rebuilt into before/after pairs from the
- * server's own passage. Stored: each question's last document, which is what
- * the review screen shows as "your answer" — the visit chain itself is only
- * needed to mark, and would be most of the row.
+ * server's own starting point. Stored: each question's last document or
+ * workbook, which the review screen shows as "your answer" — the visit chain is
+ * only needed to mark, and would be most of the row.
  */
-function answersFromTimeline(
-  paper: Paper & { passage: JSONContent },
-  timeline: NonNullable<ReturnType<typeof parseTimeline>>,
+function answersFromAnyTimeline<T>(
+  attempt: ExamAttempt,
+  start: T,
+  timeline: { question: number; document: T }[],
 ): { marking: Record<number, AnswerPayload>; stored: Record<number, AnswerPayload> } {
-  const numbers = new Set(allQuestions(paper.attempt).map((question) => question.number));
+  const numbers = new Set(allQuestions(attempt).map((question) => question.number));
   const marking: Record<number, AnswerPayload> = {};
-  for (const [number, segments] of segmentsByQuestion(paper.passage, timeline)) {
+  for (const [number, segments] of segmentsByQuestion(start, timeline)) {
     if (numbers.has(number)) marking[number] = { segments } as unknown as AnswerPayload;
   }
-
   const stored: Record<number, AnswerPayload> = {};
   for (const [key, document] of Object.entries(lastDocuments(timeline))) {
-    if (numbers.has(Number(key))) stored[Number(key)] = document;
+    if (numbers.has(Number(key))) stored[Number(key)] = document as unknown as AnswerPayload;
   }
   return { marking, stored };
 }
@@ -256,7 +288,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (paper.passage) {
     const timeline = body.timeline === undefined ? [] : parseTimeline(body.timeline);
     if (!timeline) return badRequest('The submission timeline is not valid.');
-    const built = answersFromTimeline(paper as Paper & { passage: JSONContent }, timeline);
+    const built = answersFromAnyTimeline(paper.attempt, paper.passage, timeline);
+    answers = built.marking;
+    storedAnswers = built.stored;
+  } else if (paper.startWorkbook) {
+    const timeline = body.timeline === undefined ? [] : parseWorkbookTimeline(body.timeline);
+    if (!timeline) return badRequest('The submission timeline is not valid.');
+    const built = answersFromAnyTimeline(paper.attempt, paper.startWorkbook, timeline);
     answers = built.marking;
     storedAnswers = built.stored;
   }

@@ -642,3 +642,57 @@ export const wordDocQuestions = pgTable(
 
 export type WordDocQuestion = typeof wordDocQuestions.$inferSelect;
 export type NewWordDocQuestion = typeof wordDocQuestions.$inferInsert;
+
+/**
+ * An Excel paper written on one workbook — the starting-sheet half.
+ *
+ * The spreadsheet counterpart of `word_doc_papers`, kept in its own two tables
+ * for the same reason: the flow can be dropped without touching any existing
+ * table. A `tests` row of subject `excel` is a single-workbook paper exactly
+ * when it has a row here and no `test_questions` rows. See
+ * `sdd/excel-workbook-papers.md`.
+ *
+ * `workbook` is a `WorkbookSnapshot`, normalised on the way in
+ * (`normaliseWorkbook`). Untyped `jsonb`, reconciled in `src/db/workbookPapers.ts`.
+ */
+export const excelDocPapers = pgTable('excel_doc_papers', {
+  testId: uuid('test_id')
+    .primaryKey()
+    .references(() => tests.id, { onDelete: 'cascade' }),
+  workbook: jsonb('workbook').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ExcelDocPaper = typeof excelDocPapers.$inferSelect;
+
+/**
+ * One question of a single-workbook Excel paper: the same descriptive columns
+ * as `word_doc_questions`, and `steps` — the detected `WorkbookStep[]`
+ * (`src/exam/workbook/types.ts`), which are both the worked answer and the key.
+ * `position` is also the recording order, which is why there is no reordering.
+ */
+export const excelDocQuestions = pgTable(
+  'excel_doc_questions',
+  {
+    id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    testId: uuid('test_id')
+      .notNull()
+      .references(() => tests.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    topic: text('topic').notNull(),
+    difficulty: questionDifficultyEnum('difficulty').notNull().default('Easy'),
+    marks: integer('marks').notNull().default(1),
+    instructionEn: text('instruction_en').notNull(),
+    instructionHi: text('instruction_hi').notNull(),
+    solutionEn: text('solution_en').array().notNull().default([]),
+    solutionHi: text('solution_hi').array().notNull().default([]),
+    steps: jsonb('steps').notNull().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('excel_doc_questions_position_unique').on(table.testId, table.position)],
+);
+
+export type ExcelDocQuestion = typeof excelDocQuestions.$inferSelect;
+export type NewExcelDocQuestion = typeof excelDocQuestions.$inferInsert;

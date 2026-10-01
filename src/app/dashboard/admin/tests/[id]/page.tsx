@@ -6,6 +6,7 @@ import { DeleteResource } from '@/components/dashboard/admin/DeleteResource';
 import { TestQuestionsPanel } from '@/components/dashboard/admin/TestQuestionsPanel';
 import { DocumentPaperPanel } from '@/components/dashboard/admin/DocumentPaperPanel';
 import { documentPaperIdentity, getDocumentPaper } from '@/db/documentPapers';
+import { getWorkbookPaper, workbookPaperIdentity } from '@/db/workbookPapers';
 import styles from '@/components/dashboard/admin/TestWorkbench.module.css';
 import { db } from '@/db/client';
 import { exams } from '@/db/schema';
@@ -38,10 +39,16 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
    * per-question editor, so nothing existing changes underneath anyone.
    */
   const documentPaper = test.subject === 'word' && questions.length === 0 ? await getDocumentPaper(test.id) : null;
-  const singleDocument = test.subject === 'word' && questions.length === 0;
-  const documentQuestions = documentPaper?.questions ?? [];
+  // And an Excel paper with none is written on one workbook.
+  const workbookPaper = test.subject === 'excel' && questions.length === 0 ? await getWorkbookPaper(test.id) : null;
+  const singleDocument = questions.length === 0;
+  const documentQuestions = documentPaper?.questions ?? workbookPaper?.questions ?? [];
 
-  const identity = documentPaper ? documentPaperIdentity(test, documentPaper) : paperIdentityFor(test, questions);
+  const identity = documentPaper
+    ? documentPaperIdentity(test, documentPaper)
+    : workbookPaper
+      ? workbookPaperIdentity(test, workbookPaper)
+      : paperIdentityFor(test, questions);
   const questionCount = singleDocument ? documentQuestions.length : questions.length;
 
   return (
@@ -102,7 +109,12 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {singleDocument ? (
-        <DocumentPaperPanel testId={test.id} hasPassage={documentPaper !== null} questions={documentQuestions} />
+        <DocumentPaperPanel
+          testId={test.id}
+          subject={test.subject}
+          hasPassage={(test.subject === 'word' ? documentPaper : workbookPaper) !== null}
+          questions={documentQuestions}
+        />
       ) : (
         <TestQuestionsPanel test={test} questions={questions} />
       )}

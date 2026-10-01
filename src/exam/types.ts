@@ -181,6 +181,12 @@ export interface ExcelQuestion extends BaseQuestion {
   workbook: Localised<WorkbookSnapshot>;
   /** The workbook as it looks when the question has been answered correctly. */
   modelAnswer: WorkbookAnswer;
+  /**
+   * The worked answer as a whole workbook, for a single-workbook paper — the
+   * starting sheet with that question's detected changes replayed
+   * (`src/exam/workbook/`). `modelWorkbookSnapshot` prefers it when present.
+   */
+  answerWorkbook?: WorkbookSnapshot;
 }
 
 /**
@@ -220,6 +226,12 @@ export interface ExamAttempt {
    * (`useSharedDocumentAnswers`). Absent for every other paper.
    */
   sharedDocument?: JSONContent;
+  /**
+   * The one workbook every question is answered on, for a single-workbook Excel
+   * paper (`src/db/workbookPapers.ts`). Switches the spreadsheet to one workbook
+   * for the sitting, recorded visit by visit (`useSharedWorkbookAnswers`).
+   */
+  sharedWorkbook?: WorkbookSnapshot;
 }
 
 /**

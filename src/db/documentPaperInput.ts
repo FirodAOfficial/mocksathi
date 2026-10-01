@@ -1,6 +1,7 @@
 import type { JSONContent } from '@tiptap/core';
 import { normaliseDocument, project } from '@/exam/document/apply';
-import { DOCUMENT_TOPICS, isDocumentTopic, joinTopics } from '@/exam/document/topics';
+import { topicOptions } from '@/exam/authoring/topics';
+import { TOPIC_SEPARATOR, orderIn } from '@/exam/document/topics';
 import { QUESTION_DIFFICULTIES, type QuestionDifficulty } from './schema';
 import { MAX_MARKS, MAX_SOLUTION_STEPS, type ParseResult } from './testInput';
 
@@ -60,14 +61,22 @@ function isDifficulty(value: string): value is QuestionDifficulty {
   return (QUESTION_DIFFICULTIES as readonly string[]).includes(value);
 }
 
-export function parseDocumentQuestionFields(body: DocumentQuestionInput): ParseResult<ParsedDocumentQuestionFields> {
+/**
+ * The descriptive fields of a single-document (Word) or single-workbook (Excel)
+ * question — the same for both but for which topic list they pick from.
+ */
+export function parseDocumentQuestionFields(
+  body: DocumentQuestionInput,
+  subject: 'word' | 'excel' = 'word',
+): ParseResult<ParsedDocumentQuestionFields> {
   // Picked from a fixed list, so anything off it is a crafted request, not a typo.
+  const options = topicOptions(subject);
   const topics = Array.isArray(body.topics) ? body.topics : [];
   if (topics.length === 0) return fail('TOPIC_REQUIRED', 'Choose at least one topic this question exercises.');
-  if (!topics.every(isDocumentTopic)) {
-    return fail('INVALID_TOPIC', `Topics must be chosen from the list: ${DOCUMENT_TOPICS.join(', ')}.`);
+  if (!topics.every((topic) => typeof topic === 'string' && options.includes(topic))) {
+    return fail('INVALID_TOPIC', `Topics must be chosen from the list: ${options.join(', ')}.`);
   }
-  const topic = joinTopics(topics);
+  const topic = orderIn(options, topics as string[]).join(TOPIC_SEPARATOR);
 
   const instructionEn = typeof body.instructionEn === 'string' ? body.instructionEn.trim() : '';
   if (!instructionEn) return fail('INSTRUCTION_REQUIRED', 'Enter the question, in English.');

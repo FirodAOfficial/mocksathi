@@ -15,6 +15,8 @@ import type { ExcelQuestion, Language, WorkbookAnswer } from './types';
  * counts as correct is still decided server-side, against the answer key.
  */
 export function modelWorkbookSnapshot(question: ExcelQuestion, language: Language): WorkbookSnapshot {
+  // A single-workbook paper's worked answer is already a whole workbook.
+  if (question.answerWorkbook) return structuredClone(question.answerWorkbook);
   return applyWorkbookAnswer(question.workbook[language], question.modelAnswer);
 }
 
