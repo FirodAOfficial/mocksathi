@@ -14,7 +14,7 @@ import { useFormatState } from '@/editor/useFormatState';
 import { project, replay } from '@/exam/document/apply';
 import { describeChanges, describeStep, suggestInstruction } from '@/exam/document/describe';
 import { detectChanges, hasVisibleChange, type Detection } from '@/exam/document/detect';
-import { overlapWarnings } from '@/exam/document/overlap';
+import { overlapWarnings, partialWordWarnings } from '@/exam/document/overlap';
 import type { DocumentStep } from '@/exam/document/types';
 import { createBlankDocument } from '@/services/document/types';
 import { useUiStore } from '@/state/uiStore';
@@ -210,14 +210,16 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
   const problems = detection?.problems ?? [];
   const visible = hasVisibleChange(steps);
   const liveWarnings = useMemo(
-    () =>
-      overlapWarnings(
+    () => [
+      ...partialWordWarnings(steps, baselineFlat),
+      ...overlapWarnings(
         steps,
         questions
           .filter((question) => question.id !== editing?.id)
           .map((question) => ({ number: question.position, steps: question.steps })),
       ),
-    [steps, questions, editing?.id],
+    ],
+    [steps, baselineFlat, questions, editing?.id],
   );
 
   const busy = saving || refreshing;

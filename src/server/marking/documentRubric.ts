@@ -35,6 +35,53 @@ import type { ParagraphFormatting } from '@/services/document/types';
 
 const NOTHING_ELSE = 'Nothing else in the document was changed while this question was open';
 
+/*
+ * Where a selection starts and ends is not what these questions test.
+ *
+ * A recorded range is exactly what the admin's mouse covered, and that is a
+ * little arbitrary at both ends: "Gujarat Mode" recorded for "Gujarat Model"
+ * because the drag stopped one letter short, or a sentence recorded with its
+ * full stop where a candidate selects it without. Holding candidates to the
+ * admin's exact characters marks a right answer wrong for a reason nobody
+ * could explain to them. So, against the passage (whose wording never changes):
+ *
+ * - what is *required* drops punctuation at its edges — "figures." and
+ *   "figures" are the same answer;
+ * - what is *allowed* runs out to whole words — finishing the word the admin
+ *   half-selected is not "something else changed".
+ *
+ * Neither reaches past a space, so selecting the next word is still wrong.
+ */
+const EDGE_PUNCTUATION = /["'“”‘’()[\]{}.,;:!?।\-–—]/;
+
+function charAt(document: FlatDocument, block: number, offset: number): string | undefined {
+  const entry = document.blocks[block];
+  return entry ? document.chars[entry.start + offset]?.char : undefined;
+}
+
+/** The range without punctuation at either end; unchanged if that would leave nothing. */
+function withoutEdgePunctuation(document: FlatDocument | null, block: number, from: number, to: number) {
+  if (!document) return { from, to };
+  let start = from;
+  let end = to;
+  while (start < end && EDGE_PUNCTUATION.test(charAt(document, block, start) ?? '')) start += 1;
+  while (end > start && EDGE_PUNCTUATION.test(charAt(document, block, end - 1) ?? '')) end -= 1;
+  return start < end ? { from: start, to: end } : { from, to };
+}
+
+/** The range grown out to the edges of the words it touches. */
+function toWholeWords(document: FlatDocument | null, block: number, from: number, to: number) {
+  const entry = document?.blocks[block];
+  if (!document || !entry) return { from, to };
+  const length = entry.end - entry.start;
+  const isWord = (offset: number) => /\S/.test(charAt(document, block, offset) ?? ' ');
+  let start = from;
+  let end = to;
+  while (start > 0 && isWord(start - 1) && isWord(start)) start -= 1;
+  while (end < length && isWord(end) && isWord(end - 1)) end += 1;
+  return { from: start, to: end };
+}
+
 /** The marker's name for a property, given which way it changed. */
 function markFor(change: Pick<CharacterChange, 'property' | 'value' | 'previous'>): MarkName | null {
   const value = change.value ?? change.previous;
@@ -90,12 +137,19 @@ export function documentRubricFor(
 
   for (const step of steps) {
     if (step.level === 'character') {
-      const target: Target = { by: 'range', block: step.block, from: step.from, to: step.to };
+      const required = withoutEdgePunctuation(document, step.block, step.from, step.to);
+      const target: Target = { by: 'range', block: step.block, ...required };
       const where = describeRange(document, step);
 
       for (const change of step.changes) {
+        const words = toWholeWords(document, step.block, change.range.from, change.range.to);
         exemptions.push({
-          target: { by: 'range', block: step.block, from: change.licence.from, to: change.licence.to },
+          target: {
+            by: 'range',
+            block: step.block,
+            from: Math.min(change.licence.from, words.from),
+            to: Math.max(change.licence.to, words.to),
+          },
           marks: licensedMarks(change.property),
         });
         if (step.licenceOnly) continue;
