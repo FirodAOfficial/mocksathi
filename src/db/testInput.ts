@@ -1,5 +1,7 @@
 import type { ExcelOperation, WordOperation, WordScope } from '@/exam/authoring';
 import { WORD_FUNCTIONS, isWordFunctionId } from '@/editor/functions/catalog';
+import { topicOptions } from '@/exam/authoring/topics';
+import { TOPIC_SEPARATOR, orderIn } from '@/exam/document/topics';
 import { resolveSelection, type SelectionSpec } from '@/editor/functions/selection';
 import type { CellValue } from '@/spreadsheet/model/Cell';
 import type { CellStyle } from '@/spreadsheet/model/styles';
@@ -227,8 +229,23 @@ function steps(value: string | undefined): string[] {
  * request say otherwise would put an Excel question in a Word paper.
  */
 export function parseQuestionInput(body: QuestionInput, subject: TestSubject): ParseResult<ParsedQuestionFields> {
-  const topic = body.topic?.trim() ?? '';
-  if (!topic) return fail('TOPIC_REQUIRED', 'Enter the topic this question exercises.');
+  /*
+   * Picked from the subject's list in a dropdown (`TopicMultiSelect`) and sent
+   * joined, so anything off the list is a crafted request rather than a typo —
+   * refused rather than stored, or a report would count "Bold" and "bold" as
+   * two topics. Stored in the list's own order whatever order it arrived in.
+   */
+  const options = topicOptions(subject);
+  const parts = (body.topic ?? '')
+    .split(TOPIC_SEPARATOR)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return fail('TOPIC_REQUIRED', 'Choose at least one topic this question exercises.');
+  const unknown = parts.filter((part) => !options.includes(part));
+  if (unknown.length > 0) {
+    return fail('INVALID_TOPIC', `“${unknown.join('”, “')}” is not a topic. Choose from: ${options.join(', ')}.`);
+  }
+  const topic = orderIn(options, parts).join(TOPIC_SEPARATOR);
 
   const instructionEn = body.instructionEn?.trim() ?? '';
   if (!instructionEn) return fail('INSTRUCTION_REQUIRED', 'Enter the instruction, in English.');

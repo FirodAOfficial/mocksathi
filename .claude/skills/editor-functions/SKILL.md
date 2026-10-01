@@ -137,7 +137,8 @@ Spacing", "Bullets & Numbering".
 - **Renaming or removing a topic orphans stored questions**: `splitTopics` drops names that are no
   longer on the list, and those questions reopen with their topics re-detected. Rename only with a
   data update to `word_doc_questions.topic`.
-- The server accepts only topics on the list (`parseDocumentQuestionFields`), so a new topic is
+- The server accepts only topics on the list (`parseDocumentQuestionFields` for single-document
+  questions, `parseQuestionInput` for per-question ones), so a new topic is
   usable as soon as it is in `DOCUMENT_TOPICS` — no form or validation change.
 - Add the property → topic pair to the `it.each` tables in `src/exam/document/topics.test.ts`, and
   a catalog operation → topic pair to `src/exam/authoring/topics.test.ts`.
