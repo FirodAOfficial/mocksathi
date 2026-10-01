@@ -28,6 +28,11 @@ const SERVER_ENTRIES = [
   'src/exam/marking/sheet/sheetMarker.ts',
   'src/server/marking/excelQuestionBank.ts',
   'src/server/marking/rubricFromOperations.ts',
+  'src/server/marking/documentRubric.ts',
+  'src/exam/marking/documentMarker.ts',
+  'src/db/documentPapers.ts',
+  'src/app/api/admin/tests/[id]/document/route.ts',
+  'src/app/api/admin/tests/[id]/document/questions/route.ts',
   'src/db/tests.ts',
   // The Resend API key is a send-on-your-behalf credential; this proves no
   // client module is reachable from the module that reads it.

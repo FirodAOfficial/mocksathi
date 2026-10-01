@@ -5,7 +5,7 @@ import { ResultView } from '@/components/result/ResultView';
 import headerStyles from '@/components/dashboard/AnalysisScreen.module.css';
 import emptyStyles from '@/components/dashboard/ComingSoonScreen.module.css';
 import { attemptFor } from '@/db/attempts';
-import { attemptFromTest, getTestById, questionsForTest } from '@/db/tests';
+import { attemptFromTest, getTestById, loadPaper, questionsForTest } from '@/db/tests';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -55,7 +55,12 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
   }
 
   const questions = await questionsForTest(test.id);
-  const examAttempt = attemptFromTest(test, questions, user.name);
+  // A single-document paper has no `test_questions` rows; `loadPaper` builds it
+  // from its own tables, and falls back to null for an emptied paper.
+  const examAttempt =
+    questions.length === 0
+      ? ((await loadPaper(test, user.name))?.attempt ?? attemptFromTest(test, questions, user.name))
+      : attemptFromTest(test, questions, user.name);
 
   return (
     <ResultView

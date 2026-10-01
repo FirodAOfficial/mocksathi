@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { requireAdmin } from '@/auth/cookies';
 import { DeleteResource } from '@/components/dashboard/admin/DeleteResource';
 import { TestQuestionsPanel } from '@/components/dashboard/admin/TestQuestionsPanel';
+import { DocumentPaperPanel } from '@/components/dashboard/admin/DocumentPaperPanel';
+import { documentPaperIdentity, getDocumentPaper } from '@/db/documentPapers';
 import styles from '@/components/dashboard/admin/TestWorkbench.module.css';
 import { db } from '@/db/client';
 import { exams } from '@/db/schema';
@@ -30,7 +32,17 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
     db.select({ name: exams.name }).from(exams).where(eq(exams.id, test.examId)).limit(1),
   ]);
 
-  const identity = paperIdentityFor(test, questions);
+  /*
+   * A Word paper with no per-question rows is written on one document
+   * (`/author/<id>`). Papers that already have per-question passages keep the
+   * per-question editor, so nothing existing changes underneath anyone.
+   */
+  const documentPaper = test.subject === 'word' && questions.length === 0 ? await getDocumentPaper(test.id) : null;
+  const singleDocument = test.subject === 'word' && questions.length === 0;
+  const documentQuestions = documentPaper?.questions ?? [];
+
+  const identity = documentPaper ? documentPaperIdentity(test, documentPaper) : paperIdentityFor(test, questions);
+  const questionCount = singleDocument ? documentQuestions.length : questions.length;
 
   return (
     <>
@@ -56,11 +68,11 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
             label="Delete test"
             title={`Delete “${test.name}”?`}
             detail={
-              questions.length === 0
+              questionCount === 0
                 ? 'It has no questions yet, so nothing else goes with it. This cannot be undone.'
-                : `Its ${questions.length} question${questions.length === 1 ? '' : 's'} — passages, sheets, solutions and all — are deleted with it. This cannot be undone.`
+                : `Its ${questionCount} question${questionCount === 1 ? '' : 's'} — passages, sheets, solutions and all — are deleted with it. This cannot be undone.`
             }
-            requireTyping={questions.length > 0}
+            requireTyping={questionCount > 0}
           />
         </div>
       </div>
@@ -68,12 +80,12 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
       <div className={styles.facts}>
         <div className={styles.fact}>
           <span className={styles.factLabel}>Questions</span>
-          <span className={styles.factValue}>{questions.length}</span>
+          <span className={styles.factValue}>{questionCount}</span>
         </div>
         <div className={styles.fact}>
           <span className={styles.factLabel}>Total marks</span>
           {/* Summed from the questions, so it cannot go stale the way a typed-in total would. */}
-          <span className={styles.factValue}>{questions.length === 0 ? '—' : identity.maximumMarks}</span>
+          <span className={styles.factValue}>{questionCount === 0 ? '—' : identity.maximumMarks}</span>
         </div>
         <div className={styles.fact}>
           <span className={styles.factLabel}>Qualifying</span>
@@ -89,7 +101,11 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <TestQuestionsPanel test={test} questions={questions} />
+      {singleDocument ? (
+        <DocumentPaperPanel testId={test.id} hasPassage={documentPaper !== null} questions={documentQuestions} />
+      ) : (
+        <TestQuestionsPanel test={test} questions={questions} />
+      )}
     </>
   );
 }

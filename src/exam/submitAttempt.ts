@@ -1,6 +1,7 @@
 'use client';
 
 import type { ExamResult } from './result';
+import type { TimelineEntry } from './document/types';
 import type { AnswerPayload, Language, Subject } from './types';
 
 /**
@@ -32,6 +33,11 @@ export interface SubmitPayload {
   language: Language;
   timePerQuestion: Record<number, number>;
   totalTimeSeconds: number;
+  /**
+   * For a single-document paper, the sitting visit by visit — what is marked
+   * instead of `answers`. See `useSharedDocumentAnswers`.
+   */
+  timeline?: TimelineEntry[];
 }
 
 export class SubmissionError extends Error {

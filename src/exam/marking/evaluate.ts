@@ -414,7 +414,12 @@ function checkUnchanged(
       }
     }
 
-    for (const block of new Set(indices.map((index) => submitted.chars[index]!.block))) {
+    // A block target names its paragraph directly, so an empty paragraph —
+    // which has no characters for `indices` to find it by — is still licensed.
+    const blocks = new Set(indices.map((index) => submitted.chars[index]!.block));
+    if (exemption.target.by === 'block') blocks.add(exemption.target.block);
+
+    for (const block of blocks) {
       const existing = allowedParagraph.get(block) ?? new Set<keyof ParagraphFormatting>();
       for (const attr of exemption.paragraph ?? []) existing.add(attr);
       allowedParagraph.set(block, existing);
