@@ -153,3 +153,47 @@
   clip-path: inset(50%);
   border: 0;
 }
+
+/* The Draw tab's pen colours and nib widths. */
+.inkSwatch {
+  cursor: pointer;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.inkSwatchActive {
+  outline: 2px solid #2e74b5;
+  outline-offset: 1px;
+}
+
+.inkWidth {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  place-items: center;
+  width: 26px;
+  height: 18px;
+  padding: 0;
+  display: grid;
+}
+
+.inkWidth:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.inkWidthActive {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.inkWidthBar {
+  background: #17365d;
+  border-radius: 999px;
+  width: 16px;
+  display: block;
+}

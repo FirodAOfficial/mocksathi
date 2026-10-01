@@ -22,6 +22,7 @@ import { CharacterCount, Dropcursor, Gapcursor, Placeholder, UndoRedo } from '@t
 import type { AnyExtension } from '@tiptap/core';
 import { BLOCK_FORMAT_TYPES, BlockFormat } from './BlockFormat';
 import { CharacterFormat } from './CharacterFormat';
+import { DrawingCanvas } from './DrawingCanvas';
 import { UnderlineFormat } from './UnderlineFormat';
 import { RibbonOnlyShortcuts, ribbonOnly } from './ribbonOnlyShortcuts';
 import { SearchHighlight } from './SearchHighlight';
@@ -99,6 +100,13 @@ export function buildEditorExtensions(shortcuts: Partial<WordShortcutsOptions> =
      * formats anything the candidate did not ask for.
      */
     ribbonOnly(Image.configure({ allowBase64: true })),
+
+    /*
+     * The Draw tab writes into this. Ink is a node so it is part of the
+     * answer: the submission is the document's JSON, and a drawing that is
+     * not in the document is a drawing that is not in the answer.
+     */
+    ribbonOnly(DrawingCanvas),
     ribbonOnly(HorizontalRule),
     ribbonOnly(
       Link.configure({

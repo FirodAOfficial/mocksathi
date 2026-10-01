@@ -45,6 +45,11 @@ export type IconName =
   | 'link'
   | 'comment'
   | 'horizontal-rule'
+  | 'pen'
+  | 'pencil'
+  | 'eraser'
+  | 'draw-canvas'
+  | 'replay'
   | 'error'
   | 'warning';
 
@@ -200,6 +205,37 @@ const PATHS: Record<IconName, JSX.Element> = {
     <g {...STROKE}>
       <path d="M5 2.5h6L15 6.5v11H5z" />
       <path d="M11 2.5v4h4" />
+    </g>
+  ),
+  pen: (
+    <g {...STROKE}>
+      <path d="M3 17 4.5 13 13 4.5l2.5 2.5L7 15.5z" />
+      <path d="M11.5 6 14 8.5" />
+    </g>
+  ),
+  pencil: (
+    <g {...STROKE}>
+      <path d="M3.5 16.5 5 12.5 13.5 4l2.5 2.5L7.5 15z" />
+      <path d="m5 12.5 2.5 2.5" />
+    </g>
+  ),
+  eraser: (
+    <g {...STROKE}>
+      <path d="m3.5 13 7-7a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8l-4.7 4.7H6.2z" />
+      <path d="M8 8.5 13.5 14" />
+    </g>
+  ),
+  'draw-canvas': (
+    <g {...STROKE}>
+      <rect x="2.5" y="4" width="15" height="12" rx="1.5" strokeDasharray="2.5 2" />
+      <path d="M5.5 12.5c2-4 4-4 5 0s3 2 4-1.5" />
+    </g>
+  ),
+  replay: (
+    <g {...STROKE}>
+      <path d="M10 3.5a6.5 6.5 0 1 1-6.3 8" />
+      <path d="M3.5 3.5v4h4" />
+      <path d="m8.5 8 4 2-4 2z" />
     </g>
   ),
   picture: (

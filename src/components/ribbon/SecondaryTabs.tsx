@@ -21,6 +21,7 @@ import {
   PICTURE_TYPES,
 } from '@/editor/insertActions';
 import { ICONS, SHAPES, type VectorArt } from '@/editor/vectorArt';
+import { INK_COLOURS, PEN_WIDTHS } from '@/editor/ink';
 import {
   MARGIN_PRESETS,
   PAPER_SIZES,
@@ -437,6 +438,235 @@ function TableGrid({ onPick }: { onPick: (rows: number, cols: number) => void })
 /* ---------------------------------------------------------------------- */
 
 /** Word's Design tab: the document's overall look, not one paragraph's. */
+/**
+ * Word's Draw tab.
+ *
+ * The pens write into a drawing canvas (`DrawingCanvas`), which is a node in
+ * the document — so ink is part of the answer, undoes with Ctrl+Z's button,
+ * and is marked by the same machinery as everything else.
+ *
+ * Select is `null`, not a tool. With it the pointer edits text as it always
+ * does; anything else makes every canvas in the document take the pointer.
+ * That is the one piece of state the whole tab turns on.
+ */
+export function DrawTab({ editor }: { editor: Editor }) {
+  const inkTool = useUiStore((state) => state.inkTool);
+  const inkColour = useUiStore((state) => state.inkColour);
+  const inkWidth = useUiStore((state) => state.inkWidth);
+  const setInkTool = useUiStore((state) => state.setInkTool);
+  const setInkColour = useUiStore((state) => state.setInkColour);
+  const setInkWidth = useUiStore((state) => state.setInkWidth);
+  const setNotice = useUiStore((state) => state.setNotice);
+
+  /** The canvases in the document, in order, for the commands that need one. */
+  const canvasCount = countCanvases(editor);
+
+  return (
+    <>
+      <RibbonGroup label="Drawing Tools">
+        <RibbonRow>
+          <ToolbarButton
+            label="Select"
+            icon="select-all"
+            size="large"
+            active={inkTool === null}
+            onClick={() => setInkTool(null)}
+          />
+          <ToolbarButton
+            label="Pen"
+            icon="pen"
+            size="large"
+            active={inkTool === 'pen'}
+            onClick={() => setInkTool('pen')}
+          />
+          <ToolbarButton
+            label="Pencil"
+            icon="pencil"
+            size="large"
+            active={inkTool === 'pencil'}
+            onClick={() => setInkTool('pencil')}
+          />
+          <ToolbarButton
+            label="Highlighter"
+            icon="highlight"
+            size="large"
+            active={inkTool === 'highlighter'}
+            onClick={() => setInkTool('highlighter')}
+          />
+          <ToolbarButton
+            label="Eraser"
+            icon="eraser"
+            size="large"
+            active={inkTool === 'eraser'}
+            onClick={() => setInkTool('eraser')}
+          />
+        </RibbonRow>
+      </RibbonGroup>
+
+      <RibbonGroup label="Pen">
+        <RibbonColumn>
+          <RibbonRow>
+            <span className={styles.fieldLabel}>Colour</span>
+            {INK_COLOURS.map((colour) => (
+              <button
+                key={colour.id}
+                type="button"
+                className={`${styles.inkSwatch} ${inkColour === colour.value ? styles.inkSwatchActive : ''}`}
+                style={{ background: colour.value }}
+                title={colour.label}
+                aria-label={colour.label}
+                aria-pressed={inkColour === colour.value}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setInkColour(colour.value)}
+              />
+            ))}
+          </RibbonRow>
+          <RibbonRow>
+            <span className={styles.fieldLabel}>Width</span>
+            {PEN_WIDTHS.map((width) => (
+              <button
+                key={width}
+                type="button"
+                className={`${styles.inkWidth} ${inkWidth === width ? styles.inkWidthActive : ''}`}
+                title={`${width}px`}
+                aria-label={`${width} pixel nib`}
+                aria-pressed={inkWidth === width}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setInkWidth(width)}
+              >
+                <span className={styles.inkWidthBar} style={{ height: `${Math.min(width, 10)}px` }} />
+              </button>
+            ))}
+          </RibbonRow>
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Stencils">
+        <ToolbarButton
+          label="Ruler"
+          icon="borders"
+          size="large"
+          disabled
+          disabledReason="a straight-edge needs a rotatable stencil this build has no model for"
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Edit">
+        <RibbonColumn>
+          <ToolbarButton
+            label="Erase All Ink"
+            icon="eraser"
+            size="wide"
+            disabled={canvasCount === 0}
+            disabledReason="there is no drawing canvas in the document"
+            onClick={() => {
+              const cleared = clearAllInk(editor);
+              setNotice(
+                cleared === 0 ? 'There was no ink to erase.' : `Erased the ink from ${cleared} ${cleared === 1 ? 'canvas' : 'canvases'}.`,
+              );
+            }}
+          />
+          <ToolbarButton
+            label="Format Background"
+            icon="page"
+            size="wide"
+            disabled
+            disabledReason={NO_NODE}
+          />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Convert">
+        <RibbonRow>
+          <ToolbarButton
+            label="Ink to Shape"
+            icon="shapes"
+            size="large"
+            disabled
+            disabledReason="recognising a drawn shape needs a recogniser this build does not have"
+          />
+          <ToolbarButton
+            label="Ink to Math"
+            icon="page"
+            size="large"
+            disabled
+            disabledReason="recognising handwriting needs a recogniser this build does not have"
+          />
+        </RibbonRow>
+      </RibbonGroup>
+
+      <RibbonGroup label="Insert">
+        <ToolbarButton
+          label="Drawing Canvas"
+          icon="draw-canvas"
+          size="large"
+          onClick={() => {
+            editor.chain().focus().insertDrawingCanvas().run();
+            // A canvas with Select active looks inert, so the pen comes out
+            // with it — which is what inserting one is for.
+            if (inkTool === null) setInkTool('pen');
+          }}
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Replay">
+        <ToolbarButton
+          label="Ink Replay"
+          icon="replay"
+          size="large"
+          disabled={canvasCount === 0}
+          disabledReason="there is no drawing canvas in the document"
+          onClick={() => {
+            const played = replayFirstCanvas();
+            if (!played) setNotice('Nothing has been drawn yet.');
+          }}
+        />
+      </RibbonGroup>
+    </>
+  );
+}
+
+/** How many drawing canvases the document holds. */
+function countCanvases(editor: Editor): number {
+  let count = 0;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === 'drawingCanvas') count += 1;
+  });
+  return count;
+}
+
+/** Empties every canvas in one transaction, so one Undo puts the ink back. */
+function clearAllInk(editor: Editor): number {
+  const positions: number[] = [];
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === 'drawingCanvas' && (node.attrs.strokes ?? []).length > 0) positions.push(pos);
+  });
+
+  if (positions.length === 0) return 0;
+
+  const transaction = editor.state.tr;
+  for (const pos of positions) {
+    transaction.setNodeAttribute(pos, 'strokes', []);
+  }
+  editor.view.dispatch(transaction);
+
+  return positions.length;
+}
+
+/**
+ * Plays the first canvas that has ink in it.
+ *
+ * The replay is the canvas's own — the document may hold several, and "play
+ * the ink" has to mean one of them — so the ribbon clicks the button the node
+ * view already renders rather than reaching into its state.
+ */
+function replayFirstCanvas(): boolean {
+  const button = document.querySelector<HTMLButtonElement>('[data-ink-replay]:not([disabled])');
+  if (!button) return false;
+  button.click();
+  return true;
+}
+
 export function DesignTab({ editor }: { editor: Editor }) {
   const pageColor = useUiStore((state) => state.pageColor);
   const setPageColor = useUiStore((state) => state.setPageColor);

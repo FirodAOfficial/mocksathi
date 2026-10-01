@@ -33,10 +33,25 @@ beforeEach(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 
-  // The shell asks who is signed in to put a name on the candidate panel.
+  /*
+   * The shell asks who is signed in to put a name on the candidate panel.
+   *
+   * Answered per URL rather than with one body for everything: submitting a
+   * paper posts to `/api/attempts/submit`, and handing that the signed-in user
+   * as if it were a marked result made the shell render a result screen with
+   * no score in it. That is not a failure a candidate can reach — the real
+   * endpoint returns a result or an error — so the stub refuses it, which is a
+   * path the shell does handle, and these tests are about the submit dialog.
+   */
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ user: { name: 'Test Candidate' } }))),
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/api/attempts/submit')) {
+        return new Response(JSON.stringify({ detail: 'Marking is not stubbed in this test.' }), { status: 503 });
+      }
+      return new Response(JSON.stringify({ user: { name: 'Test Candidate' } }));
+    }),
   );
 });
 

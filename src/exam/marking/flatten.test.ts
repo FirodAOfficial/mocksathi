@@ -41,6 +41,17 @@ describe('flatten — what Insert puts in the document', () => {
     expect(withRule.text).toBe(without.text);
   });
 
+  it('does not let a drawing canvas become a paragraph', () => {
+    const canvas = {
+      type: 'drawingCanvas',
+      attrs: { strokes: [{ tool: 'pen', colour: '#000000', width: 2, points: [0, 0, 10, 10] }] },
+    };
+    const withInk = project(doc(para(text('one')), canvas, para(text('two'))));
+    const without = project(doc(para(text('one')), para(text('two'))));
+
+    expect(withInk.text).toBe(without.text);
+  });
+
   /* A link is a mark on text, so the text itself still reads and still marks. */
   it('keeps the text a link was applied to', () => {
     const linked = project(doc(para(text('home', [{ type: 'link', attrs: { href: 'https://example.com/' } }]))));

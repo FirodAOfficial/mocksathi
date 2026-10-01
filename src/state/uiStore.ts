@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { INK_COLOURS, defaultWidthFor, type InkTool } from '@/editor/ink';
 
 /**
  * Chrome state that is not part of the document.
@@ -14,6 +15,7 @@ import { create } from 'zustand';
 export type RibbonTabId =
   | 'home'
   | 'insert'
+  | 'draw'
   | 'design'
   | 'layout'
   | 'references'
@@ -88,6 +90,18 @@ interface UiState {
   /** Transient message shown in the status bar, e.g. a clipboard failure. */
   notice: string | null;
 
+  /*
+   * The Draw tab's pen.
+   *
+   * `null` is Select — the pointer edits text as usual. Anything else makes a
+   * drawing canvas take the pointer, which is why it lives here rather than
+   * inside a canvas: the tool is chosen once in the ribbon and applies to
+   * every canvas in the document, as it does in Word.
+   */
+  inkTool: InkTool | null;
+  inkColour: string;
+  inkWidth: number;
+
   setActiveTab: (tab: RibbonTabId) => void;
   setZoom: (zoom: number) => void;
   /** The canvas fitting the sheet to its column — not a choice the candidate made. */
@@ -107,6 +121,9 @@ interface UiState {
   toggleFocusMode: () => void;
   setReadOnly: (readOnly: boolean) => void;
   setNotice: (notice: string | null) => void;
+  setInkTool: (tool: InkTool | null) => void;
+  setInkColour: (colour: string) => void;
+  setInkWidth: (width: number) => void;
 }
 
 const clampZoom = (value: number): number =>
@@ -130,6 +147,9 @@ export const useUiStore = create<UiState>((set) => ({
   focusMode: false,
   readOnly: false,
   notice: null,
+  inkTool: null,
+  inkColour: INK_COLOURS[0].value,
+  inkWidth: defaultWidthFor('pen'),
 
   setActiveTab: (activeTab) => set({ activeTab }),
   setZoom: (zoom) => set({ zoom: clampZoom(zoom), zoomChosen: true }),
@@ -158,6 +178,12 @@ export const useUiStore = create<UiState>((set) => ({
   toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
   setReadOnly: (readOnly) => set({ readOnly }),
   setNotice: (notice) => set({ notice }),
+
+  // Picking a pen takes its own nib width with it, as Word's pen buttons do —
+  // choosing the highlighter and getting a 2px line would be a surprise.
+  setInkTool: (inkTool) => set({ inkTool, inkWidth: inkTool ? defaultWidthFor(inkTool) : defaultWidthFor('pen') }),
+  setInkColour: (inkColour) => set({ inkColour }),
+  setInkWidth: (inkWidth) => set({ inkWidth }),
 }));
 
 /** Page box in CSS pixels for the chosen paper and orientation. */

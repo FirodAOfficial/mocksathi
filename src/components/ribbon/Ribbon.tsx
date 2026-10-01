@@ -6,12 +6,13 @@ import type { ClipboardActions } from '@/editor/useClipboard';
 import type { FormatState } from '@/editor/useFormatState';
 import { useUiStore, type RibbonTabId } from '@/state/uiStore';
 import { HomeTab } from './HomeTab';
-import { DesignTab, EmptyTab, InsertTab, LayoutTab, ReviewTab, ViewTab } from './SecondaryTabs';
+import { DesignTab, DrawTab, EmptyTab, InsertTab, LayoutTab, ReviewTab, ViewTab } from './SecondaryTabs';
 import styles from './Ribbon.module.css';
 
 const TABS: { id: RibbonTabId; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'insert', label: 'Insert' },
+  { id: 'draw', label: 'Draw' },
   { id: 'design', label: 'Design' },
   { id: 'layout', label: 'Layout' },
   { id: 'references', label: 'References' },
@@ -113,6 +114,7 @@ export function Ribbon({
           />
         ) : null}
         {activeTab === 'insert' ? <InsertTab editor={editor} onInsertLink={onInsertLink} /> : null}
+        {activeTab === 'draw' ? <DrawTab editor={editor} /> : null}
         {activeTab === 'design' ? <DesignTab editor={editor} /> : null}
         {activeTab === 'layout' ? <LayoutTab editor={editor} /> : null}
         {activeTab === 'references' ? (
