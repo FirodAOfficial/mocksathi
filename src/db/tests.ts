@@ -67,11 +67,12 @@ export const WORD_PAPERS_FROM_DOCUMENT_TABLES = true;
 /**
  * The same switch for Excel and `excel_doc_questions`.
  *
- * False while single-workbook papers are being tried out: both kinds are
- * offered. Flip to true to offer only single-workbook Excel papers, once the
- * per-question ones are retired. See `sdd/excel-workbook-papers.md`.
+ * True: only single-workbook Excel papers are offered. Per-question Excel
+ * papers still exist, still open by their own `?test=` link, keep their stored
+ * attempts, and still show on the admin list. Flip to false to offer both.
+ * See `sdd/excel-workbook-papers.md`.
  */
-export const EXCEL_PAPERS_FROM_WORKBOOK_TABLES = false;
+export const EXCEL_PAPERS_FROM_WORKBOOK_TABLES = true;
 
 /**
  * The condition that makes a `tests` row a sittable paper.

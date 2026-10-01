@@ -64,9 +64,10 @@ The extra criterion kinds live in `WorkbookCriterion` in `workbookMarker.ts`, no
 
 ## Which papers candidates see
 
-`EXCEL_PAPERS_FROM_WORKBOOK_TABLES` in `src/db/tests.ts` is **false**: both kinds of Excel paper are
-offered while this is tried out. Set it to true to offer only single-workbook papers — then the
-per-question Excel tests and their submissions can be deleted, as was done for Word.
+`EXCEL_PAPERS_FROM_WORKBOOK_TABLES` in `src/db/tests.ts` is **true**: the mock lists and "today's"
+Excel paper take Excel papers from `excel_doc_questions` only. Per-question Excel papers are no longer
+offered, but still exist, open by their own `?test=` link, keep their submissions, and appear in the
+admin list. Set it to false to offer both again.
 
 ## Tested
 
