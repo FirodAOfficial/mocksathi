@@ -185,6 +185,25 @@ export const CharacterFormat = Extension.create({
                   : Math.max(-MAX_CHARACTER_SPACING_PT, Math.min(MAX_CHARACTER_SPACING_PT, points)),
             })
             .run(),
+
+      // Declared above from the start but never implemented, so the Font
+      // dialog's OK threw here and nothing after it — effects, scale,
+      // spacing — was applied either. Off is null rather than false, so the
+      // attribute is absent and renders nothing, like every other one here.
+      setDoubleStrike:
+        (on) =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { doubleStrike: on ? true : null }).run(),
+
+      setCaps:
+        (caps) =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { caps }).run(),
+
+      setHiddenText:
+        (hidden) =>
+        ({ chain }) =>
+          chain().setMark('textStyle', { hidden: hidden ? true : null }).run(),
     };
   },
 });
