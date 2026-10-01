@@ -101,3 +101,55 @@
 .emptyTitle {
   color: var(--text-strong, #17365d);
 }
+
+/*
+ * The Shapes and Icons galleries.
+ *
+ * Each cell previews the exact SVG it inserts, so what the candidate points at
+ * is what lands in the document. Sized in `style` by the column count, because
+ * the two galleries may not always want the same shape of grid.
+ */
+.artGrid {
+  gap: 2px;
+  padding: 4px;
+  display: grid;
+}
+
+.artCell {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+}
+
+.artCell:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.artPreview {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/*
+ * Pictures opens the platform's file picker, which needs a real `<input>` to
+ * open. Hidden without `display: none`, which would make it unclickable in
+ * some browsers, and kept out of the accessibility tree because the Pictures
+ * button is the control — this is its mechanism.
+ */
+.hiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}

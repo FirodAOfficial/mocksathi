@@ -46,6 +46,7 @@ function open() {
       onWordCount={vi.fn()}
       onOpenParagraphDialog={vi.fn()}
       onOpenFontDialog={vi.fn()}
+      onInsertLink={vi.fn()}
     />,
   );
 }

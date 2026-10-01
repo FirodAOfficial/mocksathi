@@ -1,6 +1,7 @@
 'use client';
 
 import type { Editor } from '@tiptap/react';
+import { useRef, type ChangeEvent } from 'react';
 import {
   FONT_FAMILIES,
   changeIndent,
@@ -9,6 +10,17 @@ import {
   setIndents,
   setParagraphSpacing,
 } from '@/editor/ribbonActions';
+import {
+  checkPicture,
+  insertDateTime,
+  insertHorizontalLine,
+  insertPicture,
+  insertVectorArt,
+  pictureRejectionMessage,
+  readPictureDataUrl,
+  PICTURE_TYPES,
+} from '@/editor/insertActions';
+import { ICONS, SHAPES, type VectorArt } from '@/editor/vectorArt';
 import {
   MARGIN_PRESETS,
   PAPER_SIZES,
@@ -36,12 +48,19 @@ import styles from './SecondaryTabs.module.css';
  * Word itself does with commands that do not apply. A button that looks live
  * and quietly does nothing would be worse than either.
  *
- * What is disabled is disabled for one reason: this editor's schema has no node
- * for it. Pictures, links, headers and footers, floating shapes and equations
- * all need a node type that does not exist here, so no amount of ribbon wiring
- * would make them work.
+ * The reasons are specific, because they are different reasons. Some commands
+ * need a page model the document does not have; some need a service this build
+ * does not talk to; some need a subsystem nobody has written. Lumping them
+ * under one message hid which ones were a day's work and which were a quarter's.
  */
 
+/** Needs pagination: the document is one continuous sheet. */
+const NO_PAGES = 'the document is one continuous sheet, not paginated';
+
+/** Needs something outside the browser — a service, a store, the desktop. */
+const NO_SERVICE = 'this editor talks to no outside service';
+
+/** Needs a whole subsystem that does not exist in this build. */
 const NO_NODE = 'this build has no node type for it';
 
 const SYMBOLS = [
@@ -67,22 +86,50 @@ const SPACING_OPTIONS = [0, 6, 12, 18, 24].map((points) => ({
 
 /* ---------------------------------------------------------------------- */
 
-export function InsertTab({ editor }: { editor: Editor }) {
+export interface InsertTabProps {
+  editor: Editor;
+  /** Opens the hyperlink dialog, which the shell owns like the other dialogs. */
+  onInsertLink: () => void;
+}
+
+export function InsertTab({ editor, onInsertLink }: InsertTabProps) {
+  const setNotice = useUiStore((state) => state.setNotice);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * A picture the candidate chose, read into the document as a data URL.
+   *
+   * There is nowhere to upload to — the answer is one JSON payload submitted
+   * at the end — so the picture travels inside it. `checkPicture` runs on the
+   * file's own size and type before a byte is read, so an oversized picture is
+   * refused immediately instead of after the browser has base64'd it.
+   */
+  const onPicked = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    // Cleared straight away, so choosing the same file twice fires again.
+    event.target.value = '';
+    if (!file) return;
+
+    const rejection = checkPicture(file);
+    if (rejection) {
+      setNotice(pictureRejectionMessage(rejection));
+      return;
+    }
+
+    try {
+      insertPicture(editor, await readPictureDataUrl(file), file.name);
+    } catch {
+      setNotice('That picture could not be read.');
+    }
+  };
+
   return (
     <>
       <RibbonGroup label="Pages">
         <RibbonColumn>
-          <ToolbarButton label="Cover Page" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-          <ToolbarButton label="Blank Page" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-          <ToolbarButton
-            label="Page Break"
-            icon="page"
-            size="wide"
-            disabled
-            disabledReason="the document is one continuous sheet, not paginated"
-          />
+          <ToolbarButton label="Cover Page" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+          <ToolbarButton label="Blank Page" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+          <ToolbarButton label="Page Break" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
         </RibbonColumn>
       </RibbonGroup>
 
@@ -121,68 +168,119 @@ export function InsertTab({ editor }: { editor: Editor }) {
       <RibbonGroup label="Illustrations">
         <RibbonColumn>
           <RibbonRow>
-            <ToolbarButton label="Pictures" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Shapes" icon="borders" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Icons" icon="borders" size="wide"
-            disabled disabledReason={NO_NODE} />
+            <ToolbarButton
+              label="Pictures"
+              icon="picture"
+              size="wide"
+              onClick={() => fileRef.current?.click()}
+            />
+            <ArtMenu label="Shapes" icon="shapes" items={SHAPES} editor={editor} columns={4} />
+            <ArtMenu label="Icons" icon="icons" items={ICONS} editor={editor} columns={4} />
           </RibbonRow>
           <RibbonRow>
-            <ToolbarButton label="SmartArt" icon="borders" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Chart" icon="borders" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Screenshot" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Online Pictures" icon="picture" size="wide" disabled disabledReason={NO_SERVICE} />
+            <ToolbarButton label="3D Models" icon="shapes" size="wide" disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="SmartArt" icon="shapes" size="wide" disabled disabledReason={NO_NODE} />
           </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton label="Chart" icon="chart" size="wide" disabled disabledReason={NO_NODE} />
+            <ToolbarButton
+              label="Screenshot"
+              icon="picture"
+              size="wide"
+              disabled
+              disabledReason="a web page cannot capture the screen behind it"
+            />
+          </RibbonRow>
+
+          {/*
+            Outside the ribbon's reach visually, but inside the group it belongs
+            to. Clicking Pictures opens it; it is never shown, because a styled
+            file input is a worse file input than the platform's own.
+          */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept={PICTURE_TYPES.join(',')}
+            className={styles.hiddenFile}
+            onChange={onPicked}
+          />
         </RibbonColumn>
       </RibbonGroup>
 
-      <RibbonGroup label="Links">
-        <ToolbarButton label="Link" icon="page" size="large" disabled disabledReason={NO_NODE} />
+      <RibbonGroup label="Add-ins">
+        <RibbonColumn>
+          <ToolbarButton label="Get Add-ins" icon="add-ins" size="wide" disabled disabledReason={NO_SERVICE} />
+          <ToolbarButton label="My Add-ins" icon="add-ins" size="wide" disabled disabledReason={NO_SERVICE} />
+          <ToolbarButton label="Wikipedia" icon="add-ins" size="wide" disabled disabledReason={NO_SERVICE} />
+        </RibbonColumn>
       </RibbonGroup>
 
-      <RibbonGroup label="Header & Footer">
+      <RibbonGroup label="Media">
+        <ToolbarButton label="Online Video" icon="video" size="large" disabled disabledReason={NO_SERVICE} />
+      </RibbonGroup>
+
+      <RibbonGroup label="Links">
         <RibbonColumn>
-          <ToolbarButton label="Header" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-          <ToolbarButton label="Footer" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-          <ToolbarButton label="Page Number" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
+          <ToolbarButton label="Link" icon="link" size="wide" onClick={onInsertLink} />
+          <ToolbarButton
+            label="Bookmark"
+            icon="link"
+            size="wide"
+            disabled
+            disabledReason="there is nowhere in the document to jump to"
+          />
+          <ToolbarButton label="Cross-reference" icon="link" size="wide" disabled disabledReason={NO_NODE} />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Comments">
+        <ToolbarButton
+          label="Comment"
+          icon="comment"
+          size="large"
+          disabled
+          disabledReason="a paper is marked, not reviewed, so there are no comment threads"
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Header &amp; Footer">
+        <RibbonColumn>
+          <ToolbarButton label="Header" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+          <ToolbarButton label="Footer" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+          <ToolbarButton label="Page Number" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
         </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Text">
         <RibbonColumn>
-          <ToolbarButton label="Text Box" icon="borders" size="wide"
-            disabled disabledReason={NO_NODE} />
-          <ToolbarButton
-            label="Date & Time"
-            icon="page"
-            size="wide"
-            onClick={() =>
-              editor
-                .chain()
-                .focus()
-                .insertContent(
-                  new Date().toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  }),
-                )
-                .run()
-            }
-          />
+          <RibbonRow>
+            <ToolbarButton label="Text Box" icon="borders" size="wide" disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Quick Parts" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton label="WordArt" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Drop Cap" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton label="Date &amp; Time" icon="page" size="wide" onClick={() => insertDateTime(editor)} />
+            <ToolbarButton
+              label="Horizontal Line"
+              icon="horizontal-rule"
+              size="wide"
+              onClick={() => insertHorizontalLine(editor)}
+            />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton label="Signature Line" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Object" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+          </RibbonRow>
         </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Symbols">
         <RibbonColumn>
-          <ToolbarButton label="Equation" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
+          <ToolbarButton label="Equation" icon="page" size="wide" disabled disabledReason={NO_NODE} />
           <Popover
             align="end"
             trigger={({ open, toggle, id, controls }) => (
@@ -227,6 +325,85 @@ export function InsertTab({ editor }: { editor: Editor }) {
         </RibbonColumn>
       </RibbonGroup>
     </>
+  );
+}
+
+/**
+ * A gallery of shapes or icons, drawn from its own catalogue.
+ *
+ * The preview in the menu is the same SVG that is inserted, so what the
+ * candidate picks is exactly what lands in the document.
+ */
+function ArtMenu({
+  label,
+  icon,
+  items,
+  editor,
+  columns,
+}: {
+  label: string;
+  icon: 'shapes' | 'icons';
+  items: VectorArt[];
+  editor: Editor;
+  columns: number;
+}) {
+  return (
+    <Popover
+      trigger={({ open, toggle, id, controls }) => (
+        <button
+          id={id}
+          type="button"
+          data-popover-trigger
+          className={`${styles.menuButton} ${open ? styles.menuButtonOpen : ''}`}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? controls : undefined}
+          title={label}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={toggle}
+        >
+          <Icon name={icon} size={18} />
+          {label}
+          <Icon name="chevron-down" size={12} />
+        </button>
+      )}
+    >
+      {({ close }) => (
+        <div className={styles.artGrid} style={{ gridTemplateColumns: `repeat(${columns}, 44px)` }}>
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className={styles.artCell}
+              title={item.label}
+              aria-label={item.label}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                insertVectorArt(editor, item.svg, item.label);
+                close();
+              }}
+            >
+              {/*
+                Decorative: the button is already named for the shape.
+
+                A plain `<img>`, not `next/image`: the source is an inline
+                `data:image/svg+xml` of a few hundred bytes that is already in
+                the bundle. There is nothing for an image loader to fetch,
+                resize or cache, and routing it through one would add a network
+                round trip to a drawing we are holding in memory.
+              */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className={styles.artPreview}
+                src={`data:image/svg+xml;utf8,${encodeURIComponent(item.svg)}`}
+                alt=""
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </Popover>
   );
 }
 

@@ -38,6 +38,27 @@
   padding: 0 4px;
 }
 
+/*
+ * The Size box is a number input with a `list`, so the browser drew two
+ * affordances on it — the datalist chevron and the number spinner — side by
+ * side, each meaning "pick a size". The list is the one Word has, so the
+ * spinner goes.
+ *
+ * `appearance: textfield` is what Firefox reads; the pseudo-elements are what
+ * WebKit and Chromium read. Both are needed, neither alone is enough.
+ */
+.input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input[type='number']::-webkit-outer-spin-button,
+.input[type='number']::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .by {
   min-width: 0 !important;
   margin-left: 10px;

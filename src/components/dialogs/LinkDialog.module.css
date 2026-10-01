@@ -1,0 +1,49 @@
+.form {
+  flex-direction: column;
+  gap: 12px;
+  min-width: 320px;
+  display: flex;
+}
+
+.field {
+  flex-direction: column;
+  gap: 4px;
+  display: flex;
+}
+
+.caption {
+  color: var(--text-muted);
+}
+
+.input {
+  height: 24px;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  padding: 0 4px;
+  font: inherit;
+}
+
+.input:disabled {
+  color: var(--text-muted);
+  background: #f3f6fa;
+}
+
+.error {
+  color: #a4262c;
+  margin: 0;
+}
+
+.button {
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  background: linear-gradient(#fff, #e4ecf6);
+  border-radius: 2px;
+  min-width: 76px;
+  height: 24px;
+  font: inherit;
+}
+
+.primary {
+  border-color: #2e74b5;
+  font-weight: 600;
+}

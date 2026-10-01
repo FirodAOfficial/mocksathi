@@ -30,6 +30,7 @@ export interface RibbonProps {
   onWordCount: () => void;
   onOpenFontDialog: () => void;
   onOpenParagraphDialog: () => void;
+  onInsertLink: () => void;
 }
 
 export function Ribbon({
@@ -41,6 +42,7 @@ export function Ribbon({
   onWordCount,
   onOpenFontDialog,
   onOpenParagraphDialog,
+  onInsertLink,
 }: RibbonProps) {
   const activeTab = useUiStore((state) => state.activeTab);
   const setActiveTab = useUiStore((state) => state.setActiveTab);
@@ -110,7 +112,7 @@ export function Ribbon({
             onOpenParagraphDialog={onOpenParagraphDialog}
           />
         ) : null}
-        {activeTab === 'insert' ? <InsertTab editor={editor} /> : null}
+        {activeTab === 'insert' ? <InsertTab editor={editor} onInsertLink={onInsertLink} /> : null}
         {activeTab === 'design' ? <DesignTab editor={editor} /> : null}
         {activeTab === 'layout' ? <LayoutTab editor={editor} /> : null}
         {activeTab === 'references' ? (

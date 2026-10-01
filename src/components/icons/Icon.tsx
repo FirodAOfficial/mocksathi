@@ -36,6 +36,15 @@ export type IconName =
   | 'chevron-down'
   | 'print'
   | 'page'
+  | 'add-ins'
+  | 'picture'
+  | 'shapes'
+  | 'icons'
+  | 'chart'
+  | 'video'
+  | 'link'
+  | 'comment'
+  | 'horizontal-rule'
   | 'error'
   | 'warning';
 
@@ -191,6 +200,61 @@ const PATHS: Record<IconName, JSX.Element> = {
     <g {...STROKE}>
       <path d="M5 2.5h6L15 6.5v11H5z" />
       <path d="M11 2.5v4h4" />
+    </g>
+  ),
+  picture: (
+    <g {...STROKE}>
+      <rect x="2.5" y="4" width="15" height="12" rx="1.5" />
+      <path d="m2.5 13 4-4 3.5 3.5 3-2.5 4.5 4" />
+      <circle cx="13" cy="7.5" r="1.3" />
+    </g>
+  ),
+  shapes: (
+    <g {...STROKE}>
+      <rect x="2.5" y="9.5" width="8" height="7.5" rx="1" />
+      <circle cx="13.5" cy="6.5" r="4" />
+    </g>
+  ),
+  icons: (
+    <g {...STROKE}>
+      <circle cx="10" cy="7" r="2.6" />
+      <path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" />
+    </g>
+  ),
+  chart: (
+    <g {...STROKE}>
+      <path d="M3 16.5h14" />
+      <path d="M6 16.5v-5M10 16.5V5.5M14 16.5v-8" />
+    </g>
+  ),
+  video: (
+    <g {...STROKE}>
+      <rect x="2.5" y="5" width="11" height="10" rx="1.5" />
+      <path d="m13.5 9 4-2.5v7L13.5 11z" />
+    </g>
+  ),
+  link: (
+    <g {...STROKE}>
+      <path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5l-1 1" />
+      <path d="M11.5 8.5a3.5 3.5 0 0 0-5 0L4 11a3.5 3.5 0 0 0 5 5l1-1" />
+    </g>
+  ),
+  comment: (
+    <g {...STROKE}>
+      <path d="M3 4.5h14v9H9l-4 4v-4H3z" />
+    </g>
+  ),
+  'horizontal-rule': (
+    <g {...STROKE}>
+      <path d="M3 6h14M3 14h14" />
+      <path d="M3 10h14" strokeDasharray="0" strokeWidth="2" />
+    </g>
+  ),
+  /* Office's Add-ins mark: a window of four panes. */
+  'add-ins': (
+    <g {...STROKE}>
+      <rect x="3" y="3" width="14" height="14" rx="1.5" />
+      <path d="M10 3v14M3 10h14" />
     </g>
   ),
   error: (

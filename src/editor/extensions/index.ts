@@ -3,8 +3,11 @@ import { Bold } from '@tiptap/extension-bold';
 import { Document } from '@tiptap/extension-document';
 import { HardBreak } from '@tiptap/extension-hard-break';
 import { Heading } from '@tiptap/extension-heading';
+import { HorizontalRule } from '@tiptap/extension-horizontal-rule';
+import { Image } from '@tiptap/extension-image';
 import { Highlight } from '@tiptap/extension-highlight';
 import { Italic } from '@tiptap/extension-italic';
+import { Link } from '@tiptap/extension-link';
 import { BulletList, ListItem, OrderedList } from '@tiptap/extension-list';
 import { Paragraph } from '@tiptap/extension-paragraph';
 import { Strike } from '@tiptap/extension-strike';
@@ -79,6 +82,33 @@ export function buildEditorExtensions(shortcuts: Partial<WordShortcutsOptions> =
     ribbonOnly(TableRow),
     ribbonOnly(TableHeader),
     ribbonOnly(TableCell),
+
+    /*
+     * Insert's nodes.
+     *
+     * `Image` carries whatever `src` the Insert tab gives it — a data URL for
+     * a picture the candidate chose, or an inline `data:image/svg+xml` for a
+     * shape or an icon. It is `inline: false` (Word's default "In Line with
+     * Text" wrapping is not what this is; a picture here is its own block),
+     * and `allowBase64` because there is nowhere to upload to: the answer is a
+     * single JSON payload, and a picture has to travel inside it.
+     *
+     * `Link` opens nothing. `openOnClick: false` keeps a click inside the
+     * document where the candidate is working, rather than navigating the
+     * exam away mid-paper, and `autolink: false` because this build never
+     * formats anything the candidate did not ask for.
+     */
+    ribbonOnly(Image.configure({ allowBase64: true })),
+    ribbonOnly(HorizontalRule),
+    ribbonOnly(
+      Link.configure({
+        openOnClick: false,
+        autolink: false,
+        linkOnPaste: false,
+        protocols: ['http', 'https', 'mailto'],
+        HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' },
+      }),
+    ),
 
     // Character formatting
     ribbonOnly(Bold),

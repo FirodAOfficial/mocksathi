@@ -19,6 +19,7 @@ import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
 import { Dialog } from './dialogs/Dialog';
 import { FindReplaceDialog } from './dialogs/FindReplaceDialog';
+import { LinkDialog } from './dialogs/LinkDialog';
 import { FontDialog } from './dialogs/FontDialog';
 import { ParagraphDialog } from './dialogs/ParagraphDialog';
 import { WordCountDialog } from './dialogs/WordCountDialog';
@@ -66,7 +67,7 @@ export interface WordShellProps {
   testId?: string | null;
 }
 
-type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
+type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | 'link' | null;
 
 /**
  * Composition root for the application.
@@ -323,6 +324,7 @@ export function WordShell({
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
           onOpenParagraphDialog={() => setDialog('paragraph')}
+          onInsertLink={() => setDialog('link')}
         />
       ) : focusMode ? (
         // Focus hides the ribbon outright rather than reserving its height —
@@ -395,6 +397,8 @@ export function WordShell({
       ) : null}
 
       {editor && dialog === 'font' ? <FontDialog editor={editor} onClose={() => setDialog(null)} /> : null}
+
+      {editor && dialog === 'link' ? <LinkDialog editor={editor} onClose={() => setDialog(null)} /> : null}
 
       {editor && dialog === 'paragraph' ? (
         <ParagraphDialog editor={editor} format={format} onClose={() => setDialog(null)} />

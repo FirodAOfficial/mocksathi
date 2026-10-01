@@ -127,6 +127,41 @@ button {
   font-style: italic;
 }
 
+/*
+ * Insert's nodes, styled the way Word draws them.
+ *
+ * A picture never exceeds the text column: the sheet is a fixed 816px wide and
+ * a candidate inserting a 4000px photograph must not push the page out from
+ * under the ruler.
+ */
+.ProseMirror img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 10px;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #2e74b5;
+}
+
+.ProseMirror hr {
+  border: 0;
+  border-top: 1px solid #a0a0a0;
+  margin: 10px 0;
+}
+
+.ProseMirror hr.ProseMirror-selectednode {
+  border-top-color: #2e74b5;
+  outline: 1px solid #2e74b5;
+}
+
+/* Word's Hyperlink character style. */
+.ProseMirror a {
+  color: #0563c1;
+  text-decoration: underline;
+}
+
 .ProseMirror ul, .ProseMirror ol {
   margin: 0 0 10px;
   padding-left: 32px;
