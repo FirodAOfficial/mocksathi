@@ -15,6 +15,7 @@ import { project, replay } from '@/exam/document/apply';
 import { describeChanges, describeStep, suggestInstruction } from '@/exam/document/describe';
 import { detectChanges, hasVisibleChange, type Detection } from '@/exam/document/detect';
 import { overlapWarnings, partialWordWarnings } from '@/exam/document/overlap';
+import { splitTopics, topicsFor, type DocumentTopic } from '@/exam/document/topics';
 import type { DocumentStep } from '@/exam/document/types';
 import { createBlankDocument } from '@/services/document/types';
 import { useUiStore } from '@/state/uiStore';
@@ -26,6 +27,7 @@ import { WordCountDialog } from '../dialogs/WordCountDialog';
 import { DocumentCanvas } from '../document/DocumentCanvas';
 import { Ribbon } from '../ribbon/Ribbon';
 import styles from './DocumentAuthoringShell.module.css';
+import { TopicMultiSelect } from './TopicMultiSelect';
 
 /**
  * Writing a Word paper on one document.
@@ -70,7 +72,12 @@ type Mode = { kind: 'passage' } | { kind: 'new' } | { kind: 'edit'; id: string }
 type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
 
 interface FormState {
-  topic: string;
+  topics: DocumentTopic[];
+  /**
+   * True once the admin has changed the topics themselves. Until then the
+   * topics follow the detected operation as it changes.
+   */
+  topicsChosen: boolean;
   difficulty: AuthoringQuestion['difficulty'];
   marks: string;
   instructionEn: string;
@@ -80,7 +87,8 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  topic: '',
+  topics: [],
+  topicsChosen: false,
   difficulty: 'Easy',
   marks: '1',
   instructionEn: '',
@@ -92,8 +100,12 @@ const EMPTY_FORM: FormState = {
 const BLANK = documentToProseMirror(createBlankDocument());
 
 function formFor(question: AuthoringQuestion): FormState {
+  const topics = splitTopics(question.topic);
   return {
-    topic: question.topic,
+    // What was saved is what the admin chose. A topic stored before the list
+    // existed matches none of it, and then the detected ones are offered.
+    topics,
+    topicsChosen: topics.length > 0,
     difficulty: question.difficulty,
     marks: String(question.marks),
     instructionEn: question.instructionEn,
@@ -222,6 +234,10 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
     [steps, baselineFlat, questions, editing?.id],
   );
 
+  /** Ticked for the admin from what was detected, until they change the ticks themselves. */
+  const detectedTopics = useMemo(() => topicsFor(steps), [steps]);
+  const topics = form.topicsChosen ? form.topics : detectedTopics;
+
   const busy = saving || refreshing;
   const number = editing ? editing.position : questions.length + 1;
 
@@ -235,9 +251,9 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
   }
 
   function startNew(): void {
-    // The topic, difficulty and marks carry over: a paper is written in runs of
-    // similar questions, and retyping them each time is the slow part.
-    go({ kind: 'new' }, { ...EMPTY_FORM, topic: form.topic, difficulty: form.difficulty, marks: form.marks });
+    // Difficulty and marks carry over: a paper is written in runs of similar
+    // questions. Topics do not — they are read off each question's operation.
+    go({ kind: 'new' }, { ...EMPTY_FORM, difficulty: form.difficulty, marks: form.marks });
     setNotice(null);
   }
 
@@ -282,7 +298,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
     if (!editor) return;
 
     const fields = {
-      topic: form.topic,
+      topics,
       difficulty: form.difficulty,
       marks: form.marks,
       instructionEn: form.instructionEn,
@@ -317,7 +333,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
       const body = (await response.json()) as { warnings?: string[] };
       setServerWarnings(body.warnings ?? []);
       setNotice(editing ? `Question ${editing.position} updated.` : `Question ${number} recorded.`);
-      go({ kind: 'new' }, { ...EMPTY_FORM, topic: form.topic, difficulty: form.difficulty, marks: form.marks });
+      go({ kind: 'new' }, { ...EMPTY_FORM, difficulty: form.difficulty, marks: form.marks });
       // Keep the collision warnings visible past the mode change they came from.
       setServerWarnings(body.warnings ?? []);
       startRefresh(() => router.refresh());
@@ -556,16 +572,12 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
                   />
                 </label>
 
-                <label className={styles.field}>
-                  Topic
-                  <input
-                    className={styles.input}
-                    value={form.topic}
-                    onChange={(event) => setForm({ ...form, topic: event.target.value })}
-                    placeholder="e.g. Character Formatting"
-                    required
-                  />
-                </label>
+                <TopicMultiSelect
+                  value={topics}
+                  automatic={!form.topicsChosen}
+                  onChange={(next) => setForm({ ...form, topics: next, topicsChosen: true })}
+                  onReset={() => setForm({ ...form, topics: [], topicsChosen: false })}
+                />
 
                 <div className={styles.fieldRow}>
                   <label className={styles.field}>
@@ -630,7 +642,13 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
                     className={styles.primary}
                     // A new question needs something to have been done; an edit
                     // may change only its wording.
-                    disabled={busy || problems.length > 0 || (!editing && !visible) || (Boolean(editing) && dirty && !visible)}
+                    disabled={
+                      busy ||
+                      topics.length === 0 ||
+                      problems.length > 0 ||
+                      (!editing && !visible) ||
+                      (Boolean(editing) && dirty && !visible)
+                    }
                   >
                     {saving ? 'Saving…' : editing ? `Save question ${editing.position}` : `Save question ${number}`}
                   </button>

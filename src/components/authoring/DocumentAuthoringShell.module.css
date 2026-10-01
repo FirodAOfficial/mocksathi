@@ -438,3 +438,78 @@
     height: 84px;
   }
 }
+
+/* -- Topic multi-select ---------------------------------------------------- */
+
+.multiTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.multiTrigger:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.multiValue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.multiPlaceholder {
+  color: var(--text-muted);
+}
+
+.chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e3eefb;
+  border: 1px solid #b8d0ee;
+  color: #17365d;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.multiMenu {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px #0f233c33;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  overflow-y: auto;
+}
+
+.multiOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.multiOption:hover {
+  background: #f1f6fd;
+}
