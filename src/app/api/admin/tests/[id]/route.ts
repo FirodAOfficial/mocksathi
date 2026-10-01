@@ -5,6 +5,7 @@ import { db } from '@/db/client';
 import { exams } from '@/db/schema';
 import { deleteTest, getTestById, questionsForTest, updateTest } from '@/db/tests';
 import { getPassage } from '@/db/documentPapers';
+import { getStartingWorkbook } from '@/db/workbookPapers';
 import { parseTestInput, type TestInput } from '@/db/testInput';
 
 export const runtime = 'nodejs';
@@ -53,9 +54,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
    */
   if (parsed.fields.subject !== existing.subject) {
     const questions = await questionsForTest(id);
-    // A single-document passage is a Word document, so it locks the subject too.
-    const passage = await getPassage(id);
-    if (questions.length > 0 || passage) {
+    // A single-document passage or a single-workbook sheet locks it too.
+    const [passage, workbook] = await Promise.all([getPassage(id), getStartingWorkbook(id)]);
+    if (questions.length > 0 || passage || workbook) {
       return badRequest(
         'SUBJECT_LOCKED',
         'This paper already has questions, so it cannot be switched between Word and Excel. Delete its questions first, or create a new test.',

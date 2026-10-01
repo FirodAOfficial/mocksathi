@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { requireAdmin } from '@/auth/cookies';
-import { DocumentAuthoringShell, type AuthoringQuestion } from '@/components/authoring/DocumentAuthoringShell';
+import { DocumentAuthoringShell } from '@/components/authoring/DocumentAuthoringShell';
+import type { AuthoringQuestion } from '@/components/authoring/useAuthoringFlow';
+import { WorkbookAuthoringShell } from '@/components/authoring/WorkbookAuthoringShell';
 import { getDocumentPaper } from '@/db/documentPapers';
+import { getWorkbookPaper } from '@/db/workbookPapers';
 import { getTestById, questionsForTest } from '@/db/tests';
 
 export const metadata: Metadata = {
@@ -11,10 +14,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * `/author/<test id>` — writing a single-document Word paper.
+ * `/author/<test id>` — writing a single-document Word paper, or a
+ * single-workbook Excel paper.
  *
  * Outside `/dashboard` so it gets the whole screen, like `/editor`: the admin is
- * working in the same Word chrome a candidate sits the paper in. Admin-only
+ * working in the same Word or spreadsheet chrome a candidate sits the paper in. Admin-only
  * here *and* on every route it calls, since those are reachable directly.
  *
  * A paper that already has per-question passages stays with the per-question
@@ -28,11 +32,9 @@ export default async function AuthorPage({ params }: { params: Promise<{ id: str
   if (!test) notFound();
 
   const workbench = `/dashboard/admin/tests/${test.id}`;
-  if (test.subject !== 'word') redirect(workbench);
   if ((await questionsForTest(test.id)).length > 0) redirect(workbench);
 
-  const paper = await getDocumentPaper(test.id);
-  const questions: AuthoringQuestion[] = (paper?.questions ?? []).map((question) => ({
+  const fields = <Step,>(question: AuthoringQuestion<Step>): AuthoringQuestion<Step> => ({
     id: question.id,
     position: question.position,
     topic: question.topic,
@@ -43,7 +45,22 @@ export default async function AuthorPage({ params }: { params: Promise<{ id: str
     solutionEn: question.solutionEn,
     solutionHi: question.solutionHi,
     steps: question.steps,
-  }));
+  });
+
+  if (test.subject === 'excel') {
+    const paper = await getWorkbookPaper(test.id);
+    return (
+      <WorkbookAuthoringShell
+        testId={test.id}
+        testName={test.name}
+        workbook={paper?.workbook ?? null}
+        questions={(paper?.questions ?? []).map(fields)}
+      />
+    );
+  }
+
+  const paper = await getDocumentPaper(test.id);
+  const questions = (paper?.questions ?? []).map(fields);
 
   return (
     <DocumentAuthoringShell

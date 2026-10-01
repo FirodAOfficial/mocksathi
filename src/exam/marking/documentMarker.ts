@@ -1,6 +1,5 @@
 import type { JSONContent } from '@tiptap/core';
 import { project } from '@/exam/document/apply';
-import type { TimelineEntry } from '@/exam/document/types';
 import type { AnswerPayload } from '../types';
 import type { Criterion, CriterionResult } from './criteria';
 import { evaluateCriterion } from './evaluate';
@@ -39,7 +38,8 @@ interface ProjectedAnswer {
 }
 
 /**
- * Each question's visits, from the whole sitting's timeline.
+ * Each question's visits, from the whole sitting's timeline — a document's or,
+ * for a single-workbook paper, a workbook's.
  *
  * The before of each entry is the after of the one preceding it — the first
  * one's is the paper's own passage — so the chain is rebuilt here from the
@@ -47,11 +47,11 @@ interface ProjectedAnswer {
  * for a question the paper does not have still takes its place in the chain:
  * dropping it would hand its changes to whichever question came next.
  */
-export function segmentsByQuestion(
-  passage: JSONContent,
-  timeline: readonly TimelineEntry[],
-): Map<number, DocumentSegment[]> {
-  const segments = new Map<number, DocumentSegment[]>();
+export function segmentsByQuestion<T = JSONContent>(
+  passage: T,
+  timeline: readonly { question: number; document: T }[],
+): Map<number, { before: T; after: T }[]> {
+  const segments = new Map<number, { before: T; after: T }[]>();
   let before = passage;
 
   for (const entry of timeline) {
@@ -65,8 +65,8 @@ export function segmentsByQuestion(
 }
 
 /** The answer each question ends on: its last visit's after, for "your answer" on the review screen. */
-export function lastDocuments(timeline: readonly TimelineEntry[]): Record<number, JSONContent> {
-  const last: Record<number, JSONContent> = {};
+export function lastDocuments<T = JSONContent>(timeline: readonly { question: number; document: T }[]): Record<number, T> {
+  const last: Record<number, T> = {};
   for (const entry of timeline) last[entry.question] = entry.document;
   return last;
 }

@@ -13,6 +13,14 @@ import {
   getDocumentPaper,
   hasDocumentQuestions,
 } from './documentPapers';
+import {
+  attemptFromWorkbookPaper,
+  getWorkbookPaper,
+  hasWorkbookQuestions,
+  workbookPaperIdentity,
+  workbookQuestionCount,
+  workbookQuestionMarks,
+} from './workbookPapers';
 import { isUniqueViolation } from './pgErrors';
 import {
   exams,
@@ -57,16 +65,27 @@ import type { ParsedQuestionFields, ParsedTestFields } from './testInput';
 export const WORD_PAPERS_FROM_DOCUMENT_TABLES = true;
 
 /**
+ * The same switch for Excel and `excel_doc_questions`.
+ *
+ * True: only single-workbook Excel papers are offered. Per-question Excel
+ * papers still exist, still open by their own `?test=` link, keep their stored
+ * attempts, and still show on the admin list. Flip to false to offer both.
+ * See `sdd/excel-workbook-papers.md`.
+ */
+export const EXCEL_PAPERS_FROM_WORKBOOK_TABLES = true;
+
+/**
  * The condition that makes a `tests` row a sittable paper.
  *
- * It has questions — in `test_questions`, or for a Word paper in
- * `word_doc_questions` — and, while the switch above is on, a Word paper must
- * be a single-document one.
+ * It has questions — in `test_questions`, or in `word_doc_questions` /
+ * `excel_doc_questions` for a paper of that subject — and, while a switch above
+ * is on, a paper of that subject must be a single-document/workbook one.
  */
 function hasOfferableQuestions() {
   const legacy = sql<boolean>`exists (select 1 from ${testQuestions} where ${testQuestions.testId} = ${tests.id})`;
   const word = WORD_PAPERS_FROM_DOCUMENT_TABLES ? hasDocumentQuestions : or(legacy, hasDocumentQuestions);
-  return or(and(eq(tests.subject, 'word'), word), and(eq(tests.subject, 'excel'), legacy));
+  const excel = EXCEL_PAPERS_FROM_WORKBOOK_TABLES ? hasWorkbookQuestions : or(legacy, hasWorkbookQuestions);
+  return or(and(eq(tests.subject, 'word'), word), and(eq(tests.subject, 'excel'), excel));
 }
 
 export interface TestListRow {
@@ -93,6 +112,8 @@ export async function listTests(options: { examId?: string } = {}): Promise<Test
       // A single-document paper's questions live in their own table.
       documentCount: documentQuestionCount,
       documentMarks: documentQuestionMarks,
+      workbookCount: workbookQuestionCount,
+      workbookMarks: workbookQuestionMarks,
     })
     .from(tests)
     .innerJoin(exams, eq(tests.examId, exams.id))
@@ -104,10 +125,10 @@ export async function listTests(options: { examId?: string } = {}): Promise<Test
   return rows.map((row) => ({
     test: row.test,
     examName: row.examName,
-    questionCount: Number(row.questionCount ?? 0) + Number(row.documentCount ?? 0),
+    questionCount: Number(row.questionCount ?? 0) + Number(row.documentCount ?? 0) + Number(row.workbookCount ?? 0),
     // `sum` comes back as a string from `pg` (bigint/numeric), and null for a
     // paper with no questions yet.
-    totalMarks: Number(row.totalMarks ?? 0) + Number(row.documentMarks ?? 0),
+    totalMarks: Number(row.totalMarks ?? 0) + Number(row.documentMarks ?? 0) + Number(row.workbookMarks ?? 0),
   }));
 }
 
@@ -361,6 +382,8 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       totalMarks: sum(testQuestions.marks),
       documentCount: documentQuestionCount,
       documentMarks: documentQuestionMarks,
+      workbookCount: workbookQuestionCount,
+      workbookMarks: workbookQuestionMarks,
     })
     .from(tests)
     .innerJoin(exams, eq(tests.examId, exams.id))
@@ -380,8 +403,8 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       )
     : new Map();
 
-  return rows.map(({ test, questionCount, totalMarks, documentCount, documentMarks }, index) => {
-    const questions = Number(questionCount ?? 0) + Number(documentCount ?? 0);
+  return rows.map(({ test, questionCount, totalMarks, documentCount, documentMarks, workbookCount, workbookMarks }, index) => {
+    const questions = Number(questionCount ?? 0) + Number(documentCount ?? 0) + Number(workbookCount ?? 0);
     const attempt = attempts.get(test.id);
 
     return {
@@ -405,7 +428,9 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
        * nobody has sat is shown out of what it is worth today, which is the
        * only total it has.
        */
-      maxScore: attempt ? attempt.maxScore : Number(totalMarks ?? 0) + Number(documentMarks ?? 0),
+      maxScore: attempt
+        ? attempt.maxScore
+        : Number(totalMarks ?? 0) + Number(documentMarks ?? 0) + Number(workbookMarks ?? 0),
       mockType: test.subject,
       questionCount: questions,
       dateLabel: `${test.durationMinutes} min`,
@@ -469,6 +494,8 @@ export async function loadPaper(test: Test, candidateName?: string): Promise<Loa
   const questions = await questionsForTest(test.id);
   // A Word paper with no per-question rows may be a single-document one.
   if (questions.length === 0 && test.subject === 'word') return loadDocumentPaper(test, candidateName);
+  // And an Excel one may be a single-workbook one.
+  if (questions.length === 0 && test.subject === 'excel') return loadWorkbookPaper(test, candidateName);
   // A paper with no questions is not a paper. Better to fall back to the sample
   // than to open a timed sitting with an empty question palette.
   if (questions.length === 0) return null;
@@ -494,6 +521,20 @@ async function loadDocumentPaper(test: Test, candidateName?: string): Promise<Lo
     // Its questions are not `test_questions` rows; nothing reads this list.
     questions: [],
     identity: documentPaperIdentity(test, paper),
+  };
+}
+
+/** A single-workbook paper ready to be sat, or null when it has no questions yet. */
+async function loadWorkbookPaper(test: Test, candidateName?: string): Promise<LoadedPaper | null> {
+  const paper = await getWorkbookPaper(test.id);
+  if (!paper || paper.questions.length === 0) return null;
+
+  return {
+    testId: test.id,
+    slug: test.slug,
+    attempt: attemptFromWorkbookPaper(test, paper, candidateName),
+    questions: [],
+    identity: workbookPaperIdentity(test, paper),
   };
 }
 

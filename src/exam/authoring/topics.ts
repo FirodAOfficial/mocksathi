@@ -22,6 +22,9 @@ export const EXCEL_TOPICS = [
   'Data Entry',
   'Formulas & Functions',
   'Column Width',
+  // Row height and hiding rows or columns. No per-question operation asks for
+  // these; the single-workbook flow detects them (`src/exam/workbook/topics.ts`).
+  'Rows & Columns',
   'Freeze Panes',
   'Gridlines & Headings',
   'Print Area',

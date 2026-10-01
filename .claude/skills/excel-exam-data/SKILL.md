@@ -123,3 +123,21 @@ case a compile error). Prefer an existing topic; add one to `EXCEL_TOPICS` only 
 group or dialog, never with a comma in its name (topics are stored joined with `, ` in
 `test_questions.topic`). Add the case to `src/exam/authoring/topics.test.ts`.
 
+## The single-workbook flow
+
+A second way to write an Excel paper — `sdd/excel-workbook-papers.md`. The admin performs each
+question in the real spreadsheet and the operation is **detected** (`src/exam/workbook/detect.ts`);
+candidates answer on one shared workbook in any order. It reads the projection directly, so:
+
+- **A new `CellStyle` property** must be added to `STYLE_PROPERTIES` in `src/exam/workbook/detect.ts`
+  (a **compile error** until it is), to `canonicalStyle` (or it is invisible to both flows), and to
+  `describeStyle` in `src/exam/workbook/describe.ts`. Its topic comes from `topicsOf` in
+  `src/exam/workbook/topics.ts` — a total switch, so a new *step kind* without a topic does not
+  compile either.
+- **A new criterion for this flow** goes in `WorkbookCriterion` (`src/exam/marking/sheet/workbookMarker.ts`)
+  and `evaluateExtra`, not in the shared `SheetCriterion` union — the per-question papers never see it.
+- **Formulas are marked by result on the candidate's own sheet** (`formulaLike`), so a question that
+  changes an input cannot break another's formula. Don't reintroduce a `resultEquals` against the
+  admin's cached value here.
+- Add an `ActionCase` to `src/exam/workbook/workbookActions.test.ts` for any new action.
+

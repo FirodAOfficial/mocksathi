@@ -4,8 +4,7 @@ import type { JSONContent } from '@tiptap/core';
 import type { Editor } from '@tiptap/react';
 import { EditorState } from '@tiptap/pm/state';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { documentsEqual } from '@/editor/answerDocument';
 import { documentToProseMirror } from '@/editor/documentToProseMirror';
 import { useClipboard } from '@/editor/useClipboard';
@@ -15,7 +14,7 @@ import { project, replay } from '@/exam/document/apply';
 import { describeChanges, describeStep, suggestInstruction } from '@/exam/document/describe';
 import { detectChanges, hasVisibleChange, type Detection } from '@/exam/document/detect';
 import { overlapWarnings, partialWordWarnings } from '@/exam/document/overlap';
-import { DOCUMENT_TOPICS, splitTopics, topicsFor, type DocumentTopic } from '@/exam/document/topics';
+import { DOCUMENT_TOPICS, topicsFor } from '@/exam/document/topics';
 import type { DocumentStep } from '@/exam/document/types';
 import { createBlankDocument } from '@/services/document/types';
 import { useUiStore } from '@/state/uiStore';
@@ -26,8 +25,9 @@ import { ParagraphDialog } from '../dialogs/ParagraphDialog';
 import { WordCountDialog } from '../dialogs/WordCountDialog';
 import { DocumentCanvas } from '../document/DocumentCanvas';
 import { Ribbon } from '../ribbon/Ribbon';
+import { AuthoringQuestionForm, AuthoringQuestionList, AuthoringStartPanel } from './AuthoringPanels';
 import styles from './DocumentAuthoringShell.module.css';
-import { TopicMultiSelect } from './TopicMultiSelect';
+import { useAuthoringFlow, type AuthoringQuestion } from './useAuthoringFlow';
 
 /**
  * Writing a Word paper on one document.
@@ -44,77 +44,22 @@ import { TopicMultiSelect } from './TopicMultiSelect';
  * passage with every stored question replayed (`replay`). Nothing here is a
  * stored snapshot, so deleting a question anywhere in the paper simply drops
  * its changes from every later starting point.
+ *
+ * The list, the form and the requests are shared with the Excel screen
+ * (`useAuthoringFlow`, `AuthoringPanels`); this file is the Word half.
  */
-
-export interface AuthoringQuestion {
-  id: string;
-  position: number;
-  topic: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  marks: number;
-  instructionEn: string;
-  instructionHi: string;
-  solutionEn: string[];
-  solutionHi: string[];
-  steps: DocumentStep[];
-}
 
 export interface DocumentAuthoringShellProps {
   testId: string;
   testName: string;
   /** The saved passage, or null before one has been saved. */
   passage: JSONContent | null;
-  questions: AuthoringQuestion[];
+  questions: AuthoringQuestion<DocumentStep>[];
 }
-
-type Mode = { kind: 'passage' } | { kind: 'new' } | { kind: 'edit'; id: string };
 
 type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
 
-interface FormState {
-  topics: DocumentTopic[];
-  /**
-   * True once the admin has changed the topics themselves. Until then the
-   * topics follow the detected operation as it changes.
-   */
-  topicsChosen: boolean;
-  difficulty: AuthoringQuestion['difficulty'];
-  marks: string;
-  instructionEn: string;
-  instructionHi: string;
-  solutionEn: string;
-  solutionHi: string;
-}
-
-const EMPTY_FORM: FormState = {
-  topics: [],
-  topicsChosen: false,
-  difficulty: 'Easy',
-  marks: '1',
-  instructionEn: '',
-  instructionHi: '',
-  solutionEn: '',
-  solutionHi: '',
-};
-
 const BLANK = documentToProseMirror(createBlankDocument());
-
-function formFor(question: AuthoringQuestion): FormState {
-  const topics = splitTopics(question.topic);
-  return {
-    // What was saved is what the admin chose. A topic stored before the list
-    // existed matches none of it, and then the detected ones are offered.
-    topics,
-    topicsChosen: topics.length > 0,
-    difficulty: question.difficulty,
-    marks: String(question.marks),
-    instructionEn: question.instructionEn,
-    // Shown empty when it only repeats the English, as the per-question form does.
-    instructionHi: question.instructionHi === question.instructionEn ? '' : question.instructionHi,
-    solutionEn: question.solutionEn.join('\n'),
-    solutionHi: question.solutionHi.join('\n') === question.solutionEn.join('\n') ? '' : question.solutionHi.join('\n'),
-  };
-}
 
 /** Installs a document with a fresh undo history, so Undo cannot reach past where this question started. */
 function install(editor: Editor, document: JSONContent): JSONContent {
@@ -128,14 +73,18 @@ function install(editor: Editor, document: JSONContent): JSONContent {
   return editor.getJSON();
 }
 
-async function readError(response: Response): Promise<string> {
-  const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-  return body?.detail ?? `That did not work (${response.status}). Try again.`;
-}
+const summarise = (steps: DocumentStep[]): string[] =>
+  steps.filter((step) => !step.licenceOnly).map((step) => describeChanges(step));
 
 export function DocumentAuthoringShell({ testId, testName, passage, questions }: DocumentAuthoringShellProps) {
-  const router = useRouter();
-  const [refreshing, startRefresh] = useTransition();
+  const flow = useAuthoringFlow<DocumentStep>({
+    testId,
+    kind: 'document',
+    questions,
+    hasStart: passage !== null,
+    topicOptions: DOCUMENT_TOPICS,
+    startLabel: 'Passage',
+  });
 
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const openFind = useCallback(() => setDialog('find'), []);
@@ -146,17 +95,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
   const clipboard = useClipboard(editor);
   const readOnly = useUiStore((state) => state.readOnly);
 
-  const locked = questions.length > 0;
-  const [mode, setMode] = useState<Mode>(passage ? { kind: 'new' } : { kind: 'passage' });
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [serverWarnings, setServerWarnings] = useState<string[]>([]);
-
-  // An edit of a question that has since been deleted falls back to a new one.
-  const editing = mode.kind === 'edit' ? questions.find((question) => question.id === mode.id) : undefined;
-  const effectiveMode: Mode = mode.kind === 'edit' && !editing ? { kind: 'new' } : mode;
+  const { editing } = flow;
 
   /**
    * What the editor opens on, and what changes are measured from.
@@ -166,19 +105,16 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
    * that plus question k — so what it recorded is on screen and detected.
    */
   const { baseline, start } = useMemo(() => {
-    if (effectiveMode.kind === 'passage' || !passage) return { baseline: null, start: passage ?? BLANK };
-    if (effectiveMode.kind === 'new') {
+    if (flow.mode === 'passage' || !passage) return { baseline: null, start: passage ?? BLANK };
+    if (!editing) {
       const after = replay(passage, questions);
       return { baseline: after, start: after };
     }
-    const target = questions.find((question) => question.id === effectiveMode.id)!;
     return {
-      baseline: replay(passage, questions.filter((question) => question.position < target.position)),
-      start: replay(passage, questions.filter((question) => question.position <= target.position)),
+      baseline: replay(passage, questions.filter((question) => question.position < editing.position)),
+      start: replay(passage, questions.filter((question) => question.position <= editing.position)),
     };
-    // `effectiveMode` is rebuilt each render; its identity-bearing parts are listed.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveMode.kind, editing?.id, passage, questions]);
+  }, [flow.mode, editing, passage, questions]);
 
   const baselineFlat = useMemo(() => (baseline ? project(baseline) : null), [baseline]);
 
@@ -215,13 +151,13 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
 
   // The passage cannot be edited once questions are recorded on it.
   useEffect(() => {
-    editor?.setEditable(!readOnly && !(effectiveMode.kind === 'passage' && locked));
-  }, [editor, readOnly, effectiveMode.kind, locked]);
+    editor?.setEditable(!readOnly && !(flow.mode === 'passage' && flow.locked));
+  }, [editor, readOnly, flow.mode, flow.locked]);
 
   const steps = useMemo(() => detection?.steps ?? [], [detection]);
   const problems = detection?.problems ?? [];
   const visible = hasVisibleChange(steps);
-  const liveWarnings = useMemo(
+  const warnings = useMemo(
     () => [
       ...partialWordWarnings(steps, baselineFlat),
       ...overlapWarnings(
@@ -236,31 +172,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
 
   /** Ticked for the admin from what was detected, until they change the ticks themselves. */
   const detectedTopics = useMemo(() => topicsFor(steps), [steps]);
-  const topics = form.topicsChosen ? form.topics : detectedTopics;
-
-  const busy = saving || refreshing;
-  const number = editing ? editing.position : questions.length + 1;
-
-  /* -- Moving between modes ------------------------------------------------ */
-
-  function go(next: Mode, nextForm?: FormState): void {
-    setMode(next);
-    setError(null);
-    setServerWarnings([]);
-    if (nextForm) setForm(nextForm);
-  }
-
-  function startNew(): void {
-    // Difficulty and marks carry over: a paper is written in runs of similar
-    // questions. Topics do not — they are read off each question's operation.
-    go({ kind: 'new' }, { ...EMPTY_FORM, difficulty: form.difficulty, marks: form.marks });
-    setNotice(null);
-  }
-
-  function startEdit(question: AuthoringQuestion): void {
-    go({ kind: 'edit', id: question.id }, formFor(question));
-    setNotice(null);
-  }
+  const topics = flow.form.topicsChosen ? flow.form.topics : detectedTopics;
 
   function resetDocument(): void {
     if (!editor) return;
@@ -268,114 +180,6 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
     setDirty(false);
     setDetection(baselineFlat ? detectChanges(baselineFlat, project(installedRef.current)) : null);
   }
-
-  /* -- Saving -------------------------------------------------------------- */
-
-  async function savePassage(): Promise<void> {
-    if (!editor) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/admin/tests/${testId}/document`, {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ document: editor.getJSON() }),
-      });
-      if (!response.ok) {
-        setError(await readError(response));
-        return;
-      }
-      setNotice('Passage saved. Record question 1 by performing its operation on the document.');
-      go({ kind: 'new' }, { ...EMPTY_FORM });
-      startRefresh(() => router.refresh());
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveQuestion(event: FormEvent): Promise<void> {
-    event.preventDefault();
-    if (!editor) return;
-
-    const fields = {
-      topics,
-      difficulty: form.difficulty,
-      marks: form.marks,
-      instructionEn: form.instructionEn,
-      instructionHi: form.instructionHi,
-      solutionEn: form.solutionEn,
-      solutionHi: form.solutionHi,
-    };
-
-    setSaving(true);
-    setError(null);
-    setServerWarnings([]);
-    try {
-      const response = editing
-        ? await fetch(`/api/admin/tests/${testId}/document/questions/${editing.id}`, {
-            method: 'PUT',
-            headers: { 'content-type': 'application/json' },
-            // The document only when it was touched: an edit to the wording
-            // alone keeps what was recorded.
-            body: JSON.stringify({ ...fields, ...(dirty ? { document: editor.getJSON() } : {}) }),
-          })
-        : await fetch(`/api/admin/tests/${testId}/document/questions`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ ...fields, document: editor.getJSON() }),
-          });
-
-      if (!response.ok) {
-        setError(await readError(response));
-        return;
-      }
-
-      const body = (await response.json()) as { warnings?: string[] };
-      setServerWarnings(body.warnings ?? []);
-      setNotice(editing ? `Question ${editing.position} updated.` : `Question ${number} recorded.`);
-      go({ kind: 'new' }, { ...EMPTY_FORM, difficulty: form.difficulty, marks: form.marks });
-      // Keep the collision warnings visible past the mode change they came from.
-      setServerWarnings(body.warnings ?? []);
-      startRefresh(() => router.refresh());
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function deleteQuestion(question: AuthoringQuestion): Promise<void> {
-    if (
-      !window.confirm(
-        `Delete question ${question.position}? Its formatting is removed from the document, and the questions after it are renumbered.`,
-      )
-    ) {
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/admin/tests/${testId}/document/questions/${question.id}`, { method: 'DELETE' });
-      if (!response.ok) {
-        setError(await readError(response));
-        return;
-      }
-      setNotice(`Question ${question.position} deleted.`);
-      if (editing?.id === question.id) go({ kind: 'new' }, { ...EMPTY_FORM });
-      startRefresh(() => router.refresh());
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  /* -- Rendering ----------------------------------------------------------- */
-
-  const modeLabel =
-    effectiveMode.kind === 'passage'
-      ? locked
-        ? 'Passage (locked)'
-        : 'Writing the passage'
-      : editing
-        ? `Editing question ${editing.position}`
-        : `Recording question ${number}`;
 
   const paragraphs = useMemo(() => {
     if (!editor || dialog !== 'wordCount') return 0;
@@ -386,6 +190,15 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
     });
     return count;
   }, [editor, dialog]);
+
+  const modeLabel =
+    flow.mode === 'passage'
+      ? flow.locked
+        ? 'Passage (locked)'
+        : 'Writing the passage'
+      : editing
+        ? `Editing question ${editing.position}`
+        : `Recording question ${flow.number}`;
 
   return (
     <div className={styles.shell}>
@@ -415,64 +228,18 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
       )}
 
       <div className={styles.workspace}>
-        <nav className={styles.left} aria-label="Questions in this paper">
-          <div className={styles.panelSection}>
-            <h2 className={styles.panelTitle}>Paper</h2>
-            <p className={styles.panelNote}>
-              One passage, every question performed on it in turn. Candidates may answer in any order.
-            </p>
-          </div>
-
-          <ol className={styles.questionList}>
-            <li>
-              <button
-                type="button"
-                className={`${styles.questionItem} ${effectiveMode.kind === 'passage' ? styles.questionItemActive : ''}`}
-                onClick={() => go({ kind: 'passage' })}
-                disabled={busy}
-              >
-                <span className={styles.questionHead}>
-                  <span className={styles.questionNumber}>Passage</span>
-                  <span className={styles.questionMarks}>{passage ? (locked ? 'locked' : 'saved') : 'not saved'}</span>
-                </span>
-              </button>
-            </li>
-            {questions.map((question) => (
-              <li key={question.id}>
-                <button
-                  type="button"
-                  className={`${styles.questionItem} ${editing?.id === question.id ? styles.questionItemActive : ''}`}
-                  onClick={() => startEdit(question)}
-                  disabled={busy}
-                >
-                  <span className={styles.questionHead}>
-                    <span className={styles.questionNumber}>Q{question.position}</span>
-                    <span>{question.topic}</span>
-                    <span className={styles.questionMarks}>
-                      {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
-                    </span>
-                  </span>
-                  <span className={styles.questionText}>{question.instructionEn}</span>
-                  <span className={styles.questionDetected}>
-                    {question.steps
-                      .filter((step) => !step.licenceOnly)
-                      .map((step) => describeChanges(step))
-                      .join(' · ')}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-
-          <button type="button" className={styles.addButton} onClick={startNew} disabled={!passage || busy}>
-            + Record a new question
-          </button>
-        </nav>
+        <AuthoringQuestionList
+          flow={flow}
+          questions={questions}
+          hasStart={passage !== null}
+          startLabel="Passage"
+          summarise={summarise}
+        />
 
         <main className={styles.main}>
-          {effectiveMode.kind === 'passage' ? (
-            <p className={`${styles.banner} ${locked ? styles.bannerLocked : ''}`}>
-              {locked
+          {flow.mode === 'passage' ? (
+            <p className={`${styles.banner} ${flow.locked ? styles.bannerLocked : ''}`}>
+              {flow.locked
                 ? 'The passage is fixed: every question is recorded against its exact wording. Delete all questions to change it.'
                 : 'Type or paste the complete passage, with any formatting it should start with. Questions are recorded on it next.'}
             </p>
@@ -480,7 +247,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
             <p className={styles.banner}>
               {editing
                 ? `This is the document as question ${editing.position} left it. Change the formatting to re-record it, or just edit its wording on the right.`
-                : `Perform question ${number}’s operation on the document — select the text and use the ribbon, exactly as a candidate would. Formatting only: the wording must not change.`}
+                : `Perform question ${flow.number}’s operation on the document — select the text and use the ribbon, exactly as a candidate would. Formatting only: the wording must not change.`}
             </p>
           )}
 
@@ -488,200 +255,38 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
         </main>
 
         <aside className={styles.right} aria-label="Question details">
-          {effectiveMode.kind === 'passage' ? (
-            <div className={styles.panelSection}>
-              <h2 className={styles.panelTitle}>Passage</h2>
-              <div className={styles.form}>
-                <p className={styles.panelNote}>
-                  {locked
-                    ? `${questions.length} question${questions.length === 1 ? ' is' : 's are'} recorded on this passage.`
-                    : passage
-                      ? dirty
-                        ? 'You have unsaved changes to the passage.'
-                        : 'Saved. You can keep editing it until the first question is recorded.'
-                      : 'Not saved yet.'}
-                </p>
-                {error ? (
-                  <p className={styles.error} role="alert">
-                    {error}
-                  </p>
-                ) : null}
-                {!locked ? (
-                  <div className={styles.actions}>
-                    <button
-                      type="button"
-                      className={styles.primary}
-                      onClick={() => void savePassage()}
-                      disabled={busy || !editor || (passage !== null && !dirty)}
-                    >
-                      {saving ? 'Saving…' : 'Save passage'}
-                    </button>
-                    {passage && !dirty ? (
-                      <button type="button" className={styles.secondary} onClick={startNew} disabled={busy}>
-                        Record questions →
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            </div>
+          {flow.mode === 'passage' ? (
+            <AuthoringStartPanel
+              flow={flow}
+              startLabel="Passage"
+              hasStart={passage !== null}
+              dirty={dirty}
+              questionCount={questions.length}
+              onSave={() => {
+                if (editor) void flow.saveStart(editor.getJSON());
+              }}
+            />
           ) : (
-            <form className={styles.panelSection} onSubmit={(event) => void saveQuestion(event)}>
-              <h2 className={styles.panelTitle}>{editing ? `Question ${editing.position}` : `Question ${number}`}</h2>
-              <div className={styles.form}>
-                <DetectedChanges
-                  steps={steps}
-                  problems={problems}
-                  baseline={baselineFlat}
-                  editingUntouched={Boolean(editing) && !dirty}
-                />
-
-                {[...liveWarnings, ...serverWarnings.filter((warning) => !liveWarnings.includes(warning))].map(
-                  (warning) => (
-                    <p className={styles.warning} key={warning}>
-                      {warning}
-                    </p>
-                  ),
-                )}
-
-                <label className={styles.field}>
-                  Question (English)
-                  <textarea
-                    className={styles.textarea}
-                    value={form.instructionEn}
-                    onChange={(event) => setForm({ ...form, instructionEn: event.target.value })}
-                    placeholder="e.g. Make the second word of the first paragraph bold."
-                    required
-                  />
-                </label>
-                <button
-                  type="button"
-                  className={styles.linkButton}
-                  disabled={!visible}
-                  onClick={() => setForm({ ...form, instructionEn: suggestInstruction(baselineFlat, steps) })}
-                >
-                  Draft it from the detected change
-                </button>
-
-                <label className={styles.field}>
-                  Question (Hindi) <span className={styles.hint}>Optional — leave blank to use the English.</span>
-                  <textarea
-                    className={styles.textarea}
-                    value={form.instructionHi}
-                    onChange={(event) => setForm({ ...form, instructionHi: event.target.value })}
-                  />
-                </label>
-
-                <div className={styles.field}>
-                  <span>
-                    Topic{' '}
-                    <span className={styles.hint}>
-                      {form.topicsChosen ? 'Chosen by you.' : 'Selected from the detected operation — change it if you like.'}
-                    </span>
-                  </span>
-                  <TopicMultiSelect
-                    options={DOCUMENT_TOPICS}
-                    value={topics}
-                    automatic={!form.topicsChosen}
-                    onChange={(next) => setForm({ ...form, topics: next as DocumentTopic[], topicsChosen: true })}
-                    onReset={() => setForm({ ...form, topics: [], topicsChosen: false })}
-                  />
-                </div>
-
-                <div className={styles.fieldRow}>
-                  <label className={styles.field}>
-                    Difficulty
-                    <select
-                      className={styles.select}
-                      value={form.difficulty}
-                      onChange={(event) =>
-                        setForm({ ...form, difficulty: event.target.value as FormState['difficulty'] })
-                      }
-                    >
-                      <option value="Easy">Easy</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Hard">Hard</option>
-                    </select>
-                  </label>
-                  <label className={styles.field}>
-                    Marks
-                    <input
-                      className={styles.input}
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={form.marks}
-                      onChange={(event) => setForm({ ...form, marks: event.target.value })}
-                      required
-                    />
-                  </label>
-                </div>
-
-                <label className={styles.field}>
-                  Solution steps <span className={styles.hint}>Optional, one per line — written from the detected change if left blank.</span>
-                  <textarea
-                    className={styles.textarea}
-                    value={form.solutionEn}
-                    onChange={(event) => setForm({ ...form, solutionEn: event.target.value })}
-                  />
-                </label>
-                <label className={styles.field}>
-                  Solution steps (Hindi) <span className={styles.hint}>Optional.</span>
-                  <textarea
-                    className={styles.textarea}
-                    value={form.solutionHi}
-                    onChange={(event) => setForm({ ...form, solutionHi: event.target.value })}
-                  />
-                </label>
-
-                {error ? (
-                  <p className={styles.error} role="alert">
-                    {error}
-                  </p>
-                ) : null}
-                {notice && !error ? (
-                  <p className={styles.success} role="status">
-                    {notice}
-                  </p>
-                ) : null}
-
-                <div className={styles.actions}>
-                  <button
-                    type="submit"
-                    className={styles.primary}
-                    // A new question needs something to have been done; an edit
-                    // may change only its wording.
-                    disabled={
-                      busy ||
-                      topics.length === 0 ||
-                      problems.length > 0 ||
-                      (!editing && !visible) ||
-                      (Boolean(editing) && dirty && !visible)
-                    }
-                  >
-                    {saving ? 'Saving…' : editing ? `Save question ${editing.position}` : `Save question ${number}`}
-                  </button>
-                  <button type="button" className={styles.secondary} onClick={resetDocument} disabled={busy || !dirty}>
-                    Reset document
-                  </button>
-                  {editing ? (
-                    <>
-                      <button type="button" className={styles.secondary} onClick={startNew} disabled={busy}>
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.danger}
-                        onClick={() => void deleteQuestion(editing)}
-                        disabled={busy}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </form>
+            <AuthoringQuestionForm
+              flow={flow}
+              detectedLines={steps.filter((step) => !step.licenceOnly).map((step) => describeStep(baselineFlat, step))}
+              problems={problems}
+              warnings={warnings}
+              topics={topics}
+              topicOptions={DOCUMENT_TOPICS}
+              dirty={dirty}
+              hasChange={visible}
+              placeholder="e.g. Make the second word of the first paragraph bold."
+              onSuggest={() => suggestInstruction(baselineFlat, steps)}
+              onSubmit={() => {
+                if (!editor) return;
+                // The document only when it was touched: an edit to the wording
+                // alone keeps what was recorded.
+                void flow.saveQuestion(topics, !editing || dirty ? editor.getJSON() : undefined);
+              }}
+              onReset={resetDocument}
+              resetLabel="Reset document"
+            />
           )}
         </aside>
       </div>
@@ -701,55 +306,6 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
           onClose={() => setDialog(null)}
         />
       ) : null}
-    </div>
-  );
-}
-
-/** The live reading of what the admin has done since this question started. */
-function DetectedChanges({
-  steps,
-  problems,
-  baseline,
-  editingUntouched,
-}: {
-  steps: DocumentStep[];
-  problems: string[];
-  baseline: ReturnType<typeof project> | null;
-  editingUntouched: boolean;
-}) {
-  if (problems.length > 0) {
-    return (
-      <div className={`${styles.detected} ${styles.detectedProblem}`} role="alert">
-        <span className={styles.detectedTitle}>Cannot be recorded</span>
-        {problems.map((problem) => (
-          <p key={problem} style={{ margin: 0 }}>
-            {problem}
-          </p>
-        ))}
-      </div>
-    );
-  }
-
-  const visible = steps.filter((step) => !step.licenceOnly);
-  if (visible.length === 0) {
-    return (
-      <div className={`${styles.detected} ${styles.detectedEmpty}`} role="status">
-        <span className={styles.detectedTitle}>Detected operation</span>
-        Nothing yet. Select text in the document and apply the formatting this question asks for.
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.detected} role="status">
-      <span className={styles.detectedTitle}>
-        {editingUntouched ? 'Recorded operation' : 'Detected operation'} — the candidate must do exactly this
-      </span>
-      <ul className={styles.detectedList}>
-        {visible.map((step, index) => (
-          <li key={index}>{describeStep(baseline, step)}</li>
-        ))}
-      </ul>
     </div>
   );
 }
