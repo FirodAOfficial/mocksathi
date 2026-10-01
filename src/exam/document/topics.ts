@@ -1,4 +1,4 @@
-import type { DocumentStep } from './types';
+import type { CharacterProperty, DocumentStep, ParagraphProperty } from './types';
 
 /**
  * What a single-document question exercises, as a fixed list.
@@ -29,8 +29,14 @@ export type DocumentTopic = (typeof DOCUMENT_TOPICS)[number];
 
 export const TOPIC_SEPARATOR = ', ';
 
-/** The topic each detected property belongs to. */
-const TOPIC_OF: Record<string, DocumentTopic> = {
+/**
+ * The topic each detected property belongs to.
+ *
+ * Typed as one entry per property the model has, so a new `RunFormatting` or
+ * `ParagraphFormatting` field without a topic is a compile error, not a
+ * question saved with nothing ticked. Adding one: `.claude/skills/editor-functions`.
+ */
+const TOPIC_OF: Record<CharacterProperty | ParagraphProperty, DocumentTopic> = {
   bold: 'Font Style',
   italic: 'Font Style',
   underline: 'Font Style',
@@ -79,7 +85,7 @@ export function topicsFor(steps: readonly DocumentStep[]): DocumentTopic[] {
   for (const step of steps) {
     if (step.licenceOnly) continue;
     for (const change of step.changes) {
-      const topic = TOPIC_OF[change.property];
+      const topic = TOPIC_OF[change.property as CharacterProperty | ParagraphProperty];
       if (topic) found.push(topic);
     }
   }

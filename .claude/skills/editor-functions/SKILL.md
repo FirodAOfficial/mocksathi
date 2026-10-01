@@ -1,6 +1,6 @@
 ---
 name: editor-functions
-description: Add or change a Word formatting function — anything the ribbon can do and a question can ask for (bold, underline styles, indents, spacing, replacements, removals). Use when adding a ribbon control, a Font/Paragraph dialog field, a new question type, or when a question's worked answer and its marking disagree.
+description: Add or change a Word formatting function — anything the ribbon can do and a question can ask for (bold, underline styles, indents, spacing, replacements, removals). Use when adding a ribbon control, a Font/Paragraph dialog field, a new formatting property, a new question topic, a new question type, or when a question's worked answer and its marking disagree — in either the per-question catalog flow or the single-document (detected-operation) flow.
 ---
 
 # Adding an editor function
@@ -78,6 +78,9 @@ Only if the property does not already exist in the document model. Five places, 
 4. `src/exam/marking/flatten.ts` — `MarkName`, `canonicalMarks` (the canonical form decides what
    counts as "the same formatting"), and `hasMark`.
 5. `src/editor/useFormatState.ts`, if the ribbon needs to show it.
+6. **The single-document flow and its topic list** — every place in
+   [the section below](#the-single-document-flow-and-the-topic-list). A new property that is not
+   wired in there is invisible to that flow: an admin's change to it records as "nothing changed".
 
 ### 4. Give it a control
 
@@ -91,7 +94,48 @@ chains.
 - `src/server/marking/rubricFromOperations.test.ts` — **the load-bearing one**: for every question
   in the sample papers, the worked answer must *pass* the derived key and the untouched passage
   must *fail* it. The second half is what catches a key that passes everything.
+- `src/exam/document/wordActions.test.ts` — add a case for the new action (see below).
 - `npx tsc --noEmit -p .`, `npx eslint src`, `npx vitest run`.
+
+## The single-document flow and the topic list
+
+The second way to write a Word paper (`sdd/word-document-papers.md`): the admin performs each
+question in the editor and the operation is **detected** from the before and after documents
+(`src/exam/document/detect.ts`), rather than picked from the catalog. It reads the document model
+directly, so a new property in `RunFormatting` or `ParagraphFormatting` has to be added here too —
+and every property must belong to a **topic**, because the question form's Topic dropdown is ticked
+from the detected operation.
+
+### Adding a property
+
+| Where | What to add | Enforced by |
+| --- | --- | --- |
+| `src/exam/document/detect.ts` | the property to `CHARACTER_PROPERTIES` (paragraph properties are read off `EMPTY_PARAGRAPH_FORMATTING` automatically) | **compile error** if a `RunFormatting` key is missing |
+| `src/exam/document/topics.ts` | an entry in `TOPIC_OF` — see "Adding a topic" below | **compile error** if any property has no topic |
+| `src/exam/document/describe.ts` | a branch in `describeCharacterChange` / `describeParagraphChange`, in the ribbon's words, for setting it *and* for taking it off | review — falls through to the raw property name |
+| `src/server/marking/documentRubric.ts` | `markFor` / `licensedMarks` if it shares a slot with another mark (as sub/superscript and emboss/engrave do); `COLOURED` if it is a colour (either of Office's two reds passes); `VALUED` if the criterion must check its value | review |
+| `src/exam/document/apply.ts` | `cleanMarks` / `cleanParagraph`, with a range check — the passage is rebuilt from known-good values | review — an unlisted property is silently dropped from saved passages |
+| `src/exam/document/wordActions.test.ts` | an `ActionCase`: the ribbon action, the standard value it must be detected as, the markup it must render, how it is described, and a near miss | the suite |
+
+### Adding a topic
+
+The topics are the dropdown's options (`DOCUMENT_TOPICS` in `src/exam/document/topics.ts`), named
+after the ribbon group or dialog section a candidate uses — "Font Style", "Line & Paragraph
+Spacing", "Bullets & Numbering".
+
+- **A new property goes into an existing topic when one fits.** A new underline variant is "Font
+  Style"; a new spacing control is "Line & Paragraph Spacing". Add it to `TOPIC_OF` only.
+- **A new topic is for a new ribbon group or dialog section** — e.g. when tables or page setup become
+  markable. Add it to `DOCUMENT_TOPICS` in the position the ribbon would show it (the list order is
+  the order topics are shown and stored in), then map its properties in `TOPIC_OF`.
+- **Never put a comma in a topic name.** Topics are stored joined with `, ` in the existing `topic`
+  column (`joinTopics` / `splitTopics`); `topics.test.ts` checks this.
+- **Renaming or removing a topic orphans stored questions**: `splitTopics` drops names that are no
+  longer on the list, and those questions reopen with their topics re-detected. Rename only with a
+  data update to `word_doc_questions.topic`.
+- The server accepts only topics on the list (`parseDocumentQuestionFields`), so a new topic is
+  usable as soon as it is in `DOCUMENT_TOPICS` — no form or validation change.
+- Add the property → topic pair to the `it.each` tables in `src/exam/document/topics.test.ts`.
 
 ## Naming the text: selections
 

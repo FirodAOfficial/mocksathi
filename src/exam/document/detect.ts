@@ -32,7 +32,7 @@ import type {
  */
 
 /** Every character property the projection carries. */
-export const CHARACTER_PROPERTIES: readonly CharacterProperty[] = [
+export const CHARACTER_PROPERTIES = [
   'bold',
   'italic',
   'underline',
@@ -50,7 +50,16 @@ export const CHARACTER_PROPERTIES: readonly CharacterProperty[] = [
   'effect',
   'charScale',
   'charSpacing',
-];
+] as const satisfies readonly CharacterProperty[];
+
+/*
+ * A `RunFormatting` property missing from the list above would never be
+ * detected — an admin's change to it would record as "nothing changed". This
+ * fails to compile until it is listed.
+ */
+type UnlistedCharacterProperty = Exclude<CharacterProperty, (typeof CHARACTER_PROPERTIES)[number]>;
+const EVERY_CHARACTER_PROPERTY_IS_LISTED: [UnlistedCharacterProperty] extends [never] ? true : UnlistedCharacterProperty = true;
+void EVERY_CHARACTER_PROPERTY_IS_LISTED;
 
 /** Every paragraph property, read off the empty formatting so a new one cannot be missed. */
 export const PARAGRAPH_ATTRIBUTES = Object.keys(EMPTY_PARAGRAPH_FORMATTING) as (keyof ParagraphFormatting)[];
