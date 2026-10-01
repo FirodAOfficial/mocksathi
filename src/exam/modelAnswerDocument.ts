@@ -251,6 +251,9 @@ export function applyParts(document: JSONContent, list: readonly Omit<ModelAnswe
 }
 
 export function modelAnswerDocument(question: WordQuestion, language: Language): JSONContent {
+  // A single-document paper's worked answer is already a whole document.
+  if (question.answerDocument) return structuredClone(question.answerDocument);
+
   // Deep-copied: the passage is the question's own data, and the worked answer
   // must not share nodes with the document it was derived from — a caller that
   // edits what it is given would otherwise edit the question.

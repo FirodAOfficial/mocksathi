@@ -158,6 +158,15 @@ export interface WordQuestion extends BaseQuestion {
   passage: Localised<JSONContent>;
   /** The passage as it looks when the question has been answered correctly. */
   modelAnswer: ModelAnswer;
+  /**
+   * The worked answer as a whole document, for a single-document paper.
+   *
+   * Those papers record each question as detected changes rather than as a
+   * `ModelAnswer` (`src/exam/document/`), and their worked answer is the
+   * passage with that one question's changes replayed. Present only there;
+   * `modelAnswerDocument` prefers it when it is.
+   */
+  answerDocument?: JSONContent;
 }
 
 export interface ExcelQuestion extends BaseQuestion {
@@ -202,6 +211,15 @@ export interface ExamAttempt {
   sections: ExamSection[];
   /** Total time allowed, in seconds. */
   durationSeconds: number;
+  /**
+   * The one passage every question is answered on, for a single-document Word
+   * paper (`src/db/documentPapers.ts`).
+   *
+   * Its presence is what switches the editor from one document per question to
+   * one document for the whole sitting, recorded visit by visit
+   * (`useSharedDocumentAnswers`). Absent for every other paper.
+   */
+  sharedDocument?: JSONContent;
 }
 
 /**

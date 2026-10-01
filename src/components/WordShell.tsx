@@ -6,9 +6,11 @@ import { useClipboard } from '@/editor/useClipboard';
 import { useDocumentEditor } from '@/editor/useDocumentEditor';
 import { useFormatState } from '@/editor/useFormatState';
 import { useQuestionAnswers } from '@/editor/useQuestionAnswers';
+import { useSharedDocumentAnswers } from '@/editor/useSharedDocumentAnswers';
 import type { ExamResult } from '@/exam/result';
 import { SubmissionError, submitAttempt } from '@/exam/submitAttempt';
 import { elapsedSeconds, selectIsLocked, useExamStore } from '@/state/examStore';
+import { useSharedDocumentStore } from '@/state/sharedDocumentStore';
 import type { DocumentMetadata } from '@/services/document/types';
 import type { ExamAttempt, Language } from '@/exam/types';
 import { useUiStore } from '@/state/uiStore';
@@ -112,12 +114,20 @@ export function WordShell({
   const [result, setResult] = useState<ExamResult | null>(null);
   const [markingError, setMarkingError] = useState<string | null>(null);
 
-  // Each question owns its own document; this keeps the editor in step with the
-  // question selected in the side panels.
-  const questionAnswers = useQuestionAnswers(editor, {
-    enabled: exam && status === 'ready',
+  /*
+   * Each question owns its own document; this keeps the editor in step with the
+   * question selected in the side panels — unless the paper is written on one
+   * shared document, when the whole sitting happens on it and each visit to a
+   * question is recorded instead (`useSharedDocumentAnswers`). Exactly one of
+   * the two is enabled.
+   */
+  const shared = attempt.sharedDocument !== undefined;
+  const perQuestionAnswers = useQuestionAnswers(editor, {
+    enabled: exam && status === 'ready' && !shared,
     adoptInitialContent: docUrl !== null,
   });
+  const sharedAnswers = useSharedDocumentAnswers(editor, { enabled: exam && status === 'ready' && shared });
+  const questionAnswers = shared ? sharedAnswers : perQuestionAnswers;
 
   /*
    * Below 768px the three columns cannot coexist: the page alone is wider than
@@ -219,9 +229,13 @@ export function WordShell({
     const controller = new AbortController();
     void (async () => {
       try {
+        // A shared-document paper is marked from its timeline alone; the
+        // per-question documents in `answers` would only double the payload.
+        const timeline = shared ? useSharedDocumentStore.getState().timeline : undefined;
         const marked = await submitAttempt(
           {
-            answers,
+            answers: shared ? {} : answers,
+            ...(timeline ? { timeline } : {}),
             subject: 'word',
             testId,
             language,

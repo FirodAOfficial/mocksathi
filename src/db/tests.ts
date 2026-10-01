@@ -1,10 +1,18 @@
 import 'server-only';
-import { and, asc, count, desc, eq, gt, max, sum } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, max, or, sql, sum } from 'drizzle-orm';
 import { buildAttempt } from '@/exam/authoring';
 import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
 import { attemptsForUser, type StoredAttempt } from './attempts';
 import { db } from './client';
+import {
+  attemptFromDocumentPaper,
+  documentPaperIdentity,
+  documentQuestionCount,
+  documentQuestionMarks,
+  getDocumentPaper,
+  hasDocumentQuestions,
+} from './documentPapers';
 import { isUniqueViolation } from './pgErrors';
 import {
   exams,
@@ -37,6 +45,30 @@ import type { ParsedQuestionFields, ParsedTestFields } from './testInput';
 
 /* -- Reading --------------------------------------------------------------- */
 
+/**
+ * Whether candidates are offered only single-document Word papers.
+ *
+ * True: the mock lists and "today's" Word paper come from `word_doc_questions`
+ * alone, and per-question Word papers stop being offered — they still exist,
+ * still open by their own `?test=` link, and still show on the admin list.
+ * Excel is unaffected. Flip to false to offer both kinds again; nothing else
+ * needs to change. See `sdd/word-document-papers.md`.
+ */
+export const WORD_PAPERS_FROM_DOCUMENT_TABLES = true;
+
+/**
+ * The condition that makes a `tests` row a sittable paper.
+ *
+ * It has questions — in `test_questions`, or for a Word paper in
+ * `word_doc_questions` — and, while the switch above is on, a Word paper must
+ * be a single-document one.
+ */
+function hasOfferableQuestions() {
+  const legacy = sql<boolean>`exists (select 1 from ${testQuestions} where ${testQuestions.testId} = ${tests.id})`;
+  const word = WORD_PAPERS_FROM_DOCUMENT_TABLES ? hasDocumentQuestions : or(legacy, hasDocumentQuestions);
+  return or(and(eq(tests.subject, 'word'), word), and(eq(tests.subject, 'excel'), legacy));
+}
+
 export interface TestListRow {
   test: Test;
   examName: string;
@@ -58,6 +90,9 @@ export async function listTests(options: { examId?: string } = {}): Promise<Test
       examName: exams.name,
       questionCount: count(testQuestions.id),
       totalMarks: sum(testQuestions.marks),
+      // A single-document paper's questions live in their own table.
+      documentCount: documentQuestionCount,
+      documentMarks: documentQuestionMarks,
     })
     .from(tests)
     .innerJoin(exams, eq(tests.examId, exams.id))
@@ -69,10 +104,10 @@ export async function listTests(options: { examId?: string } = {}): Promise<Test
   return rows.map((row) => ({
     test: row.test,
     examName: row.examName,
-    questionCount: Number(row.questionCount ?? 0),
+    questionCount: Number(row.questionCount ?? 0) + Number(row.documentCount ?? 0),
     // `sum` comes back as a string from `pg` (bigint/numeric), and null for a
     // paper with no questions yet.
-    totalMarks: Number(row.totalMarks ?? 0),
+    totalMarks: Number(row.totalMarks ?? 0) + Number(row.documentMarks ?? 0),
   }));
 }
 
@@ -324,16 +359,18 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       test: tests,
       questionCount: count(testQuestions.id),
       totalMarks: sum(testQuestions.marks),
+      documentCount: documentQuestionCount,
+      documentMarks: documentQuestionMarks,
     })
     .from(tests)
     .innerJoin(exams, eq(tests.examId, exams.id))
     .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
-    .where(eq(tests.status, 'published'))
-    .groupBy(tests.id)
     // An empty paper is not a mock. It is a paper an admin created and has not
     // written yet, and listing it offers a candidate a Start button that leads
-    // to a blank page and a running clock.
-    .having(gt(count(testQuestions.id), 0))
+    // to a blank page and a running clock. Which table its questions must be in
+    // is `hasOfferableQuestions`'s call.
+    .where(and(eq(tests.status, 'published'), hasOfferableQuestions()))
+    .groupBy(tests.id)
     .orderBy(asc(tests.createdAt));
 
   const attempts: Map<string, StoredAttempt> = userId
@@ -343,8 +380,8 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       )
     : new Map();
 
-  return rows.map(({ test, questionCount, totalMarks }, index) => {
-    const questions = Number(questionCount ?? 0);
+  return rows.map(({ test, questionCount, totalMarks, documentCount, documentMarks }, index) => {
+    const questions = Number(questionCount ?? 0) + Number(documentCount ?? 0);
     const attempt = attempts.get(test.id);
 
     return {
@@ -368,7 +405,7 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
        * nobody has sat is shown out of what it is worth today, which is the
        * only total it has.
        */
-      maxScore: attempt ? attempt.maxScore : Number(totalMarks ?? 0),
+      maxScore: attempt ? attempt.maxScore : Number(totalMarks ?? 0) + Number(documentMarks ?? 0),
       mockType: test.subject,
       questionCount: questions,
       dateLabel: `${test.durationMinutes} min`,
@@ -401,12 +438,11 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
  * than showing a candidate an error about content that does not exist.
  */
 export async function todaysTest(subject: TestSubject): Promise<Test | null> {
+  // The same rule as the mock lists, so `/exam` never opens a paper they hide.
   const [test] = await db
     .select({ test: tests })
     .from(tests)
-    .innerJoin(testQuestions, eq(testQuestions.testId, tests.id))
-    .where(and(eq(tests.subject, subject), eq(tests.status, 'published')))
-    .groupBy(tests.id)
+    .where(and(eq(tests.subject, subject), eq(tests.status, 'published'), hasOfferableQuestions()))
     .orderBy(asc(tests.createdAt))
     .limit(1);
 
@@ -431,6 +467,8 @@ export interface LoadedPaper {
 
 export async function loadPaper(test: Test, candidateName?: string): Promise<LoadedPaper | null> {
   const questions = await questionsForTest(test.id);
+  // A Word paper with no per-question rows may be a single-document one.
+  if (questions.length === 0 && test.subject === 'word') return loadDocumentPaper(test, candidateName);
   // A paper with no questions is not a paper. Better to fall back to the sample
   // than to open a timed sitting with an empty question palette.
   if (questions.length === 0) return null;
@@ -441,6 +479,21 @@ export async function loadPaper(test: Test, candidateName?: string): Promise<Loa
     attempt: attemptFromTest(test, questions, candidateName),
     questions,
     identity: paperIdentityFor(test, questions),
+  };
+}
+
+/** A single-document paper ready to be sat, or null when it has no questions yet. */
+async function loadDocumentPaper(test: Test, candidateName?: string): Promise<LoadedPaper | null> {
+  const paper = await getDocumentPaper(test.id);
+  if (!paper || paper.questions.length === 0) return null;
+
+  return {
+    testId: test.id,
+    slug: test.slug,
+    attempt: attemptFromDocumentPaper(test, paper, candidateName),
+    // Its questions are not `test_questions` rows; nothing reads this list.
+    questions: [],
+    identity: documentPaperIdentity(test, paper),
   };
 }
 

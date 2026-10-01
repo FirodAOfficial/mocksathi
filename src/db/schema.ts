@@ -567,3 +567,78 @@ export const testAttempts = pgTable(
 
 export type TestAttemptRow = typeof testAttempts.$inferSelect;
 export type NewTestAttemptRow = typeof testAttempts.$inferInsert;
+
+/**
+ * A Word paper written on one document — the passage half.
+ *
+ * The per-question flow above (`test_questions`) gives each question its own
+ * passage and has the admin describe its operation in a form. This flow has the
+ * admin type one passage into the real editor and then *perform* each question
+ * on it in turn; what they did is detected from the before and after
+ * (`src/exam/document/detect.ts`) and stored as the question. See
+ * `sdd/word-document-papers.md`.
+ *
+ * Kept in its own two tables, touching no existing one, so the flow can be
+ * dropped without a data migration: `DROP TABLE word_doc_questions,
+ * word_doc_papers` and the code that reads them, and every `tests` row
+ * reverts to having no questions. A `tests` row is a single-document paper
+ * exactly when it has a row here and no `test_questions` rows.
+ *
+ * `document` is editor JSON (`JSONContent`), normalised on the way in
+ * (`normaliseDocument`). Untyped `jsonb` here for the reason `test_attempts.
+ * result` is: this file is read by `drizzle.config.ts` outside Next's module
+ * resolution, so `src/db/documentPapers.ts` reconciles the type instead.
+ */
+export const wordDocPapers = pgTable('word_doc_papers', {
+  testId: uuid('test_id')
+    .primaryKey()
+    .references(() => tests.id, { onDelete: 'cascade' }),
+  document: jsonb('document').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type WordDocPaper = typeof wordDocPapers.$inferSelect;
+export type NewWordDocPaper = typeof wordDocPapers.$inferInsert;
+
+/**
+ * One question of a single-document Word paper.
+ *
+ * The same descriptive columns as `test_questions` — what a list or a report
+ * reads without unpacking JSON — and, instead of a passage and operations,
+ * `steps`: the changes detected when the admin performed the question
+ * (`DocumentStep[]`, `src/exam/document/types.ts`). They are both the worked
+ * answer (replayed onto the passage) and the answer key
+ * (`src/server/marking/documentRubric.ts`).
+ *
+ * `position` is also the order the questions were recorded in, and so the
+ * order they are replayed in to rebuild the document the next one is recorded
+ * on. That is why there is no reordering here: a candidate may answer in any
+ * order anyway, and moving question 8 before question 3 would change what
+ * question 8 was recorded against.
+ */
+export const wordDocQuestions = pgTable(
+  'word_doc_questions',
+  {
+    id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    testId: uuid('test_id')
+      .notNull()
+      .references(() => tests.id, { onDelete: 'cascade' }),
+    /** 1-based; the question number the candidate sees, and the recording order. */
+    position: integer('position').notNull(),
+    topic: text('topic').notNull(),
+    difficulty: questionDifficultyEnum('difficulty').notNull().default('Easy'),
+    marks: integer('marks').notNull().default(1),
+    instructionEn: text('instruction_en').notNull(),
+    instructionHi: text('instruction_hi').notNull(),
+    solutionEn: text('solution_en').array().notNull().default([]),
+    solutionHi: text('solution_hi').array().notNull().default([]),
+    steps: jsonb('steps').notNull().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('word_doc_questions_position_unique').on(table.testId, table.position)],
+);
+
+export type WordDocQuestion = typeof wordDocQuestions.$inferSelect;
+export type NewWordDocQuestion = typeof wordDocQuestions.$inferInsert;
