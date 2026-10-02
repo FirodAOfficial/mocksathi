@@ -486,7 +486,9 @@ a.examPickerButton:hover {
   height: 30px;
   border-radius: 50%;
   background: var(--db-accent-soft);
-  color: var(--db-accent);
+  /* Not `--db-accent`: the brand blue on its own tint is 3.99:1, and these
+     initials are 12px. `--brand-on-soft` is the darker step, 5.5:1. */
+  color: var(--brand-on-soft);
   display: grid;
   place-items: center;
   font-size: var(--text-xs);

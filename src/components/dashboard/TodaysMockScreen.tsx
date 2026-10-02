@@ -49,7 +49,6 @@ export function TodaysMockScreen({ todaysMock, excelMock, limitReached }: Todays
           <StartMockAction
             href={startHrefFor(todaysMock)}
             label="Read the instructions"
-            className={styles.primary ?? ''}
             limitReached={limitReached}
           />
         </div>
@@ -66,8 +65,7 @@ export function TodaysMockScreen({ todaysMock, excelMock, limitReached }: Todays
             <StartMockAction
               href={startHrefFor(excelMock)}
               label="Read the instructions"
-              className={styles.primary ?? ''}
-              limitReached={limitReached}
+                limitReached={limitReached}
             />
           </div>
         ) : null}

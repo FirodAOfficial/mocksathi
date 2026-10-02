@@ -75,7 +75,7 @@ function ActionCell({ mock, limitReached }: { mock: MockSummary; limitReached: b
         <StartMockAction
           href={startHrefFor(mock)}
           label="Start Mock"
-          className={styles.actionFilled ?? ''}
+          size="sm"
           limitReached={limitReached}
         />
       ) : (

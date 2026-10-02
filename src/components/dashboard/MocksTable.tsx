@@ -5,6 +5,7 @@ import type { MockSummary } from '@/dashboard/types';
 import { formatMinutesSeconds } from '@/dashboard/seedDashboard';
 import { DashboardIcon } from './icons/DashboardIcon';
 import styles from './MocksTable.module.css';
+import { ButtonLink } from '../ui/Button';
 import { StartMockAction } from './StartMockAction';
 
 export interface MocksTableProps {
@@ -60,7 +61,7 @@ function ActionCell({ mock, limitReached }: { mock: MockSummary; limitReached: b
         <StartMockAction
           href={startHrefFor(mock)}
           label="Start"
-          className={styles.actionPrimary ?? ''}
+          size="sm"
           limitReached={limitReached}
         />
       ) : (
@@ -85,9 +86,11 @@ function ActionCell({ mock, limitReached }: { mock: MockSummary; limitReached: b
       // attempt as "the score".
       return mock.testId ? (
         <>
-          <Link href={`/dashboard/mocks/test/${mock.testId}/submission`} className={styles.actionPrimary}>
+          {/* Secondary, not filled: a sat paper's action is to look back at it,
+              which should not compete with the mocks still to start. */}
+          <ButtonLink href={`/dashboard/mocks/test/${mock.testId}/submission`} size="sm" variant="secondary">
             View Submission
-          </Link>
+          </ButtonLink>
           <Link href={startHrefFor(mock)} className={styles.actionGhost}>
             Retake
           </Link>
@@ -133,7 +136,15 @@ export function MocksTable({ heading, mocks, headerRight, emptyNote, limitReache
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <p className={styles.heading}>{heading}</p>
+        {/*
+          An `<h1>`, not a `<p>`.
+
+          This table is the whole of `/dashboard/mocks`, so its heading is the
+          page's heading — and the page had none at all, which left the
+          document outline starting at the sidebar's labels. Styled exactly as
+          the paragraph was; only the element changed.
+        */}
+        <h1 className={styles.heading}>{heading}</h1>
         {headerRight}
       </div>
 

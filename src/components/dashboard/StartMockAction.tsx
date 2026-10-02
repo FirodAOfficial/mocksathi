@@ -1,13 +1,18 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
+import { Button, ButtonLink, type ButtonSize } from '../ui/Button';
 import { MockLimitModal } from './MockLimitModal';
 
 export interface StartMockActionProps {
   href: string;
   label: string;
-  className: string;
+  /**
+   * Smaller inside a table row, where the action sits beside dense text.
+   * Never shorter than 44px — `size` changes the width and the type, not the
+   * hit area.
+   */
+  size?: ButtonSize;
   /** True once starting a *new* mock should be blocked — see `src/dashboard/mockLimit.ts`. */
   limitReached: boolean;
 }
@@ -21,22 +26,22 @@ export interface StartMockActionProps {
  * a paper already sat is never routed through this component (see the
  * callers), so it is never blocked here either.
  */
-export function StartMockAction({ href, label, className, limitReached }: StartMockActionProps) {
+export function StartMockAction({ href, label, size = 'md', limitReached }: StartMockActionProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   if (!limitReached) {
     return (
-      <Link href={href} className={className}>
+      <ButtonLink href={href} size={size}>
         {label}
-      </Link>
+      </ButtonLink>
     );
   }
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setModalOpen(true)}>
+      <Button size={size} onClick={() => setModalOpen(true)}>
         {label}
-      </button>
+      </Button>
       {modalOpen && <MockLimitModal onClose={() => setModalOpen(false)} />}
     </>
   );

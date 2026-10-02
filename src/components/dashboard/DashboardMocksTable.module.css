@@ -168,17 +168,6 @@
 }
 
 .actionOutline,
-.actionFilled {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  padding: 7px 14px;
-  border-radius: 8px;
-  text-decoration: none;
-  white-space: nowrap;
-}
 
 .actionOutline {
   border: 1px solid var(--db-accent);
@@ -186,11 +175,6 @@
   background: var(--db-accent-soft);
 }
 
-.actionFilled {
-  border: none;
-  color: #fff;
-  background: #0f1e46;
-}
 
 .actionCell {
   display: flex;

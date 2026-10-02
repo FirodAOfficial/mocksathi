@@ -30,6 +30,15 @@
   --brand-active: #114aa8;
   /* A tint for selected rows and soft badges. Never carries text on its own. */
   --brand-soft: #e8effe;
+  /*
+   * Brand-coloured text ON that tint.
+   *
+   * `--brand` on `--brand-soft` is 3.99:1 — under AA for anything below
+   * 18.66px, and the dashboard used exactly that pairing for the avatar
+   * initials at 12px. This darker step is 5.5:1 on the tint and still reads as
+   * the same blue.
+   */
+  --brand-on-soft: #1559c9;
   /* The navy the footer and marketing panel already use, as a real token. */
   --brand-deep: #0b1638;
 
@@ -188,6 +197,8 @@
     --brand-hover: #7fb2ff;
     --brand-active: #9cc4ff;
     --brand-soft: #16233f;
+    /* On a dark tint the brand text lightens instead. 7.3:1 on #16233f. */
+    --brand-on-soft: #8bb8ff;
     --brand-deep: #070e22;
 
     --surface: #131722;
@@ -233,6 +244,7 @@
   --brand-hover: #7fb2ff;
   --brand-active: #9cc4ff;
   --brand-soft: #16233f;
+  --brand-on-soft: #8bb8ff;
   --brand-deep: #070e22;
 
   --surface: #131722;
