@@ -10,8 +10,11 @@ import styles from './CloseButton.module.css';
  * (`history.go(-n)`, the same underlying mechanism `router.back()` uses,
  * just more than one step at a time) rather than a fresh `router.push`,
  * which is a brand-new navigation with no cache to restore from and was
- * visibly slower. Falls back to "/" only when nothing was tracked at all —
- * a bookmarked or directly-typed visit, with no history to jump back into.
+ * visibly slower. Falls back to `/dashboard` only when nothing was tracked at
+ * all — a bookmarked or directly-typed visit, with no history to jump back
+ * into. `/dashboard` rather than `/`, because that is where someone reading
+ * these pages wants to end up; a signed-out visitor is sent on to `/login` by
+ * the dashboard layout's own guard, so the fallback is safe either way.
  */
 export function CloseButton() {
   const router = useRouter();
@@ -24,7 +27,7 @@ export function CloseButton() {
       onClick={() => {
         const steps = consumeLegalBackSteps();
         if (steps) window.history.go(-steps);
-        else router.push('/');
+        else router.push('/dashboard');
       }}
     >
       ✕

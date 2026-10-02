@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import styles from './LegalModal.module.css';
+import { Button } from '@/components/ui/Button';
 
 export interface LegalModalProps {
   title: string;
@@ -60,9 +61,7 @@ export function LegalModal({ title, lastUpdated, onClose, onAccept, children }: 
       <div className={styles.body}>{children}</div>
 
       <div className={styles.footer}>
-        <button type="button" className={styles.acceptButton} onClick={onAccept}>
-          Accept
-        </button>
+        <Button onClick={onAccept}>Accept</Button>
       </div>
     </dialog>
   );

@@ -24,7 +24,7 @@ export function RefundPolicyContent() {
       <p>
         Given the digital and instantly-accessible nature of our Service,{' '}
         <strong>all purchases are generally final and non-refundable</strong> once access to the
-        purchased test series, mock test, or subscription has been granted — regardless of whether
+        purchased test series, mock test, or subscription has been granted, regardless of whether
         the content has actually been attempted or viewed. This is because the value of the product
         (access to the test bank) is delivered in full at the moment of purchase.
       </p>
@@ -45,15 +45,15 @@ export function RefundPolicyContent() {
           </thead>
           <tbody>
             <tr>
-              <td><strong>Duplicate payment</strong> — you were charged more than once for the same order due to a technical error</td>
+              <td><strong>Duplicate payment:</strong> you were charged more than once for the same order due to a technical error</td>
               <td>Full refund of the duplicate amount</td>
             </tr>
             <tr>
-              <td><strong>Payment debited but access not granted</strong> — money was deducted but your test/plan was never activated</td>
+              <td><strong>Payment debited but access not granted:</strong> money was deducted but your test/plan was never activated</td>
               <td>Full refund, or activation of access, at our discretion</td>
             </tr>
             <tr>
-              <td><strong>Technical error attributable to MockSathi</strong> — e.g., you purchased a test series that was not actually available/functional on the Platform</td>
+              <td><strong>Technical error attributable to MockSathi:</strong> for example, you purchased a test series that was not actually available or functional on the Platform</td>
               <td>Full or partial refund, evaluated case-by-case</td>
             </tr>
           </tbody>
@@ -161,7 +161,7 @@ export function RefundPolicyContent() {
           Note: This is a general-purpose draft based on common practices across Indian ed-tech/
           test-prep platforms. Please have it reviewed by a qualified legal professional before
           publishing, and ensure the specific timelines (refund window, processing days) match what
-          you can operationally commit to — payment gateways like Razorpay typically check that this
+          you can operationally commit to. Payment gateways like Razorpay typically check that this
           page&apos;s stated terms match what you actually practice.
         </em>
       </p>

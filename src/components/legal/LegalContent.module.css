@@ -1,18 +1,43 @@
+/*
+ * Legal prose.
+ *
+ * The audit's worst typography finding was here: 13.5px at `line-height: 1.6`
+ * in a 740px column, which measured ~118 characters a line at 1920px. The eye
+ * loses its place returning from the end of a line that long, and these are the
+ * documents a user is least willing to re-read. Three changes fix it — 16px
+ * body, 1.7 leading, and a hard cap at `--measure` (68ch) on the text blocks.
+ *
+ * The cap is on the children rather than on `.content`, because `.tableWrap`
+ * needs the card's full width: a table squeezed to 68ch scrolls sideways for no
+ * reason.
+ */
 .content {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--db-text);
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text);
+}
+
+.content > p,
+.content > ul,
+.content > ol,
+.content > h2,
+.content > h3 {
+  max-width: var(--measure);
 }
 
 .content p {
-  margin: 0 0 14px;
+  margin: 0 0 var(--space-4);
+  text-wrap: pretty;
 }
 
 .content h2 {
-  font-size: 15.5px;
-  font-weight: 700;
-  color: var(--db-text);
-  margin: 26px 0 10px;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  /* Space above a heading belongs to the heading, not to the paragraph that
+     ended — so the gap reads as a break, not as a wide paragraph margin. */
+  margin: var(--space-8) 0 var(--space-3);
 }
 
 .content h2:first-child {
@@ -20,52 +45,55 @@
 }
 
 .content h3 {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--db-text);
-  margin: 18px 0 8px;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: var(--space-6) 0 var(--space-2);
 }
 
 .content ul,
 .content ol {
-  margin: 0 0 14px;
-  padding-left: 20px;
+  margin: 0 0 var(--space-4);
+  padding-left: var(--space-6);
 }
 
 .content li {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
 }
 
 .content strong {
-  color: var(--db-text);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
 }
 
 .content hr {
   border: none;
-  border-top: 1px solid var(--db-border);
-  margin: 20px 0;
+  border-top: 1px solid var(--border);
+  margin: var(--space-8) 0;
+  max-width: var(--measure);
 }
 
 .tableWrap {
   overflow-x: auto;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
 .content table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
 }
 
 .content th,
 .content td {
   text-align: left;
-  padding: 9px 11px;
-  border: 1px solid var(--db-border);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
   vertical-align: top;
 }
 
 .content th {
-  background: #f8fafc;
-  font-weight: 700;
+  background: var(--surface-sunken);
+  font-weight: var(--weight-semibold);
 }

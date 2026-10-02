@@ -151,7 +151,7 @@ export function TermsContent() {
 
       <h2>10. Intellectual Property Rights</h2>
       <ul>
-        <li>All Content on the Platform — including questions, solutions, typing passages, graphics, logos, and the overall design/layout — is the exclusive property of MockSathi or its licensors and is protected under applicable copyright, trademark, and intellectual property laws.</li>
+        <li>All Content on the Platform, including questions, solutions, typing passages, graphics, logos, and the overall design/layout, is the exclusive property of MockSathi or its licensors and is protected under applicable copyright, trademark, and intellectual property laws.</li>
         <li>You are granted a limited, non-exclusive, non-transferable license to access and use the Content solely for personal, non-commercial exam-preparation purposes.</li>
         <li>No part of the Content may be reproduced, distributed, publicly displayed, or used to create derivative works without MockSathi&apos;s prior written consent.</li>
       </ul>

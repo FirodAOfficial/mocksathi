@@ -55,8 +55,18 @@
   color: #0b1638;
 }
 
+/*
+ * `--brand-on-soft` (#1559c9 in the light scheme), not `--brand` (#1c6ef2).
+ * The wordmark appears on both white cards and the sunken page background, and
+ * #1c6ef2 measured 4.07:1 on the sunken grey at this size — under AA, because
+ * 16.6px bold is below the 18.66px large-text threshold. This step is 5.61:1
+ * there and 6.36:1 on white, and reads as the same blue.
+ *
+ * The token flips to #8bb8ff under a dark scheme, which is what the two
+ * `.dark .wordmarkAccent` overrides below used to say by hand; they are gone.
+ */
 .dark .wordmarkAccent {
-  color: #1c6ef2;
+  color: var(--brand-on-soft);
 }
 
 /*
@@ -84,10 +94,6 @@
   :root:not([data-theme='light']) .dark .wordmark {
     color: #e8ecf4;
   }
-
-  :root:not([data-theme='light']) .dark .wordmarkAccent {
-    color: #8bb8ff;
-  }
 }
 
 :root[data-theme='dark'] .dark .markBarrel {
@@ -102,6 +108,3 @@
   color: #e8ecf4;
 }
 
-:root[data-theme='dark'] .dark .wordmarkAccent {
-  color: #8bb8ff;
-}

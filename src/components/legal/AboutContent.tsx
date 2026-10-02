@@ -5,7 +5,7 @@ export function AboutContent() {
   return (
     <div className={styles.content}>
       <p>
-        MockSathi is a mock test platform built for one purpose — helping students excel in
+        MockSathi is a mock test platform built for one purpose: helping students excel in
         competitive and government exams through expert-designed practice. We are not just another
         mock test website; every test on MockSathi is created by subject-matter experts, ensuring
         each mock reflects real exam patterns and difficulty levels.
@@ -19,10 +19,10 @@ export function AboutContent() {
       <p>
         We&apos;re continuously expanding. In the coming months, MockSathi will launch dedicated
         mock test series for SSC, Banking, RRB NTPC, DSSSB, and other major state-level government
-        exams — giving aspirants a single, reliable platform for all their exam preparation needs.
+        exams, giving aspirants a single, reliable platform for all their exam preparation needs.
       </p>
       <p>
-        At MockSathi, our only focus is quality — high-quality mocks built by experts, so students
+        At MockSathi, our only focus is quality: high-quality mocks built by experts, so students
         can prepare with confidence and perform their best on exam day.
       </p>
     </div>

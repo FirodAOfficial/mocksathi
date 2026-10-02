@@ -1,90 +1,111 @@
+/*
+ * Contact.
+ *
+ * Every colour here was a literal before the redesign — this page is one of the
+ * two that never used even the `--db-*` set, so in dark mode it would have
+ * stayed a white card with navy text on a dark page. It is all semantic now.
+ */
 .intro {
-  margin: 0 0 4px;
-  color: #334155;
+  margin: 0 0 var(--space-1);
+  max-width: var(--measure);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+  text-wrap: pretty;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
-  margin: 18px 0 8px;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-2);
 }
 
 .card {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid #e5e9f2;
-  border-radius: 12px;
-  background: #fff;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
 }
 
 .card:hover {
-  border-color: #1c6ef2;
-  box-shadow: 0 4px 16px #0b163814;
+  border-color: var(--brand);
+  box-shadow: var(--shadow-md);
 }
 
 .card:focus-visible {
-  outline: 2px solid #1c6ef2;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
+
 .cardIcon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: var(--target);
+  height: var(--target);
+  border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   flex: none;
-  color: #1c6ef2;
-  background: #eef4ff;
+  color: var(--brand-on-soft);
+  background: var(--brand-soft);
 }
 
 .cardText {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
 .cardLabel {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-subtle);
 }
 
 .cardValue {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0b1638;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  /* An email address and a phone number are both unbreakable words long enough
+     to push a 260px card sideways. */
   overflow-wrap: anywhere;
 }
 
 .cardHint {
-  font-size: 13px;
-  line-height: 1.5;
-  color: #64748b;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-muted);
 }
 
 .sectionHeading {
-  margin: 30px 0 0;
-  font-size: 19px;
-  font-weight: 700;
-  color: #0b1638;
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+  color: var(--text);
 }
 
 .note {
-  margin-top: 22px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: #f6f8fc;
-  border: 1px solid #e5e9f2;
-  font-size: 14px;
-  color: #334155;
+  margin-top: var(--space-6);
+  max-width: var(--measure);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
 }

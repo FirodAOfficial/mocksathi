@@ -25,7 +25,7 @@ export function PrivacyContent() {
         <li>
           <strong>Payment-related details:</strong> Billing name and, where applicable, GST/invoice
           details. We do <strong>not</strong> collect or store your full card number, CVV, UPI PIN,
-          or net-banking credentials — these are captured and processed directly by our payment
+          or net-banking credentials. These are captured and processed directly by our payment
           gateway partner (see Section 4).
         </li>
       </ul>
@@ -47,10 +47,10 @@ export function PrivacyContent() {
       <p>We use the information we collect to:</p>
       <ul>
         <li>Create and manage your account, and authenticate your login.</li>
-        <li>Provide the Service — deliver mock tests, typing tests, results, performance analytics, and solutions.</li>
+        <li>Provide the Service: deliver mock tests, typing tests, results, performance analytics, and solutions.</li>
         <li>Process payments, activate purchased plans, and apply coupons/discounts.</li>
         <li>Send transactional communications (OTPs, purchase confirmations, result notifications, renewal reminders).</li>
-        <li>Send promotional communications about new tests, offers, or features (you may opt out at any time — see Section 8).</li>
+        <li>Send promotional communications about new tests, offers, or features (you may opt out at any time; see Section 8).</li>
         <li>Analyze usage patterns to improve test content, fix bugs, and personalize recommendations (e.g., suggested mock tests).</li>
         <li>Detect and prevent fraud, malpractice, account sharing, or misuse of the Platform.</li>
         <li>Comply with legal obligations and enforce our Terms and Conditions.</li>
@@ -67,8 +67,8 @@ export function PrivacyContent() {
       <h2>4. Sharing of Information</h2>
       <p>We do not sell your personal information. We may share your information with:</p>
       <ul>
-        <li><strong>Payment gateway partners</strong> (e.g., Razorpay, PayU, or similar RBI-authorised providers) — solely to process your payment. These providers have their own privacy policies governing how they handle your payment data.</li>
-        <li><strong>Service providers</strong> who support our operations — hosting, cloud storage, email/SMS/WhatsApp delivery, analytics, and customer support tools — under confidentiality obligations and only to the extent necessary to perform their services.</li>
+        <li><strong>Payment gateway partners</strong> (e.g., Razorpay, PayU, or similar RBI-authorised providers), solely to process your payment. These providers have their own privacy policies governing how they handle your payment data.</li>
+        <li><strong>Service providers</strong> who support our operations (hosting, cloud storage, email/SMS/WhatsApp delivery, analytics, and customer support tools), under confidentiality obligations and only to the extent necessary to perform their services.</li>
         <li><strong>Legal and regulatory authorities</strong>, where required to comply with applicable law, court orders, or to protect our rights, users, or the public.</li>
         <li><strong>Business transfers</strong>, in the event of a merger, acquisition, or sale of assets, where user information may be transferred as part of that transaction, subject to equivalent privacy protections.</li>
       </ul>

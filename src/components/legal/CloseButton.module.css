@@ -1,18 +1,22 @@
 .close {
   flex: none;
+  /* 34px painted, 44px tapped: the hit area is grown by the
+     `(pointer: coarse)` overlay in `globals.css`, which matches this button
+     through its `PublicPageLayout` ancestor. Growing the painted box instead
+     would put a 44px grey square beside a 28px logo. */
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--db-border);
-  border-radius: 8px;
-  background: var(--db-surface);
-  color: var(--db-text-muted);
-  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
 .close:hover {
-  background: #f1f5f9;
-  color: var(--db-text);
+  background: var(--surface-sunken);
+  color: var(--text);
 }
