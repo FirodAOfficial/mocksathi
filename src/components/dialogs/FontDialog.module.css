@@ -58,7 +58,7 @@
 }
 
 .unit {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 /* Mirrors the rendered effects so the dialog previews what OK will do. */
@@ -154,7 +154,7 @@
 }
 
 .caption {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 /* Word's Effects block is two columns of checkboxes. */
@@ -172,5 +172,5 @@
 }
 
 .previewCaption {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }

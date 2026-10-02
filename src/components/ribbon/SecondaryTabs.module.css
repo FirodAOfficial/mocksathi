@@ -57,7 +57,7 @@
 
 .fieldLabel {
   min-width: 42px;
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 
@@ -90,7 +90,7 @@
 }
 
 .emptyTab {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   flex-direction: column;
   gap: 4px;
   max-width: 640px;
@@ -260,7 +260,7 @@
 }
 
 .themeLabel {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   font-size: 10px;
 }
 

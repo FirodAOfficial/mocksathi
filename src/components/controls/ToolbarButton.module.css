@@ -1,5 +1,5 @@
 .button {
-  color: var(--text);
+  color: var(--chrome-text);
   cursor: pointer;
   background: none;
   border: 1px solid #0000;

@@ -1,11 +1,4 @@
 .split {
-  --db-accent: #1c6ef2;
-  --db-bg: #eceff4;
-  --db-surface: #fff;
-  --db-border: #e8edf5;
-  --db-text: #0f172a;
-  --db-text-muted: #64748b;
-  --db-text-faint: #94a3b8;
 
   /* A fixed height, not min-height: `body` sets `overflow: hidden` globally
      (globals.css, for the editor's own chrome) — this page never had a

@@ -16,7 +16,7 @@
 }
 
 .row dt {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 .row dd {

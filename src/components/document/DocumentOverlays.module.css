@@ -52,13 +52,13 @@
 }
 
 .message {
-  color: var(--text);
+  color: var(--chrome-text);
   margin: 0 0 6px;
   line-height: 1.5;
 }
 
 .detail {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   word-break: break-all;
   margin: 0;
   font-size: 11px;
@@ -76,7 +76,7 @@
   border: 1px solid var(--control-border);
   cursor: pointer;
   height: 26px;
-  color: var(--text);
+  color: var(--chrome-text);
   background: linear-gradient(#fff, #e4ecf6);
   border-radius: 2px;
   align-items: center;

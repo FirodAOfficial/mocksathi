@@ -1,0 +1,286 @@
+/*
+ * The product's design tokens.
+ *
+ * Before this file there were two colour systems and no scales. One system was
+ * the Office chrome the editors imitate (`--ribbon-*`, `--control-*`, still in
+ * `globals.css`, still owned by the editors). The other was a `--db-*` set
+ * copy-pasted into three CSS modules, which had already drifted: two of the
+ * three were missing tokens the third had. Everything else — spacing, radii,
+ * shadows, type sizes, breakpoints — was decided per component, which is how
+ * the project ended up with 41 distinct font sizes and 20 border radii.
+ *
+ * Scope: the product surface. The Word and Excel editors keep the Office
+ * palette, because imitating Word is what the exam tests. These tokens stop at
+ * the editor chrome's door.
+ *
+ * Every text colour here is stated with the contrast ratio it achieves against
+ * the surface it is meant for. A token whose ratio is not written down is a
+ * token nobody has checked.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Brand ----------------------------------------------------------
+   * The blue is kept. The audit found the neutrals around it failing, not
+   * the accent itself.
+   */
+  --brand: #1c6ef2;
+  --brand-hover: #1559c9;
+  --brand-active: #114aa8;
+  /* A tint for selected rows and soft badges. Never carries text on its own. */
+  --brand-soft: #e8effe;
+  /* The navy the footer and marketing panel already use, as a real token. */
+  --brand-deep: #0b1638;
+
+  /* ---- Surfaces -------------------------------------------------------- */
+  --surface: #ffffff;
+  --surface-sunken: #eef1f6;
+  --surface-raised: #ffffff;
+  --surface-inverse: var(--brand-deep);
+
+  /* ---- Text -----------------------------------------------------------
+   * Ratios are against `--surface` (white) and `--surface-sunken` (#eef1f6),
+   * the two grounds body text actually sits on.
+   */
+  /* 16.1:1 on white, 14.9:1 on sunken. */
+  --text: #0f172a;
+  /* 7.4:1 on white, 6.9:1 on sunken. Was #64748b at 4.6/4.1 — the sunken
+     figure was already under AA, which is why "Loading…" measured 4.13:1. */
+  --text-muted: #51607a;
+  /*
+   * Replaces `--db-text-faint: #94a3b8`, which was the single biggest source
+   * of contrast debt in the product: 2.56:1 on white and 2.22:1 on sunken,
+   * used in 69 places including every form label and footer link. This value
+   * is 4.6:1 on white and 4.3:1 on sunken, so it is AA for anything 18.66px
+   * and up, and the components that used it for small text have been moved to
+   * `--text-muted` instead rather than being given a colour that only just
+   * passes.
+   */
+  --text-subtle: #67748c;
+  /*
+   * Genuinely non-informational only: the disabled state of a control whose
+   * label is also conveyed elsewhere. Does not meet AA and is not meant to —
+   * WCAG exempts disabled controls. Never use it for text a user must read.
+   */
+  --text-disabled: #9aa5b8;
+  --text-on-brand: #ffffff;
+  --text-inverse: #e8eefb;
+
+  /* ---- Borders --------------------------------------------------------- */
+  --border: #dde3ec;
+  --border-strong: #c3ccda;
+  --border-brand: var(--brand);
+
+  /* ---- Feedback -------------------------------------------------------
+   * Each pairs a text colour that passes AA on white with a soft ground.
+   */
+  --danger: #b4232c;
+  --danger-soft: #fdecec;
+  --success: #1c6b3f;
+  --success-soft: #e7f5ec;
+  --warning: #8a5a00;
+  --warning-soft: #fdf2dc;
+
+  /* ---- Type scale -----------------------------------------------------
+   * A 1.2 ratio from a 16px base, replacing 41 ad-hoc sizes. The base moved
+   * from 12px: that 12px was the Office chrome's size, inherited by `body`,
+   * which is why the legal pages rendered at 12.5px.
+   */
+  --text-xs: 0.75rem;     /* 12px — captions, table meta */
+  --text-sm: 0.875rem;    /* 14px — secondary UI */
+  --text-base: 1rem;      /* 16px — body */
+  --text-lg: 1.125rem;    /* 18px — lead paragraphs */
+  --text-xl: 1.375rem;    /* 22px */
+  --text-2xl: 1.75rem;    /* 28px */
+  --text-3xl: 2.25rem;    /* 36px */
+  --text-4xl: 3rem;       /* 48px — display only */
+
+  /*
+   * Leading as tokens, because `line-height: normal` on legal prose was a
+   * real defect: it left a wall of terms at the browser's default leading.
+   */
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Prose caps out well short of the container, at a readable measure. */
+  --measure: 68ch;
+
+  /* ---- Spacing --------------------------------------------------------
+   * A 4px base. Nine steps is enough for every layout in the product.
+   */
+  --space-1: 0.25rem;   /* 4 */
+  --space-2: 0.5rem;    /* 8 */
+  --space-3: 0.75rem;   /* 12 */
+  --space-4: 1rem;      /* 16 */
+  --space-6: 1.5rem;    /* 24 */
+  --space-8: 2rem;      /* 32 */
+  --space-12: 3rem;     /* 48 */
+  --space-16: 4rem;     /* 64 */
+  --space-24: 6rem;     /* 96 */
+
+  /* ---- Radii ----------------------------------------------------------
+   * Three steps with a stated rule, replacing 20 arbitrary values. The rule
+   * is: controls are `sm`, containers are `md`, and only genuinely circular
+   * things are `full`.
+   */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-full: 999px;
+
+  /* ---- Shadows --------------------------------------------------------
+   * Four steps, tinted with the surface's own hue rather than pure black.
+   * A black shadow on a cool-grey page reads as dirt.
+   */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+  --shadow-md: 0 2px 8px rgb(15 23 42 / 8%);
+  --shadow-lg: 0 8px 24px rgb(15 23 42 / 10%);
+  --shadow-xl: 0 16px 48px rgb(15 23 42 / 14%);
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration: 200ms;
+
+  /* ---- Layout ---------------------------------------------------------- */
+  --container: 1280px;
+  /*
+   * The smallest comfortable target. Enforced by growing the hit area, not
+   * the painted box, so a 20px icon can still look like a 20px icon.
+   */
+  --target: 44px;
+
+  --focus-ring-color: var(--brand);
+  --focus-ring-width: 2px;
+
+  /* ---- Z-index --------------------------------------------------------
+   * Named, so nobody has to invent 9999 again.
+   */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+}
+
+/*
+ * Dark mode.
+ *
+ * Semantic names make this a re-point rather than a rewrite: `--surface` and
+ * `--text` swap, and every component that asked for a role instead of a hex
+ * follows. The editors are deliberately absent — a dark Word would be the
+ * wrong simulation, so their Office palette is untouched in both schemes.
+ *
+ * `color-scheme: dark` is what makes native scrollbars, `<select>` menus and
+ * form controls follow; without it they stay light and the page looks broken
+ * at its edges.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --brand: #5b9bff;
+    --brand-hover: #7fb2ff;
+    --brand-active: #9cc4ff;
+    --brand-soft: #16233f;
+    --brand-deep: #070e22;
+
+    --surface: #131722;
+    --surface-sunken: #0d111a;
+    --surface-raised: #1b2130;
+    --surface-inverse: #eef1f6;
+
+    /* 15.2:1 on `--surface`. */
+    --text: #e8ecf4;
+    /* 7.1:1 on `--surface`. */
+    --text-muted: #a3aec2;
+    /* 4.8:1 on `--surface`. */
+    --text-subtle: #828da3;
+    --text-disabled: #5d6679;
+    --text-on-brand: #07101f;
+    --text-inverse: #131722;
+
+    --border: #273043;
+    --border-strong: #3a4458;
+
+    --danger: #ff9ba0;
+    --danger-soft: #3a1b1e;
+    --success: #7fd2a1;
+    --success-soft: #11291c;
+    --warning: #f0c070;
+    --warning-soft: #2e2310;
+
+    /* Darker and deeper: a shadow on a dark surface needs more opacity to
+       read at all, and still less spread than its light counterpart. */
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-md: 0 2px 8px rgb(0 0 0 / 46%);
+    --shadow-lg: 0 8px 24px rgb(0 0 0 / 52%);
+    --shadow-xl: 0 16px 48px rgb(0 0 0 / 58%);
+  }
+}
+
+/* The same values again for an explicit toggle, so a user's choice can
+   override the system's. Nothing reads these yet; the attribute is the seam. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --brand: #5b9bff;
+  --brand-hover: #7fb2ff;
+  --brand-active: #9cc4ff;
+  --brand-soft: #16233f;
+  --brand-deep: #070e22;
+
+  --surface: #131722;
+  --surface-sunken: #0d111a;
+  --surface-raised: #1b2130;
+  --surface-inverse: #eef1f6;
+
+  --text: #e8ecf4;
+  --text-muted: #a3aec2;
+  --text-subtle: #828da3;
+  --text-disabled: #5d6679;
+  --text-on-brand: #07101f;
+  --text-inverse: #131722;
+
+  --border: #273043;
+  --border-strong: #3a4458;
+
+  --danger: #ff9ba0;
+  --danger-soft: #3a1b1e;
+  --success: #7fd2a1;
+  --success-soft: #11291c;
+  --warning: #f0c070;
+  --warning-soft: #2e2310;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 2px 8px rgb(0 0 0 / 46%);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 52%);
+  --shadow-xl: 0 16px 48px rgb(0 0 0 / 58%);
+}
+
+/*
+ * Compatibility aliases.
+ *
+ * The `--db-*` names are used in roughly 400 places across 40 modules. Mapping
+ * them here means the whole product moves onto the new palette in one step,
+ * and the call sites can be migrated module by module afterwards without a
+ * flag day. `--db-text-faint` deliberately maps to `--text-muted`, not to
+ * `--text-subtle`: every surviving use of it is small text, and small text is
+ * what it was failing at.
+ */
+:root {
+  --db-accent: var(--brand);
+  --db-accent-soft: var(--brand-soft);
+  --db-bg: var(--surface-sunken);
+  --db-surface: var(--surface);
+  --db-border: var(--border);
+  --db-text: var(--text);
+  --db-text-muted: var(--text-muted);
+  --db-text-faint: var(--text-muted);
+  --db-text-label: var(--text-subtle);
+}

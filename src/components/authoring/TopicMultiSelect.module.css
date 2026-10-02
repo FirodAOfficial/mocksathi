@@ -18,7 +18,7 @@
   font: inherit;
   font-weight: 400;
   font-size: 13px;
-  color: var(--text);
+  color: var(--chrome-text);
   text-align: left;
   cursor: pointer;
 }
@@ -36,7 +36,7 @@
 }
 
 .multiPlaceholder {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 .chip {
@@ -69,7 +69,7 @@
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
-  color: var(--text);
+  color: var(--chrome-text);
   white-space: nowrap;
 }
 

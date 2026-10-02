@@ -1,7 +1,7 @@
 .dialog {
   border: 1px solid var(--frame-border);
   font-family: var(--ui-font);
-  color: var(--text);
+  color: var(--chrome-text);
   background: linear-gradient(#fff, #f3f7fc);
   border-radius: 3px;
   /*

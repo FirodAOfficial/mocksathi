@@ -70,7 +70,7 @@
 .launcher:hover {
   background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
   border-color: var(--control-hover-border);
-  color: var(--text);
+  color: var(--chrome-text);
 }
 
 /*

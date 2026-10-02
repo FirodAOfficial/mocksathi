@@ -1,13 +1,4 @@
 .shell {
-  --db-accent: #1c6ef2;
-  --db-accent-soft: #e8effe;
-  --db-bg: #eceff4;
-  --db-surface: #fff;
-  --db-border: #e8edf5;
-  --db-text: #0f172a;
-  --db-text-muted: #64748b;
-  --db-text-faint: #94a3b8;
-  --db-text-label: #a3aec0;
 
   display: flex;
   /* Column now, not row: the topbar is a full-width strip at the very top

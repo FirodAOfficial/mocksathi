@@ -23,7 +23,7 @@
 
 .status {
   min-height: 16px;
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   margin: 10px 0 0;
 }
 

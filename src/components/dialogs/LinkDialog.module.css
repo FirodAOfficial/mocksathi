@@ -12,7 +12,7 @@
 }
 
 .caption {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
 }
 
 .input {
@@ -24,7 +24,7 @@
 }
 
 .input:disabled {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   background: #f3f6fa;
 }
 

@@ -1,11 +1,4 @@
 .page {
-  --db-accent: #1c6ef2;
-  --db-bg: #eceff4;
-  --db-surface: #fff;
-  --db-border: #e8edf5;
-  --db-text: #0f172a;
-  --db-text-muted: #64748b;
-  --db-text-faint: #94a3b8;
 
   /* A fixed height plus its own overflow, not `min-height`: this is the
      scroll container, which is what keeps `.header` sticky and the close

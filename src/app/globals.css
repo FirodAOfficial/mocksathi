@@ -1,3 +1,5 @@
+@import './../styles/tokens.css';
+
 :root {
   --frame-top: #e8f1fb;
   --frame-bottom: #c9dcf0;
@@ -27,8 +29,15 @@
   --status-top: #dce9f7;
   --status-bottom: #bed4ec;
   --status-text: #1f3a55;
-  --text: #1b1b1b;
-  --text-muted: #5a6b7d;
+  /*
+   * Renamed from `--text` / `--text-muted`. They collided with the product's
+   * tokens of the same name, and because this block is declared after the
+   * token import, the Office chrome's values were silently winning everywhere
+   * — `--db-text-faint` resolved to #5a6b7d instead of the checked value.
+   * These two belong to the editor chrome, so they are named for it.
+   */
+  --chrome-text: #1b1b1b;
+  --chrome-text-muted: #5a6b7d;
   --focus-ring: #2b6cb0;
   --ui-font: "Segoe UI", "Segoe UI Web", Tahoma, Geneva, Verdana, sans-serif;
   --doc-font: "Calibri", "Carlito", "Segoe UI", sans-serif;
@@ -61,11 +70,24 @@ html, body {
  * editors already set `overflow: hidden` on their own shells, which is where
  * that decision belongs.
  */
+/*
+ * The product's defaults, not the editor's.
+ *
+ * This used to be `font-size: 12px; background: var(--canvas-bg)` — the Office
+ * chrome's size and the grey behind a Word page — inherited by every route,
+ * including the marketing and legal pages. A terms-of-service document was
+ * rendering at 12.5px on #8c8c8c because of these two lines.
+ *
+ * The editors set their own size and canvas on their own shells, where that
+ * decision belongs, so nothing in them depends on this.
+ */
 body {
   font-family: var(--ui-font);
-  color: var(--text);
-  background: var(--canvas-bg);
-  font-size: 12px;
+  color: var(--chrome-text);
+  background: var(--surface-sunken);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
 }
 
 button {
@@ -74,8 +96,19 @@ button {
   color: inherit;
 }
 
+/*
+ * One focus ring for the product, offset outwards so it is not clipped by the
+ * control it belongs to. The editors keep the inset ring below, because an
+ * outward ring inside the ribbon's tight rows overlaps its neighbours.
+ */
 :focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+.ProseMirror :focus-visible,
+[class*='Ribbon-module'] :focus-visible,
+[class*='Toolbar'] :focus-visible {
   outline-offset: -1px;
 }
 

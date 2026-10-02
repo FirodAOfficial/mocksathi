@@ -100,7 +100,7 @@
 }
 
 .galleryLabel {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 100%;

@@ -52,7 +52,7 @@
 }
 
 .empty {
-  color: var(--text-muted);
+  color: var(--chrome-text-muted);
   margin: 0;
   padding: 18px 14px;
 }
