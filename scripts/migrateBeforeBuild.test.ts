@@ -21,7 +21,22 @@ function run(env: Record<string, string | undefined>): string {
     // developer's shell cannot make the skip case connect to something.
     // `NODE_ENV` is carried because the repo's `ProcessEnv` requires it.
     env: { PATH: process.env.PATH ?? '', NODE_ENV: 'test', ...env },
+    /*
+     * Bounded, because the configured case really does try to reach
+     * `db.example.com` and waits on the network to refuse it. Under a full
+     * suite that wait stretched past the point where this test still had a
+     * worker, and it failed here while passing on its own. The script prints
+     * the host before it starts drizzle-kit, so a timeout still carries the
+     * line these assertions are about.
+     */
+    timeout: 8_000,
   });
+}
+
+/** stdout from a run that failed or timed out, which is the normal path here. */
+function outputOf(error: unknown): string {
+  const failure = error as { stdout?: string | Buffer; stderr?: string | Buffer };
+  return `${String(failure.stdout ?? '')}${String(failure.stderr ?? '')}`;
 }
 
 describe('migrateBeforeBuild', () => {
@@ -32,15 +47,22 @@ describe('migrateBeforeBuild', () => {
     expect(output).toContain('skipping migrations');
   });
 
-  it('names the host it is about to migrate, and never the credentials', () => {
+  /*
+   * Slower than vitest's 5s default, and legitimately so: this one really does
+   * start the script against `db.example.com` and waits for the network to
+   * refuse it. The child is capped at 8s above, so this has room for that plus
+   * node's own start-up under a loaded suite.
+   */
+  it('names the host it is about to migrate, and never the credentials', { timeout: 20_000 }, () => {
     // Build logs are readable by anyone with project access, and the
     // connection string carries a password.
     let output = '';
     try {
       output = run({ MIGRATION_DATABASE_URL: 'postgres://someone:hunter2@db.example.com:5432/app' });
     } catch (error) {
-      // drizzle-kit will fail to reach example.com; its output is what we get.
-      output = String((error as { stdout?: string }).stdout ?? '');
+      // drizzle-kit will fail to reach example.com, or be cut off waiting for
+      // it; either way the script has already printed the line under test.
+      output = outputOf(error);
     }
 
     expect(output).toContain('db.example.com:5432');

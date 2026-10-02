@@ -146,7 +146,9 @@ describe('SpreadsheetShell', () => {
   });
 
   describe('honesty of the controls', () => {
-    it('gives every disabled ribbon control a reason', async () => {
+    // Walks every tab and every control in the ribbon, which is more than
+    // vitest's 5s default allows for once the whole suite is running.
+    it('gives every disabled ribbon control a reason', { timeout: 20_000 }, async () => {
       // Same rule the Word ribbon is held to: nothing that looks live is inert,
       // and nothing that is unavailable is silent about why.
       render(<SpreadsheetShell />);

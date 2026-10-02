@@ -1,7 +1,7 @@
 'use client';
 
 import type { Editor } from '@tiptap/react';
-import { useRef, type ChangeEvent, type CSSProperties } from 'react';
+import { useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import {
   FONT_FAMILIES,
   changeIndent,
@@ -21,6 +21,13 @@ import {
   PICTURE_TYPES,
 } from '@/editor/insertActions';
 import { ICONS, SHAPES, type VectorArt } from '@/editor/vectorArt';
+import {
+  accessibilityIssues,
+  describeAccessibility,
+  insertCaption,
+  insertTableOfContents,
+  readableText,
+} from '@/editor/referenceActions';
 import { BLOCK_FORMAT_TYPES } from '@/editor/extensions/BlockFormat';
 import { INK_COLOURS, PEN_WIDTHS } from '@/editor/ink';
 import {
@@ -1118,9 +1125,45 @@ export function LayoutTab({ editor }: { editor: Editor }) {
 
 /* ---------------------------------------------------------------------- */
 
-export function ReviewTab({ onWordCount }: { onWordCount: () => void }) {
+export function ReviewTab({ editor, onWordCount }: { editor: Editor; onWordCount: () => void }) {
   const readOnly = useUiStore((state) => state.readOnly);
   const setReadOnly = useUiStore((state) => state.setReadOnly);
+  const setNotice = useUiStore((state) => state.setNotice);
+  const [speaking, setSpeaking] = useState(false);
+
+  /*
+   * Read Aloud, through the browser's own speech engine.
+   *
+   * No service and no model: `speechSynthesis` ships with the browser, which
+   * is why this one is real where Translate is not. It stops as well as
+   * starts, because a paper that reads itself aloud with no way to silence it
+   * would be worse than no button.
+   */
+  const toggleReadAloud = (): void => {
+    const speech = typeof window === 'undefined' ? null : window.speechSynthesis;
+    if (!speech) {
+      setNotice('This browser cannot read text aloud.');
+      return;
+    }
+
+    if (speaking || speech.speaking) {
+      speech.cancel();
+      setSpeaking(false);
+      return;
+    }
+
+    const text = readableText(editor.getJSON());
+    if (text.length === 0) {
+      setNotice('There is nothing to read yet.');
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    speech.speak(utterance);
+    setSpeaking(true);
+  };
 
   return (
     <>
@@ -1128,7 +1171,14 @@ export function ReviewTab({ onWordCount }: { onWordCount: () => void }) {
         <RibbonRow>
           <ToolbarButton label="Word Count" icon="find" size="large" onClick={onWordCount} />
           <ToolbarButton
-            label="Spelling & Grammar"
+            label="Spelling &amp; Grammar"
+            icon="find"
+            size="large"
+            disabled
+            disabledReason="no dictionary in this build"
+          />
+          <ToolbarButton
+            label="Thesaurus"
             icon="find"
             size="large"
             disabled
@@ -1137,8 +1187,40 @@ export function ReviewTab({ onWordCount }: { onWordCount: () => void }) {
         </RibbonRow>
       </RibbonGroup>
 
+      <RibbonGroup label="Speech">
+        <ToolbarButton
+          label={speaking ? 'Stop Reading' : 'Read Aloud'}
+          icon="speech"
+          size="large"
+          active={speaking}
+          onClick={toggleReadAloud}
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Accessibility">
+        <ToolbarButton
+          label="Check Accessibility"
+          icon="check"
+          size="large"
+          onClick={() => setNotice(describeAccessibility(accessibilityIssues(editor.getJSON())))}
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Language">
+        <RibbonColumn>
+          <ToolbarButton label="Translate" icon="page" size="wide" disabled disabledReason={NO_SERVICE} />
+          <ToolbarButton
+            label="Language"
+            icon="page"
+            size="wide"
+            disabled
+            disabledReason="the paper's language is chosen before it starts and fixed for the sitting"
+          />
+        </RibbonColumn>
+      </RibbonGroup>
+
       <RibbonGroup label="Comments">
-        <ToolbarButton label="New Comment" icon="page" size="large" disabled disabledReason={NO_NODE} />
+        <ToolbarButton label="New Comment" icon="comment" size="large" disabled disabledReason={NO_NODE} />
       </RibbonGroup>
 
       <RibbonGroup label="Tracking">
@@ -1148,6 +1230,16 @@ export function ReviewTab({ onWordCount }: { onWordCount: () => void }) {
           size="large"
           disabled
           disabledReason="revisions are not recorded in this build"
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Compare">
+        <ToolbarButton
+          label="Compare"
+          icon="page"
+          size="large"
+          disabled
+          disabledReason="there is only ever one version of a paper to compare"
         />
       </RibbonGroup>
 
@@ -1163,6 +1255,149 @@ export function ReviewTab({ onWordCount }: { onWordCount: () => void }) {
     </>
   );
 }
+
+/* ---------------------------------------------------------------------- */
+
+/**
+ * Word's References tab.
+ *
+ * Two of its commands survive without pagination, and they are the two worth
+ * having: a contents list built from the document's own headings, and numbered
+ * captions. Everything else here needs either page numbers or a bibliography
+ * store, and says which.
+ */
+export function ReferencesTab({ editor }: { editor: Editor }) {
+  const setNotice = useUiStore((state) => state.setNotice);
+
+  return (
+    <>
+      <RibbonGroup label="Table of Contents">
+        <ToolbarButton
+          label="Table of Contents"
+          icon="line-numbers"
+          size="large"
+          onClick={() => {
+            const count = insertTableOfContents(editor);
+            setNotice(
+              count === 0
+                ? 'Give the document some headings first — the contents list is built from them.'
+                : `Contents built from ${count} heading${count === 1 ? '' : 's'}. Page numbers need pagination, so there are none.`,
+            );
+          }}
+        />
+      </RibbonGroup>
+
+      <RibbonGroup label="Footnotes">
+        <RibbonColumn>
+          <ToolbarButton label="Insert Footnote" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+          <ToolbarButton label="Insert Endnote" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Citations &amp; Bibliography">
+        <RibbonColumn>
+          <ToolbarButton
+            label="Insert Citation"
+            icon="page"
+            size="wide"
+            disabled
+            disabledReason="there is no source list to cite from"
+          />
+          <ToolbarButton
+            label="Bibliography"
+            icon="page"
+            size="wide"
+            disabled
+            disabledReason="there is no source list to build one from"
+          />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Captions">
+        <RibbonColumn>
+          <RibbonRow>
+            <ToolbarButton
+              label="Insert Caption"
+              icon="picture"
+              size="wide"
+              onClick={() => setNotice(`Figure ${insertCaption(editor, 'Figure')} caption added.`)}
+            />
+            <ToolbarButton
+              label="Insert Table Caption"
+              icon="borders"
+              size="wide"
+              onClick={() => setNotice(`Table ${insertCaption(editor, 'Table')} caption added.`)}
+            />
+          </RibbonRow>
+          <ToolbarButton
+            label="Table of Figures"
+            icon="page"
+            size="wide"
+            disabled
+            disabledReason={NO_PAGES}
+          />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Index">
+        <RibbonColumn>
+          <ToolbarButton label="Mark Entry" icon="page" size="wide" disabled disabledReason={NO_NODE} />
+          <ToolbarButton label="Insert Index" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
+        </RibbonColumn>
+      </RibbonGroup>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+
+/**
+ * Word's Mailings tab, in full and entirely unavailable.
+ *
+ * Nothing here can work without a data source and a merge engine, and the tab
+ * is drawn anyway: a candidate who expects Mailings to be the sixth tab should
+ * find it there, with each command saying what it would need.
+ */
+export function MailingsTab() {
+  const NO_MERGE = 'mail merge needs a data source this build has no way to open';
+
+  return (
+    <>
+      <RibbonGroup label="Create">
+        <RibbonColumn>
+          <ToolbarButton label="Envelopes" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+          <ToolbarButton label="Labels" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Start Mail Merge">
+        <RibbonColumn>
+          <ToolbarButton label="Start Mail Merge" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+          <ToolbarButton label="Select Recipients" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+          <ToolbarButton label="Edit Recipient List" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Write &amp; Insert Fields">
+        <RibbonColumn>
+          <ToolbarButton label="Address Block" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+          <ToolbarButton label="Greeting Line" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+          <ToolbarButton label="Insert Merge Field" icon="page" size="wide" disabled disabledReason={NO_MERGE} />
+        </RibbonColumn>
+      </RibbonGroup>
+
+      <RibbonGroup label="Preview Results">
+        <ToolbarButton label="Preview Results" icon="find" size="large" disabled disabledReason={NO_MERGE} />
+      </RibbonGroup>
+
+      <RibbonGroup label="Finish">
+        <ToolbarButton label="Finish &amp; Merge" icon="check" size="large" disabled disabledReason={NO_MERGE} />
+      </RibbonGroup>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------- */
 

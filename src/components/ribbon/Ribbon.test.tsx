@@ -61,19 +61,42 @@ describe('Ribbon tabs', () => {
     }
   });
 
-  it('says why References and Mailings are empty instead of showing dead buttons', async () => {
+  /*
+   * References and Mailings were a paragraph of prose apiece. A candidate
+   * looking for Table of Contents found an explanation of why it was not
+   * there, which is not the same as finding the ribbon Word has. Both are
+   * drawn in full now, so the test is that Mailings — where nothing can work
+   * without a data source — is still every command, each saying what it needs.
+   */
+  it('draws Mailings in full, with every command saying what it would need', async () => {
+    open();
+    await userEvent.click(screen.getByRole('tab', { name: 'Mailings' }));
+
+    const buttons = within(screen.getByRole('tabpanel')).getAllByRole('button');
+
+    expect(buttons.length).toBeGreaterThan(8);
+    for (const button of buttons) {
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(button.getAttribute('title')).toMatch(/ — .+/);
+    }
+  });
+
+  it('gives References the two commands that survive without pagination', async () => {
     open();
     await userEvent.click(screen.getByRole('tab', { name: 'References' }));
 
-    const panel = screen.getByRole('tabpanel');
-    expect(within(panel).queryAllByRole('button')).toHaveLength(0);
-    expect(panel).toHaveTextContent(/does not have/i);
+    const live = within(screen.getByRole('tabpanel'))
+      .getAllByRole('button')
+      .filter((button) => !(button as HTMLButtonElement).disabled)
+      .map((button) => button.getAttribute('aria-label'));
+
+    expect(live).toEqual(['Table of Contents', 'Insert Caption', 'Insert Table Caption']);
   });
 
   it('gives every disabled control a reason in its tooltip', async () => {
     open();
 
-    for (const tab of ['Insert', 'Layout', 'Review', 'View']) {
+    for (const tab of ['Insert', 'Draw', 'Design', 'Layout', 'References', 'Mailings', 'Review', 'View']) {
       await userEvent.click(screen.getByRole('tab', { name: tab }));
       const disabled = within(screen.getByRole('tabpanel'))
         .queryAllByRole('button')

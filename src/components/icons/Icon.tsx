@@ -56,6 +56,7 @@ export type IconName =
   | 'align-objects'
   | 'group'
   | 'rotate'
+  | 'speech'
   | 'error'
   | 'warning';
 
@@ -279,6 +280,12 @@ const PATHS: Record<IconName, JSX.Element> = {
     <g {...STROKE}>
       <path d="M16.5 10a6.5 6.5 0 1 1-2.1-4.8" />
       <path d="M16.8 2.8v3.6h-3.6" />
+    </g>
+  ),
+  speech: (
+    <g {...STROKE}>
+      <rect x="7.5" y="2.5" width="5" height="9" rx="2.5" />
+      <path d="M4.5 9a5.5 5.5 0 0 0 11 0M10 14.5v3" />
     </g>
   ),
   picture: (

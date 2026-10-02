@@ -6,7 +6,17 @@ import type { ClipboardActions } from '@/editor/useClipboard';
 import type { FormatState } from '@/editor/useFormatState';
 import { useUiStore, type RibbonTabId } from '@/state/uiStore';
 import { HomeTab } from './HomeTab';
-import { DesignTab, DrawTab, EmptyTab, InsertTab, LayoutTab, ReviewTab, ViewTab } from './SecondaryTabs';
+import {
+  DesignTab,
+  DrawTab,
+  EmptyTab,
+  InsertTab,
+  LayoutTab,
+  MailingsTab,
+  ReferencesTab,
+  ReviewTab,
+  ViewTab,
+} from './SecondaryTabs';
 import styles from './Ribbon.module.css';
 
 const TABS: { id: RibbonTabId; label: string }[] = [
@@ -117,19 +127,9 @@ export function Ribbon({
         {activeTab === 'draw' ? <DrawTab editor={editor} /> : null}
         {activeTab === 'design' ? <DesignTab editor={editor} /> : null}
         {activeTab === 'layout' ? <LayoutTab editor={editor} /> : null}
-        {activeTab === 'references' ? (
-          <EmptyTab
-            title="References"
-            body="Word's citations, footnotes, table of contents and index all need document parts this build does not have. The tab is here so it is where you expect it, not because there is anything behind it."
-          />
-        ) : null}
-        {activeTab === 'mailings' ? (
-          <EmptyTab
-            title="Mailings"
-            body="Mail merge needs a data source and a merge engine, neither of which this build has."
-          />
-        ) : null}
-        {activeTab === 'review' ? <ReviewTab onWordCount={onWordCount} /> : null}
+        {activeTab === 'references' ? <ReferencesTab editor={editor} /> : null}
+        {activeTab === 'mailings' ? <MailingsTab /> : null}
+        {activeTab === 'review' ? <ReviewTab editor={editor} onWordCount={onWordCount} /> : null}
         {activeTab === 'view' ? <ViewTab /> : null}
         {activeTab === 'help' ? (
           <EmptyTab
