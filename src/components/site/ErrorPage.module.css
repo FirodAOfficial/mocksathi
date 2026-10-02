@@ -1,0 +1,179 @@
+/*
+ * The shared shell for the two pages nobody means to reach: 404 and the error
+ * boundary. One stylesheet, because a visitor who hits both in a session
+ * should not feel they landed on two different products.
+ */
+.page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--surface-sunken);
+  color: var(--text);
+  padding: var(--space-6) max(var(--space-4), env(safe-area-inset-left))
+    calc(var(--space-12) + env(safe-area-inset-bottom));
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+}
+
+.brand {
+  display: inline-flex;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+}
+
+/*
+ * The status, set large and in the muted tone rather than as a headline. The
+ * number is orientation, not the message — what the visitor needs to read
+ * first is the sentence under it.
+ */
+.code {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  margin: 0;
+}
+
+.title {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.message {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+  max-width: 46ch;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/*
+ * One filled action and one quiet one. Both clear the 44px target without a
+ * pseudo-element, because here there is room to simply be that tall.
+ */
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--target);
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease), transform var(--duration-fast) var(--ease);
+}
+
+.primary {
+  background: var(--brand);
+  color: var(--text-on-brand);
+  border: 1px solid var(--brand);
+}
+
+.primary:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+
+.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.secondary:hover {
+  border-color: var(--text-subtle);
+}
+
+/* A pressed control moves, so a tap feels like it landed. */
+.primary:active,
+.secondary:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary,
+  .secondary {
+    transition: none;
+  }
+
+  .primary:active,
+  .secondary:active {
+    transform: none;
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-6);
+  margin-top: var(--space-6);
+}
+
+.link {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+/*
+ * The digest, for when someone reports the fault.
+ *
+ * Small and selectable, not hidden: it is the one piece of information that
+ * makes a support message actionable, and a visitor who does not care will
+ * not read it anyway. It is an opaque id, never the error text — a stack
+ * trace on screen tells an attacker more than it tells the person reading it.
+ */
+.digest {
+  margin-top: var(--space-6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  user-select: all;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: var(--text-3xl);
+  }
+
+  .message {
+    font-size: var(--text-lg);
+  }
+}
