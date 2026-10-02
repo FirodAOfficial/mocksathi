@@ -420,12 +420,38 @@ export function HomeTab({
         </div>
       </RibbonGroup>
 
+      {/*
+        Named, not just drawn. Word labels every command in this group, and an
+        unlabelled magnifier and arrow are the two in the ribbon a candidate is
+        least likely to recognise by shape alone.
+      */}
       <RibbonGroup label="Editing">
         <RibbonColumn>
-          <ToolbarButton label="Find" icon="find" onClick={onFind} />
-          <ToolbarButton label="Replace" icon="replace" onClick={onReplace} />
-          <ToolbarButton label="Select All" icon="select-all" onClick={() => editor.chain().focus().selectAll().run()} />
+          <ToolbarButton label="Find" icon="find" size="wide" onClick={onFind} />
+          <ToolbarButton label="Replace" icon="replace" size="wide" onClick={onReplace} />
+          <ToolbarButton
+            label="Select All"
+            icon="select-all"
+            size="wide"
+            onClick={() => editor.chain().focus().selectAll().run()}
+          />
         </RibbonColumn>
+      </RibbonGroup>
+
+      {/*
+        Add-ins is where Word puts it, and a candidate looking for it should
+        find it rather than wonder whether this ribbon is missing a group. It
+        is disabled and says why: an add-in is third-party code loaded into the
+        host application, and there is no host to load it into.
+      */}
+      <RibbonGroup label="Add-ins">
+        <ToolbarButton
+          label="Add-ins"
+          icon="add-ins"
+          size="large"
+          disabled
+          disabledReason="this editor loads no third-party add-ins"
+        />
       </RibbonGroup>
     </>
   );

@@ -21,6 +21,7 @@ import { useUiStore } from '@/state/uiStore';
 import { TitleBar } from '../TitleBar';
 import { FindReplaceDialog } from '../dialogs/FindReplaceDialog';
 import { FontDialog } from '../dialogs/FontDialog';
+import { LinkDialog } from '../dialogs/LinkDialog';
 import { ParagraphDialog } from '../dialogs/ParagraphDialog';
 import { WordCountDialog } from '../dialogs/WordCountDialog';
 import { DocumentCanvas } from '../document/DocumentCanvas';
@@ -57,7 +58,7 @@ export interface DocumentAuthoringShellProps {
   questions: AuthoringQuestion<DocumentStep>[];
 }
 
-type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
+type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | 'link' | null;
 
 const BLANK = documentToProseMirror(createBlankDocument());
 
@@ -221,6 +222,7 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
           onReplace={() => setDialog('replace')}
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
+          onInsertLink={() => setDialog('link')}
           onOpenParagraphDialog={() => setDialog('paragraph')}
         />
       ) : (
@@ -295,6 +297,8 @@ export function DocumentAuthoringShell({ testId, testName, passage, questions }:
         <FindReplaceDialog editor={editor} mode={dialog} onClose={() => setDialog(null)} />
       ) : null}
       {editor && dialog === 'font' ? <FontDialog editor={editor} onClose={() => setDialog(null)} /> : null}
+
+      {editor && dialog === 'link' ? <LinkDialog editor={editor} onClose={() => setDialog(null)} /> : null}
       {editor && dialog === 'paragraph' ? (
         <ParagraphDialog editor={editor} format={format} onClose={() => setDialog(null)} />
       ) : null}

@@ -139,3 +139,39 @@
     border-radius: 3px;
   }
 }
+
+/*
+ * A landscape phone: about 390px of height for the whole editor, and the
+ * document is the paper. Every row the ribbon gives up is a row of the
+ * document — the same ribbon, drawn shorter, since hiding commands would
+ * change what is being tested.
+ *
+ * Last in the file on purpose: a 640-767px landscape phone matches the narrow
+ * block above as well, and there the height is the scarcer of the two. 28px
+ * tabs are the compromise — shorter than the 38px a thumb prefers, still large
+ * enough to hit, and 10px per row back to the document.
+ */
+@media (max-height: 500px) {
+  .tabstrip {
+    height: auto;
+    padding: 1px 4px 0;
+  }
+
+  .tab {
+    min-height: 28px;
+    height: auto;
+    font-size: 0.8125rem;
+  }
+
+  /*
+   * Shorter, never capped. A `max-height` here cut the second row of the Home
+   * tab in half — Bold, Italic and Underline with no way to scroll to them —
+   * and a command a candidate cannot reach is a command the paper no longer
+   * tests. The height comes out of the buttons instead
+   * (`controls/ToolbarButton.module.css`).
+   */
+  .panel {
+    min-height: 0;
+    padding: 2px 4px;
+  }
+}

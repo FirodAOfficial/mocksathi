@@ -112,11 +112,22 @@
 }
 
 @media (width <= 767px) {
-  .windowButtons {
-    display: none;
+  .title {
+    text-align: left;
+  }
+}
+
+/*
+ * A landscape phone. The bar cannot go: ✕ submits the paper. It gives up its
+ * height and its title instead — the paper's name is on the instruction strip
+ * and the question list, so losing it here costs the candidate nothing.
+ */
+@media (max-height: 500px) {
+  .titleBar {
+    padding: 1px 6px;
   }
 
   .title {
-    text-align: left;
+    font-size: 11px;
   }
 }

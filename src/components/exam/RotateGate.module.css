@@ -1,0 +1,116 @@
+/*
+ * The rotate prompt, over everything.
+ *
+ * z-index 60 clears the exam drawers (41) and their scrim (40): it has to cover
+ * the layout it is asking the candidate to replace.
+ */
+.gate {
+  z-index: 60;
+  background: linear-gradient(160deg, #10263e, #1c3f66);
+  place-items: center;
+  padding: 24px max(16px, env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom));
+  display: grid;
+  position: fixed;
+  inset: 0;
+}
+
+.card {
+  color: #fff;
+  text-align: center;
+  max-width: 22rem;
+}
+
+.mark {
+  width: 96px;
+  height: 72px;
+  margin-bottom: 18px;
+  /* The phone starts upright and leans over, which is the instruction in one
+     gesture. Still, nothing here is only animation: the heading says it too. */
+  animation: tip 2.4s ease-in-out infinite;
+}
+
+.markPhone {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+.markScreen {
+  fill: #ffffff2e;
+}
+
+.markArc {
+  fill: none;
+  stroke: #8fc3f0;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes tip {
+  0%, 35% {
+    transform: rotate(0deg);
+  }
+
+  60%, 100% {
+    transform: rotate(-90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    animation: none;
+  }
+}
+
+.heading {
+  margin: 0 0 10px;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.body {
+  color: #cfe2f5;
+  margin: 0 0 22px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.primary, .secondary {
+  cursor: pointer;
+  border-radius: 10px;
+  width: 100%;
+  /* 44px: the smallest target a thumb hits reliably, as in `ExamPanels`. */
+  min-height: 44px;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.primary {
+  color: #10263e;
+  background: #fff;
+  border: 0;
+  margin-bottom: 10px;
+}
+
+.secondary {
+  color: #cfe2f5;
+  background: #ffffff1a;
+  border: 1px solid #ffffff4d;
+}
+
+.note {
+  color: #9fc0de;
+  margin: 14px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* Nothing of this belongs on paper. */
+@media print {
+  .gate {
+    display: none;
+  }
+}

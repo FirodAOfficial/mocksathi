@@ -75,3 +75,15 @@
   }
 }
 
+
+/* A landscape phone: the clock stays the most legible thing in the panel, but
+   it does not need 30px digits to be. */
+@media (max-height: 500px) {
+  .timer {
+    padding: 6px 10px 5px;
+  }
+
+  .value {
+    font-size: 22px;
+  }
+}

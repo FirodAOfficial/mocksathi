@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { ExamDrawerBar, ExamPanel, type DrawerSide } from '@/components/exam/ExamPanels';
+import { CloseSubmitButton } from '@/components/exam/CloseSubmitButton';
+import { RotateGate } from '@/components/exam/RotateGate';
 import { ExamSummaryPanel } from '@/components/exam/ExamSummaryPanel';
 import { InstructionStrip } from '@/components/exam/InstructionStrip';
 import { QuestionListPanel } from '@/components/exam/QuestionListPanel';
@@ -330,12 +332,20 @@ function ShellBody({
           {exam ? `${attempt.sections[0]?.name ?? 'Spreadsheet'} — Practical Paper` : 'Book1 — Spreadsheet Editor'}
         </h1>
 
-        {/* Decorative, as in the Word editor: this is a web page, so they are
-            hidden from assistive technology rather than faked as controls. */}
-        <div className={styles.windowButtons} aria-hidden="true">
-          <span className={styles.windowButton}>—</span>
-          <span className={styles.windowButton}>▢</span>
-          <span className={`${styles.windowButton} ${styles.closeButton}`}>✕</span>
+        {/* Minimise and restore are gone, as in the Word editor: a web page can
+            do neither. ✕ submits the paper during an exam and is decorative
+            otherwise. */}
+        <div className={styles.windowButtons}>
+          {exam ? (
+            <CloseSubmitButton
+              className={`${styles.windowButton} ${styles.closeButton}`}
+              onSaveAnswer={questionWorkbooks.saveCurrent}
+            />
+          ) : (
+            <span className={`${styles.windowButton} ${styles.closeButton}`} aria-hidden="true">
+              ✕
+            </span>
+          )}
         </div>
       </header>
 
@@ -375,6 +385,9 @@ function ShellBody({
           onToggle={(side) => setDrawer((current) => (current === side ? null : side))}
         />
       ) : null}
+
+      {/* The same request the Word paper makes, for the same reason. */}
+      {exam ? <RotateGate /> : null}
 
       <SheetTabs />
       <SpreadsheetStatusBar />

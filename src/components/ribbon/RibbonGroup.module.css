@@ -72,3 +72,24 @@
   border-color: var(--control-hover-border);
   color: var(--text);
 }
+
+/*
+ * A landscape phone. The group's caption is already carried by the section's
+ * `aria-label`, and the hairline rules between groups do the dividing on
+ * screen, so the caption row shrinks to a line.
+ *
+ * It is not removed: the dialog launcher lives in it, and Font and Paragraph
+ * are opened nowhere else.
+ */
+@media (max-height: 500px) {
+  .group {
+    min-height: 0;
+    padding: 2px 5px 0;
+  }
+
+  .label {
+    padding: 0;
+    font-size: 9px;
+    line-height: 1.1;
+  }
+}

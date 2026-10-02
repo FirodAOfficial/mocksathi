@@ -36,6 +36,27 @@ export type IconName =
   | 'chevron-down'
   | 'print'
   | 'page'
+  | 'add-ins'
+  | 'picture'
+  | 'shapes'
+  | 'icons'
+  | 'chart'
+  | 'video'
+  | 'link'
+  | 'comment'
+  | 'horizontal-rule'
+  | 'pen'
+  | 'pencil'
+  | 'eraser'
+  | 'draw-canvas'
+  | 'replay'
+  | 'theme'
+  | 'check'
+  | 'line-numbers'
+  | 'align-objects'
+  | 'group'
+  | 'rotate'
+  | 'speech'
   | 'error'
   | 'warning';
 
@@ -191,6 +212,135 @@ const PATHS: Record<IconName, JSX.Element> = {
     <g {...STROKE}>
       <path d="M5 2.5h6L15 6.5v11H5z" />
       <path d="M11 2.5v4h4" />
+    </g>
+  ),
+  pen: (
+    <g {...STROKE}>
+      <path d="M3 17 4.5 13 13 4.5l2.5 2.5L7 15.5z" />
+      <path d="M11.5 6 14 8.5" />
+    </g>
+  ),
+  pencil: (
+    <g {...STROKE}>
+      <path d="M3.5 16.5 5 12.5 13.5 4l2.5 2.5L7.5 15z" />
+      <path d="m5 12.5 2.5 2.5" />
+    </g>
+  ),
+  eraser: (
+    <g {...STROKE}>
+      <path d="m3.5 13 7-7a2 2 0 0 1 2.8 0l2.4 2.4a2 2 0 0 1 0 2.8l-4.7 4.7H6.2z" />
+      <path d="M8 8.5 13.5 14" />
+    </g>
+  ),
+  'draw-canvas': (
+    <g {...STROKE}>
+      <rect x="2.5" y="4" width="15" height="12" rx="1.5" strokeDasharray="2.5 2" />
+      <path d="M5.5 12.5c2-4 4-4 5 0s3 2 4-1.5" />
+    </g>
+  ),
+  replay: (
+    <g {...STROKE}>
+      <path d="M10 3.5a6.5 6.5 0 1 1-6.3 8" />
+      <path d="M3.5 3.5v4h4" />
+      <path d="m8.5 8 4 2-4 2z" />
+    </g>
+  ),
+  theme: (
+    <g {...STROKE}>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="1.5" />
+      <path d="M2.5 9h15M8 9v7.5" />
+    </g>
+  ),
+  check: (
+    <g {...STROKE}>
+      <circle cx="10" cy="10" r="7" />
+      <path d="m6.8 10.2 2.2 2.3 4.2-4.8" />
+    </g>
+  ),
+  'line-numbers': (
+    <g {...STROKE}>
+      <path d="M8 5h9M8 10h9M8 15h9" />
+      <path d="M3.4 3.6h1V7M3 12.2a1.4 1.4 0 1 1 2.4 1L3 16.4h2.6" />
+    </g>
+  ),
+  'align-objects': (
+    <g {...STROKE}>
+      <path d="M3 3.5v13" />
+      <rect x="6" y="5" width="11" height="3.6" rx="0.8" />
+      <rect x="6" y="11.4" width="7" height="3.6" rx="0.8" />
+    </g>
+  ),
+  group: (
+    <g {...STROKE}>
+      <rect x="2.5" y="2.5" width="8" height="8" rx="1" />
+      <rect x="9.5" y="9.5" width="8" height="8" rx="1" />
+    </g>
+  ),
+  rotate: (
+    <g {...STROKE}>
+      <path d="M16.5 10a6.5 6.5 0 1 1-2.1-4.8" />
+      <path d="M16.8 2.8v3.6h-3.6" />
+    </g>
+  ),
+  speech: (
+    <g {...STROKE}>
+      <rect x="7.5" y="2.5" width="5" height="9" rx="2.5" />
+      <path d="M4.5 9a5.5 5.5 0 0 0 11 0M10 14.5v3" />
+    </g>
+  ),
+  picture: (
+    <g {...STROKE}>
+      <rect x="2.5" y="4" width="15" height="12" rx="1.5" />
+      <path d="m2.5 13 4-4 3.5 3.5 3-2.5 4.5 4" />
+      <circle cx="13" cy="7.5" r="1.3" />
+    </g>
+  ),
+  shapes: (
+    <g {...STROKE}>
+      <rect x="2.5" y="9.5" width="8" height="7.5" rx="1" />
+      <circle cx="13.5" cy="6.5" r="4" />
+    </g>
+  ),
+  icons: (
+    <g {...STROKE}>
+      <circle cx="10" cy="7" r="2.6" />
+      <path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" />
+    </g>
+  ),
+  chart: (
+    <g {...STROKE}>
+      <path d="M3 16.5h14" />
+      <path d="M6 16.5v-5M10 16.5V5.5M14 16.5v-8" />
+    </g>
+  ),
+  video: (
+    <g {...STROKE}>
+      <rect x="2.5" y="5" width="11" height="10" rx="1.5" />
+      <path d="m13.5 9 4-2.5v7L13.5 11z" />
+    </g>
+  ),
+  link: (
+    <g {...STROKE}>
+      <path d="M8.5 11.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 0 0-5-5l-1 1" />
+      <path d="M11.5 8.5a3.5 3.5 0 0 0-5 0L4 11a3.5 3.5 0 0 0 5 5l1-1" />
+    </g>
+  ),
+  comment: (
+    <g {...STROKE}>
+      <path d="M3 4.5h14v9H9l-4 4v-4H3z" />
+    </g>
+  ),
+  'horizontal-rule': (
+    <g {...STROKE}>
+      <path d="M3 6h14M3 14h14" />
+      <path d="M3 10h14" strokeDasharray="0" strokeWidth="2" />
+    </g>
+  ),
+  /* Office's Add-ins mark: a window of four panes. */
+  'add-ins': (
+    <g {...STROKE}>
+      <rect x="3" y="3" width="14" height="14" rx="1.5" />
+      <path d="M10 3v14M3 10h14" />
     </g>
   ),
   error: (

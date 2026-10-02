@@ -1,5 +1,6 @@
 'use client';
 
+import { BrandMark } from '@/components/site/BrandLogo';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from '@/auth/otpPolicy';
@@ -183,7 +184,7 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
         <div className={loginStyles.centerColumn}>
           <div className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
-              <div className={cardStyles.logoMark}>M</div>
+              <BrandMark size={32} tone="dark" />
               <div>
                 <div className={cardStyles.logoName}>Mocksathi</div>
               </div>

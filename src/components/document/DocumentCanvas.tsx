@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, type Editor } from '@tiptap/react';
 import { useIsPhone } from '@/hooks/useMediaQuery';
+import { headingStyleVars } from '@/editor/themes';
 import { MARGIN_PRESETS, pageSize, useUiStore } from '@/state/uiStore';
 import { Ruler } from './Ruler';
 import styles from './DocumentCanvas.module.css';
@@ -34,6 +35,7 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
   const columns = useUiStore((state) => state.columns);
   const pageColor = useUiStore((state) => state.pageColor);
   const watermark = useUiStore((state) => state.watermark);
+  const heading = useUiStore((state) => state.heading);
   const pageBorder = useUiStore((state) => state.pageBorder);
   const viewMode = useUiStore((state) => state.viewMode);
 
@@ -86,9 +88,27 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
     };
 
     fit();
-    const observer = new ResizeObserver(fit);
+
+    /*
+     * The observer's work is deferred by a frame.
+     *
+     * A `ResizeObserver` callback runs after layout and before paint, which
+     * can land in the middle of React rendering — and `fitZoom` writes to the
+     * store the status bar reads, so React warned that the status bar was
+     * being updated while the shell was still rendering. A frame's delay puts
+     * the write back in its own task, after the render that triggered it.
+     */
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    });
+
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [width, fitZoom]);
 
   useEffect(() => {
@@ -96,15 +116,23 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
     if (!element) return;
 
     // The sheet grows with its content, so the page count is recomputed
-    // whenever the rendered height changes rather than on every keystroke.
+    // whenever the rendered height changes rather than on every keystroke —
+    // deferred a frame for the reason the fit observer above gives.
+    let frame = 0;
     const observer = new ResizeObserver(() => {
-      const contentHeight = element.scrollHeight - margins.top - margins.bottom;
-      setPageHeight(Math.max(height, element.scrollHeight));
-      onPageCountChange(Math.max(1, Math.ceil(contentHeight / usableHeight)));
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const contentHeight = element.scrollHeight - margins.top - margins.bottom;
+        setPageHeight(Math.max(height, element.scrollHeight));
+        onPageCountChange(Math.max(1, Math.ceil(contentHeight / usableHeight)));
+      });
     });
 
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [height, margins.top, margins.bottom, usableHeight, onPageCountChange]);
 
   /*
@@ -165,6 +193,13 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
                 paddingLeft: margins.left,
                 transform: `scale(${zoom})`,
                 ...(pageColor ? { background: pageColor } : {}),
+                /*
+                 * The Design tab's heading look, as custom properties the
+                 * stylesheet reads. On the page rather than on the document,
+                 * because it is page decoration: the ProseMirror document is
+                 * untouched, so nothing here can shift what the marker reads.
+                 */
+                ...headingStyleVars(heading),
               }}
               onMouseDown={placeCaretFromPageClick}
             >

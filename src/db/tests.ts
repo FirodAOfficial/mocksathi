@@ -62,7 +62,7 @@ import type { ParsedQuestionFields, ParsedTestFields } from './testInput';
  * Excel is unaffected. Flip to false to offer both kinds again; nothing else
  * needs to change. See `sdd/word-document-papers.md`.
  */
-export const WORD_PAPERS_FROM_DOCUMENT_TABLES = true;
+export const WORD_PAPERS_FROM_DOCUMENT_TABLES = false;
 
 /**
  * The same switch for Excel and `excel_doc_questions`.
@@ -72,7 +72,7 @@ export const WORD_PAPERS_FROM_DOCUMENT_TABLES = true;
  * attempts, and still show on the admin list. Flip to false to offer both.
  * See `sdd/excel-workbook-papers.md`.
  */
-export const EXCEL_PAPERS_FROM_WORKBOOK_TABLES = true;
+export const EXCEL_PAPERS_FROM_WORKBOOK_TABLES = false;
 
 /**
  * The condition that makes a `tests` row a sittable paper.

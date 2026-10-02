@@ -33,10 +33,25 @@ beforeEach(() => {
     disconnect() {}
   } as unknown as typeof ResizeObserver;
 
-  // The shell asks who is signed in to put a name on the candidate panel.
+  /*
+   * The shell asks who is signed in to put a name on the candidate panel.
+   *
+   * Answered per URL rather than with one body for everything: submitting a
+   * paper posts to `/api/attempts/submit`, and handing that the signed-in user
+   * as if it were a marked result made the shell render a result screen with
+   * no score in it. That is not a failure a candidate can reach — the real
+   * endpoint returns a result or an error — so the stub refuses it, which is a
+   * path the shell does handle, and these tests are about the submit dialog.
+   */
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify({ user: { name: 'Test Candidate' } }))),
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/api/attempts/submit')) {
+        return new Response(JSON.stringify({ detail: 'Marking is not stubbed in this test.' }), { status: 503 });
+      }
+      return new Response(JSON.stringify({ user: { name: 'Test Candidate' } }));
+    }),
   );
 });
 
@@ -170,5 +185,56 @@ describe('the Excel paper', () => {
 
     expect(screen.queryByRole('listbox', { name: 'Question list' })).not.toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Candidate summary' })).not.toBeInTheDocument();
+  });
+
+  /*
+   * Closing the window is submitting the paper — that is what ✕ means on a
+   * document that is being handed in. The risk the tests cover is the obvious
+   * one: it must not submit on the click, and the window buttons that cannot
+   * do anything must not be sitting next to it inviting the attempt.
+   */
+  describe('the window close button', () => {
+    it('asks before submitting rather than submitting', async () => {
+      await openPaper();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Submit paper' }));
+
+      expect(screen.getByRole('dialog', { name: /submit paper/i })).toBeInTheDocument();
+      expect(useExamStore.getState().submittedBy).toBeNull();
+    });
+
+    it('submits once the candidate confirms', async () => {
+      await openPaper();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Submit paper' }));
+      const dialog = screen.getByRole('dialog', { name: /submit paper/i });
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Submit' }));
+
+      await waitFor(() => expect(useExamStore.getState().submittedBy).toBe('candidate'));
+    });
+
+    it('keeps the paper open when the candidate cancels', async () => {
+      await openPaper();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Submit paper' }));
+      const dialog = screen.getByRole('dialog', { name: /submit paper/i });
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(useExamStore.getState().submittedBy).toBeNull();
+    });
+
+    it('is the only window button left', async () => {
+      await openPaper();
+
+      expect(screen.queryByText('—')).not.toBeInTheDocument();
+      expect(screen.queryByText('▢')).not.toBeInTheDocument();
+    });
+
+    it('stays decorative when there is no paper to submit', () => {
+      render(<SpreadsheetShell />);
+
+      expect(screen.queryByRole('button', { name: 'Submit paper' })).not.toBeInTheDocument();
+    });
   });
 });

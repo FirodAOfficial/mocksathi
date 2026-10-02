@@ -1,0 +1,104 @@
+.wrapper {
+  position: relative;
+  margin: 0 0 10px;
+  border: 1px dashed #c3cfdd;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.selected {
+  border-color: #2e74b5;
+  outline: 1px solid #2e74b5;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+/*
+ * The pointer only changes when a pen is chosen. With Select this is an
+ * ordinary block and the I-beam is the honest cursor for it.
+ */
+.drawing {
+  cursor: crosshair;
+}
+
+.hint {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #9aa7b8;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.replay {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: #2e74b5;
+  cursor: pointer;
+  background: #fffffff2;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+}
+
+.replay:disabled {
+  color: #b4bfcc;
+  cursor: default;
+}
+
+/*
+ * Replay draws each stroke along its own length.
+ *
+ * `pathLength="1"` is not used — the dash array is set from the path's real
+ * length by the browser when the value is a percentage, so 100% works for a
+ * stroke of any length without measuring it in JavaScript.
+ */
+[data-replaying] .stroke {
+  stroke-dasharray: 100% 100%;
+  animation-name: draw;
+  animation-timing-function: linear;
+  animation-fill-mode: backwards;
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 100%;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Replay is a motion effect with no information in it that the finished
+ * drawing does not already carry, so it simply does not run.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-replaying] .stroke {
+    animation: none;
+  }
+}
+
+@media print {
+  .wrapper {
+    border-color: #0000;
+  }
+
+  .replay, .hint {
+    display: none;
+  }
+}

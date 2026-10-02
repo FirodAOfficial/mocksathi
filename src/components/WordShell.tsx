@@ -19,6 +19,7 @@ import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
 import { Dialog } from './dialogs/Dialog';
 import { FindReplaceDialog } from './dialogs/FindReplaceDialog';
+import { LinkDialog } from './dialogs/LinkDialog';
 import { FontDialog } from './dialogs/FontDialog';
 import { ParagraphDialog } from './dialogs/ParagraphDialog';
 import { WordCountDialog } from './dialogs/WordCountDialog';
@@ -26,6 +27,7 @@ import { DocumentCanvas } from './document/DocumentCanvas';
 import { ExamSummaryPanel } from './exam/ExamSummaryPanel';
 import { QuestionListPanel } from './exam/QuestionListPanel';
 import { ExamDrawerBar, ExamPanel, type DrawerSide } from './exam/ExamPanels';
+import { RotateGate } from './exam/RotateGate';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
 import { ResultView } from './result/ResultView';
@@ -65,7 +67,7 @@ export interface WordShellProps {
   testId?: string | null;
 }
 
-type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | null;
+type OpenDialog = 'find' | 'replace' | 'wordCount' | 'font' | 'paragraph' | 'link' | null;
 
 /**
  * Composition root for the application.
@@ -309,6 +311,7 @@ export function WordShell({
         canUndo={format.canUndo}
         canRedo={format.canRedo}
         readOnly={readOnly}
+        onSaveAnswer={exam ? questionAnswers.saveCurrent : undefined}
       />
 
       {editor && !focusMode ? (
@@ -321,6 +324,7 @@ export function WordShell({
           onWordCount={() => setDialog('wordCount')}
           onOpenFontDialog={() => setDialog('font')}
           onOpenParagraphDialog={() => setDialog('paragraph')}
+          onInsertLink={() => setDialog('link')}
         />
       ) : focusMode ? (
         // Focus hides the ribbon outright rather than reserving its height —
@@ -379,6 +383,13 @@ export function WordShell({
         />
       ) : null}
 
+      {/*
+        A phone held upright has the pixels for the three columns and is holding
+        them the wrong way round, so the paper asks for the turn rather than
+        folding the panels into drawers. Dismissible — see `RotateGate`.
+      */}
+      {exam && !focusMode ? <RotateGate /> : null}
+
       <StatusBar pages={pages} words={format.words} readOnly={readOnly || locked} />
 
       {editor && (dialog === 'find' || dialog === 'replace') ? (
@@ -386,6 +397,8 @@ export function WordShell({
       ) : null}
 
       {editor && dialog === 'font' ? <FontDialog editor={editor} onClose={() => setDialog(null)} /> : null}
+
+      {editor && dialog === 'link' ? <LinkDialog editor={editor} onClose={() => setDialog(null)} /> : null}
 
       {editor && dialog === 'paragraph' ? (
         <ParagraphDialog editor={editor} format={format} onClose={() => setDialog(null)} />

@@ -47,6 +47,14 @@
   }
 }
 
+/* Matches the ribbon's own landscape-phone height, so the chrome does not jump
+   once the editor mounts. See `ribbon/Ribbon.module.css`. */
+@media (max-height: 500px) {
+  .ribbonPlaceholder {
+    height: 94px;
+  }
+}
+
 @media print {
   .shell {
     height: auto;

@@ -15,6 +15,51 @@ const doc = (...content: unknown[]) => ({ type: 'doc', content });
  * The projection exists to make representation differences invisible, so these
  * pin the specific ways ProseMirror can express the same visible result.
  */
+/*
+ * Insert's non-text nodes.
+ *
+ * A picture, a shape and a horizontal rule are not paragraphs, and a question
+ * that says "make the third paragraph bold" must still mean the third
+ * paragraph after a candidate has inserted one between the second and it. The
+ * projection's `default: break` is what makes that true, so it is pinned here
+ * rather than left as an accident of the switch.
+ */
+describe('flatten — what Insert puts in the document', () => {
+  const PICTURE = { type: 'image', attrs: { src: 'data:image/svg+xml;utf8,%3Csvg%2F%3E', alt: 'Rectangle' } };
+
+  it('does not let a picture become a paragraph', () => {
+    const withPicture = project(doc(para(text('one')), PICTURE, para(text('two'))));
+    const without = project(doc(para(text('one')), para(text('two'))));
+
+    expect(withPicture.text).toBe(without.text);
+  });
+
+  it('does not let a horizontal rule become a paragraph', () => {
+    const withRule = project(doc(para(text('one')), { type: 'horizontalRule' }, para(text('two'))));
+    const without = project(doc(para(text('one')), para(text('two'))));
+
+    expect(withRule.text).toBe(without.text);
+  });
+
+  it('does not let a drawing canvas become a paragraph', () => {
+    const canvas = {
+      type: 'drawingCanvas',
+      attrs: { strokes: [{ tool: 'pen', colour: '#000000', width: 2, points: [0, 0, 10, 10] }] },
+    };
+    const withInk = project(doc(para(text('one')), canvas, para(text('two'))));
+    const without = project(doc(para(text('one')), para(text('two'))));
+
+    expect(withInk.text).toBe(without.text);
+  });
+
+  /* A link is a mark on text, so the text itself still reads and still marks. */
+  it('keeps the text a link was applied to', () => {
+    const linked = project(doc(para(text('home', [{ type: 'link', attrs: { href: 'https://example.com/' } }]))));
+
+    expect(linked.text).toBe('home');
+  });
+});
+
 describe('flatten — canonicalisation', () => {
   it('gives the same projection whether a run is one text node or several', () => {
     const single = project(doc(para(text('quick brown', [{ type: 'bold' }]))));

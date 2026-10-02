@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { BrandMark } from '@/components/site/BrandLogo';
 import styles from './ResultArt.module.css';
 
 /**
@@ -24,37 +25,14 @@ export function MockSathiLogo({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * The MS monogram: a broken ring around an M and an S.
+ * The brand mark, at the size the result screens use it.
  *
- * Redrawn as vector geometry rather than embedded as a bitmap, because it is
- * used from 24px in the footer to 32px in the header and has to stay crisp at
- * both. The ring is a stroked circle with two gaps — one where the M's first
- * stroke passes through it, one where the S runs out to the right.
+ * A thin wrapper over `BrandMark` rather than a second drawing of the pencil:
+ * this file used to carry its own MS monogram, and two marks that are supposed
+ * to be the same mark will not stay the same mark.
  */
 export function MockSathiMark({ size = 32 }: { size?: number }) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      width={size}
-      height={size}
-      role="img"
-      aria-label="MockSathi"
-      className={styles.mark}
-    >
-      <rect width="64" height="64" rx="14" fill="#3b5aa0" />
-      {/*
-        The ring is two arcs, not a circle. The gaps are where the letterforms
-        cross it — lower left for the M, lower right for the S — which is what
-        stops the monogram reading as letters dropped onto a badge.
-      */}
-      <g fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M53.6 39.9A23 23 0 1 0 11.2 41.7" />
-        <path d="M13.2 45.2A23 23 0 0 0 51.9 43.5" />
-        <path d="M12.5 45.5V18.5l11.5 17 11.5-17v11" />
-        <path d="M49.5 27c0-4.7-4.6-8.5-10.2-8.5S29 22.3 29 27c0 4.2 3.7 6.4 10.3 8.1S49.5 39.6 49.5 43.8c0 4.7-4.6 8.5-10.2 8.5-4.7 0-8.7-2.6-9.9-6.3" />
-      </g>
-    </svg>
-  );
+  return <BrandMark size={size} tone="dark" className={styles.mark} />;
 }
 
 /** The rotated handwritten asides that sit in the margins of the design. */

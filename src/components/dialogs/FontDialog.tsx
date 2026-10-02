@@ -23,6 +23,7 @@ import {
   setUnderlineStyle,
 } from '@/editor/ribbonActions';
 import { THEME_PALETTE } from '../controls/ColorPicker';
+import { NumberCombo } from '../controls/NumberCombo';
 import { Dialog } from './Dialog';
 import styles from './FontDialog.module.css';
 
@@ -210,24 +211,31 @@ export function FontDialog({ editor, onClose }: FontDialogProps) {
               </select>
             </label>
 
-            <label className={`${styles.stack} ${styles.narrow}`}>
-              <span className={styles.caption}>Size:</span>
-              <input
-                type="number"
-                className={styles.input}
+            {/*
+              The same control the Home tab's Size box uses.
+              
+              It was an `<input type="number" list="…">`, which drew two
+              affordances — the datalist chevron and the number spinner — and,
+              once the spinner was suppressed, left a chevron the browser would
+              not open on a click. `NumberCombo` is a real combo: the field
+              takes a typed size, the arrow is a button, and the list is the
+              same preset ladder. A paper may ask for 15pt, which the list does
+              not offer, so the field has to stay typeable either way.
+            */}
+            <div className={`${styles.stack} ${styles.narrow}`}>
+              <span className={styles.caption} id="font-dialog-size-caption">
+                Size:
+              </span>
+              <NumberCombo
+                label="Size"
+                value={size}
+                options={FONT_SIZES}
                 min={MIN_FONT_SIZE_PT}
                 max={MAX_FONT_SIZE_PT}
-                step={0.5}
-                list="font-dialog-sizes"
-                value={size}
-                onChange={(event) => setSize(Number(event.target.value))}
+                width={90}
+                onChange={setSize}
               />
-              <datalist id="font-dialog-sizes">
-                {FONT_SIZES.map((entry) => (
-                  <option key={entry} value={entry} />
-                ))}
-              </datalist>
-            </label>
+            </div>
           </div>
 
           <div className={styles.row}>

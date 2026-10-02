@@ -1,0 +1,33 @@
+/*
+ * Only what the shells' own `.windowButton` skins do not give a `<button>`.
+ * The look — size, colour, border — stays with each editor's stylesheet, so
+ * this control cannot drift away from the chrome it sits in.
+ */
+.close {
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.close:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+/*
+ * A touch screen. 26x18px is a mouse target; a thumb needs more, and this
+ * particular mistake submits the paper, so the hit area grows without the
+ * button growing — the padding is outside the painted box.
+ */
+@media (pointer: coarse) {
+  .close {
+    outline-offset: 2px;
+    position: relative;
+  }
+
+  .close::after {
+    content: '';
+    position: absolute;
+    inset: -13px -9px;
+  }
+}

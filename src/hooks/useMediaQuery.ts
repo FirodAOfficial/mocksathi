@@ -51,14 +51,31 @@ export function useMediaQuery(query: string): boolean {
 export const PHONE_QUERY = '(max-width: 767px)';
 
 /**
- * Too narrow for the three-column layout, which needs about 1280px: the page is
- * 816px on its own, and the question list and summary want another ~460px
- * between them. Below that the panels become drawers — including on a tablet,
- * where three columns would squeeze the document to a slot.
+ * Too narrow for the three-column layout.
+ *
+ * The two panels ask for 196px and 228px at their narrowest, so below about
+ * 640px the document column is left under 220px and the layout stops being
+ * usable. That — and not a phone — is what makes the panels drawers: a tablet,
+ * a split-screen window and a landscape phone all clear 640px and all get the
+ * columns, because a candidate reading the question list beside the document is
+ * the layout the paper was written for.
  */
-export const PANELS_QUERY = '(max-width: 1279px)';
+export const DRAWER_QUERY = '(max-width: 639px)';
+
+/**
+ * A phone held upright: too narrow for the columns, and rotating fixes it.
+ *
+ * Narrower than `DRAWER_QUERY` demands *and* portrait, which is the one case
+ * where the screen has the pixels the columns need and is simply holding them
+ * the wrong way round. `RotateGate` asks for the rotation rather than quietly
+ * folding the panels away.
+ */
+export const ROTATE_QUERY = '(max-width: 639px) and (orientation: portrait)';
 
 export const useIsPhone = (): boolean => useMediaQuery(PHONE_QUERY);
 
 /** True when the side panels have to be drawers rather than columns. */
-export const useDrawerLayout = (): boolean => useMediaQuery(PANELS_QUERY);
+export const useDrawerLayout = (): boolean => useMediaQuery(DRAWER_QUERY);
+
+/** True when turning the device would give the columns the width they need. */
+export const useShouldRotate = (): boolean => useMediaQuery(ROTATE_QUERY);

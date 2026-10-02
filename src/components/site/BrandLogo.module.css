@@ -5,9 +5,14 @@
   line-height: 1;
 }
 
+/*
+ * Sized by height, not by a square box: the pencil is 54 wide to 92 tall, and
+ * forcing it into a square would letterbox it inside its own footprint and
+ * leave the lockup's gap looking twice as wide as it is.
+ */
 .mark {
-  width: var(--mark-size);
   height: var(--mark-size);
+  width: auto;
   flex: none;
   display: block;
 }
@@ -19,13 +24,14 @@
   white-space: nowrap;
 }
 
-/* On a dark background: white plate, navy glyph, white wordmark. */
-.light .markPlate {
+/* On a dark background. The graphite tip would disappear into navy, so it
+   becomes the lighter blue the wordmark's accent already uses. */
+.light .markBarrel {
   fill: #fff;
 }
 
-.light .markGlyph {
-  fill: #0b1638;
+.light .markTip {
+  fill: #8fb0de;
 }
 
 .light .wordmark {
@@ -36,13 +42,13 @@
   color: #7ba9ff;
 }
 
-/* On a light background: the brand blue plate, white glyph. */
-.dark .markPlate {
-  fill: #1c6ef2;
+/* On a light background: the brand navy barrel over the graphite tip. */
+.dark .markBarrel {
+  fill: #16316b;
 }
 
-.dark .markGlyph {
-  fill: #fff;
+.dark .markTip {
+  fill: #3b4050;
 }
 
 .dark .wordmark {

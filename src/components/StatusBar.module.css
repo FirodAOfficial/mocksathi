@@ -92,3 +92,11 @@
     height: 22px;
   }
 }
+
+/* A landscape phone: shorter still, and every figure kept. */
+@media (max-height: 500px) {
+  .bar {
+    height: 20px;
+    font-size: 11px;
+  }
+}

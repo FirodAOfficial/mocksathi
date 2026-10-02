@@ -101,3 +101,219 @@
 .emptyTitle {
   color: var(--text-strong, #17365d);
 }
+
+/*
+ * The Shapes and Icons galleries.
+ *
+ * Each cell previews the exact SVG it inserts, so what the candidate points at
+ * is what lands in the document. Sized in `style` by the column count, because
+ * the two galleries may not always want the same shape of grid.
+ */
+.artGrid {
+  gap: 2px;
+  padding: 4px;
+  display: grid;
+}
+
+.artCell {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+}
+
+.artCell:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.artPreview {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/*
+ * Pictures opens the platform's file picker, which needs a real `<input>` to
+ * open. Hidden without `display: none`, which would make it unclickable in
+ * some browsers, and kept out of the accessibility tree because the Pictures
+ * button is the control — this is its mechanism.
+ */
+.hiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+/* The Draw tab's pen colours and nib widths. */
+.inkSwatch {
+  cursor: pointer;
+  border: 1px solid var(--control-border);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
+.inkSwatchActive {
+  outline: 2px solid #2e74b5;
+  outline-offset: 1px;
+}
+
+.inkWidth {
+  cursor: pointer;
+  background: none;
+  border: 1px solid #0000;
+  border-radius: 2px;
+  place-items: center;
+  width: 26px;
+  height: 18px;
+  padding: 0;
+  display: grid;
+}
+
+.inkWidth:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.inkWidthActive {
+  background: linear-gradient(180deg, var(--control-checked-top), var(--control-checked-bottom));
+  border-color: var(--control-hover-border);
+}
+
+.inkWidthBar {
+  background: #17365d;
+  border-radius: 999px;
+  width: 16px;
+  display: block;
+}
+
+/*
+ * The Design tab's themes and style sets.
+ *
+ * Each previews as a title over two rules of body text, because that is what
+ * the choice changes — a swatch could not show a heading's font, weight or
+ * capitals.
+ */
+.specimen {
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 54px;
+  height: 40px;
+  padding: 4px;
+  display: flex;
+  overflow: hidden;
+}
+
+.specimenTitle {
+  color: var(--doc-heading-colour);
+  font-family: var(--doc-heading-font);
+  font-weight: var(--doc-heading-weight);
+  text-transform: var(--doc-heading-caps);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.specimenBody {
+  background: #c9d4e0;
+  border-radius: 1px;
+  height: 2px;
+}
+
+.specimenBody:last-child {
+  width: 70%;
+}
+
+.themeGrid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 4px;
+  display: grid;
+}
+
+.themeCell {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  display: flex;
+}
+
+.themeCell:hover {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.themeLabel {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.styleSets {
+  align-items: stretch;
+  gap: 3px;
+  display: flex;
+}
+
+.styleSet {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  padding: 0;
+}
+
+.styleSet:hover {
+  border-color: var(--control-hover-border);
+}
+
+.styleSetActive {
+  border-color: #2e74b5;
+  outline: 1px solid #2e74b5;
+}
+
+.themeSwatch {
+  border: 1px solid #00000026;
+  border-radius: 2px;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+}
+
+.colourList {
+  flex-direction: column;
+  padding: 3px;
+  display: flex;
+}
+
+.colourRow {
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font: inherit;
+  display: flex;
+}
+
+.colourRow:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
