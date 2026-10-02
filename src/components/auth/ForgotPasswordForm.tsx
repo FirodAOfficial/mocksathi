@@ -113,7 +113,7 @@ export function ForgotPasswordForm() {
 
       <div className={loginStyles.formSide}>
         <div className={loginStyles.centerColumn}>
-          <div className={cardStyles.card}>
+          <main id="main" tabIndex={-1} className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
               <BrandMark size={32} tone="dark" />
               <div>
@@ -255,7 +255,7 @@ export function ForgotPasswordForm() {
                 <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
               </span>
             </div>
-          </div>
+          </main>
 
           <SiteFooterCompact />
         </div>

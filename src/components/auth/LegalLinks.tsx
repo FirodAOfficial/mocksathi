@@ -25,6 +25,7 @@ export function LegalLinks({ agreed, onAgreedChange }: LegalLinksProps) {
     <label id="legal-consent-row" className={styles.consentRow}>
       <input
         id="legal-consent-checkbox"
+        name="legal-consent"
         type="checkbox"
         className={styles.consentCheckbox}
         checked={agreed}

@@ -410,7 +410,15 @@ export function PortalShell({
         )}
 
         <div className={styles.main}>
-          <div className={styles.content}>
+          {/*
+            `<main>`, not a `<div>`. Every dashboard route rendered without a
+            main landmark, so a screen-reader user had no way to jump past the
+            topbar and sidebar to the page itself. `id="main"` is the skip
+            link's target (see `app/layout.tsx`), and `tabIndex={-1}` lets the
+            skip link move focus here — a landmark is not focusable otherwise,
+            so the link would move the viewport and leave focus behind.
+          */}
+          <main id="main" tabIndex={-1} className={styles.content}>
             {children}
 
             {/*
@@ -422,7 +430,7 @@ export function PortalShell({
               page's own padding like everything above it, not to bleed past it.
             */}
             <PortalFooter />
-          </div>
+          </main>
         </div>
       </div>
 

@@ -79,7 +79,7 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
         </p>
 
         <div className={styles.centerColumn}>
-          <div className={cardStyles.card}>
+          <main id="main" tabIndex={-1} className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
               <BrandMark size={32} tone="dark" />
               <div>
@@ -98,7 +98,8 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
                 <input
                   id="email"
                   type="email"
-                  autoComplete="email"
+                  name="email"
+              autoComplete="email"
                   required
                   className={cardStyles.input}
                   value={email}
@@ -118,7 +119,8 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
                 <input
                   id="password"
                   type="password"
-                  autoComplete="current-password"
+                  name="password"
+              autoComplete="current-password"
                   required
                   className={cardStyles.input}
                   value={password}
@@ -150,7 +152,7 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
                 <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
               </span>
             </div>
-          </div>
+          </main>
 
           <SiteFooterCompact />
         </div>

@@ -41,6 +41,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         inside the app still reports normally.
       */}
       <body suppressHydrationWarning>
+        {/*
+          The first thing in the tab order, visible only once focused.
+
+          Every route put its navigation — a sidebar of twenty links, or a
+          marketing panel — ahead of its content, so a keyboard user tabbed
+          through all of it on every page before reaching the form or the
+          dashboard. The target is `#main`, which each shell now renders as a
+          focusable `<main>`.
+        */}
+        <a className="skip-link" href="#main">
+          Skip to content
+        </a>
         {children}
         {/*
           Vercel Analytics. It injects its script only on Vercel, so local runs

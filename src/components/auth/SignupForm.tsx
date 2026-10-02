@@ -112,7 +112,7 @@ export function SignupForm({
         </p>
 
         <div className={styles.centerColumn}>
-          <div className={cardStyles.card}>
+          <main id="main" tabIndex={-1} className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
               <BrandMark size={32} tone="dark" />
               <div>
@@ -131,7 +131,8 @@ export function SignupForm({
                 <input
                   id="name"
                   type="text"
-                  autoComplete="name"
+                  name="name"
+              autoComplete="name"
                   required
                   className={cardStyles.input}
                   value={name}
@@ -146,7 +147,8 @@ export function SignupForm({
                 <input
                   id="email"
                   type="email"
-                  autoComplete="email"
+                  name="email"
+              autoComplete="email"
                   required
                   className={cardStyles.input}
                   value={email}
@@ -161,7 +163,8 @@ export function SignupForm({
                 <input
                   id="password"
                   type="password"
-                  autoComplete="new-password"
+                  name="password"
+              autoComplete="new-password"
                   required
                   minLength={MIN_PASSWORD_LENGTH}
                   className={cardStyles.input}
@@ -222,7 +225,7 @@ export function SignupForm({
                 <b>Your data is safe with us.</b> We don&apos;t share your information with third parties.
               </span>
             </div>
-          </div>
+          </main>
 
           <SiteFooterCompact />
         </div>

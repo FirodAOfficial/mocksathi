@@ -70,10 +70,19 @@ export function MarketingPanel() {
       </div>
 
       <div className={styles.main}>
-        <h1 className={styles.headline}>
+        {/*
+          A slogan, not the page's heading.
+
+          This was an `<h1>`, which gave every auth route two of them: this and
+          the card's own title. The card title is what the page is for — "Sign
+          in", "Create your account" — so it keeps the `<h1>` and this becomes
+          a paragraph. Nothing about how it looks changes; `.headline` still
+          styles it.
+        */}
+        <p className={styles.headline}>
           Master Efficiency Tests for Rajasthan&rsquo;s{' '}
           <span className={styles.headlineAccent}>RSSB LDC and High Court Exams</span>
-        </h1>
+        </p>
         <p className={styles.subtitle}>
           Practice real exam-style Word and Excel tasks, review your solutions, and track how you
           improve mock over mock.

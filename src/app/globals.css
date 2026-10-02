@@ -90,6 +90,58 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * The skip link.
+ *
+ * Off-screen rather than `display: none`, because a hidden element is not
+ * focusable and a skip link that cannot be focused is not a skip link. It
+ * comes back on `:focus-visible` as an ordinary button at the top-left.
+ */
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-toast);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--space-4)));
+  transition: transform var(--duration) var(--ease);
+}
+
+/*
+ * `:focus`, not `:focus-visible`.
+ *
+ * A skip link is only ever reached by keyboard, so the distinction buys
+ * nothing — and `:focus-visible` is heuristic: it did not match when focus
+ * arrived programmatically, which left the link focused and still off-screen.
+ * A focused control the user cannot see is worse than no skip link.
+ */
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
+/*
+ * A focused `<main>` is a scroll target, not a control: it takes focus from
+ * the skip link so the next Tab continues inside the page, but it should not
+ * draw a ring around the whole region.
+ */
+main:focus {
+  outline: none;
+}
+
 button {
   font-family: inherit;
   font-size: inherit;
@@ -279,4 +331,71 @@ button {
 .ProseMirror .search-match {
   background: #b5d5ff;
   border-radius: 1px;
+}
+
+/*
+ * The minimum hit area.
+ *
+ * At 375px the public pages had every one of their interactive elements under
+ * 44px — footer links at 13.5px with no padding, mostly. WCAG 2.2 AA (2.5.8)
+ * asks for 24px and the platform guidelines for 44; the audience sits these
+ * mocks on phones, so this takes the larger number.
+ *
+ * The area grows, not the painted box: a pseudo-element centred on the link
+ * extends the target without moving the text or changing the row's look on a
+ * mouse. `position: relative` is set on the link itself so the overlay is
+ * measured against it.
+ *
+ * Scoped to the product's own surfaces. The editors are excluded deliberately
+ * — a Word ribbon with 44px between every control is not a Word ribbon, and
+ * their touch sizing is already handled by `(pointer: coarse)` rules in
+ * `ToolbarButton.module.css`.
+ */
+@media (pointer: coarse) {
+  /*
+   * A form control carries its own height, so it is raised rather than
+   * overlaid: an invisible pseudo-element over a `<select>` would swallow the
+   * taps meant for it.
+   */
+  :is([class*='AuthCard-module'], [class*='Modal-module'], [class*='Screen-module'], [class*='Form-module'])
+    :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+    min-height: var(--target);
+  }
+
+  :is(
+      [class*='SiteFooter-module'],
+      [class*='PortalFooter-module'],
+      [class*='PortalShell-module'],
+      [class*='PublicPageLayout-module'],
+      [class*='AuthCard-module'],
+      [class*='LegalLinks-module'],
+      [class*='MocksTable-module'],
+      [class*='TodaysMock'],
+      [class*='Screen-module']
+    )
+    :is(a, button):not([class*='Toolbar']) {
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  :is(
+      [class*='SiteFooter-module'],
+      [class*='PortalFooter-module'],
+      [class*='PortalShell-module'],
+      [class*='PublicPageLayout-module'],
+      [class*='AuthCard-module'],
+      [class*='LegalLinks-module'],
+      [class*='MocksTable-module'],
+      [class*='TodaysMock'],
+      [class*='Screen-module']
+    )
+    :is(a, button):not([class*='Toolbar'])::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    min-height: var(--target);
+    transform: translateY(-50%);
+  }
 }

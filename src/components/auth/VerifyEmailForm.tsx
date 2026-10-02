@@ -182,7 +182,7 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
 
       <div className={loginStyles.formSide}>
         <div className={loginStyles.centerColumn}>
-          <div className={cardStyles.card}>
+          <main id="main" tabIndex={-1} className={cardStyles.card}>
             <div className={cardStyles.logoRow}>
               <BrandMark size={32} tone="dark" />
               <div>
@@ -272,7 +272,7 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
                 {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
               </button>
             </p>
-          </div>
+          </main>
 
           <SiteFooterCompact />
         </div>
