@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/next';
+import { ThemeScript } from '@/components/site/ThemeScript';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/site/seo';
 import './globals.css';
 
@@ -29,7 +30,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    /*
+      `suppressHydrationWarning` on <html> as well as <body>: `ThemeScript`
+      sets `data-theme` on this element before React hydrates, so the client
+      legitimately sees an attribute the server never rendered.
+    */
+    <html lang="en" suppressHydrationWarning>
       {/*
         Browser extensions decorate <body> before React hydrates — Grammarly
         adds `data-gr-ext-installed` and `data-new-gr-c-s-check-loaded`, and
@@ -41,6 +47,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         inside the app still reports normally.
       */}
       <body suppressHydrationWarning>
+        {/*
+          First, before anything is painted: the stored colour scheme.
+        */}
+        <ThemeScript />
         {/*
           The first thing in the tab order, visible only once focused.
 

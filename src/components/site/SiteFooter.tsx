@@ -2,6 +2,7 @@ import { LegalNavLink } from '@/components/legal/LegalNavLink';
 import { CONTACT, MAIL_URL, SITE_LINKS, WHATSAPP_URL } from '@/site/contact';
 import { BrandLogo } from './BrandLogo';
 import { SocialIcon } from './SocialIcon';
+import { ThemeToggle } from './ThemeToggle';
 import styles from './SiteFooter.module.css';
 
 /**
@@ -76,6 +77,10 @@ export function SiteFooter() {
         <p className={styles.copyright}>
           &copy; {new Date().getFullYear()} MockSathi. All rights reserved.
         </p>
+        {/* In the baseline rather than up with the links: it is a preference,
+            not a destination, and it belongs with the other page-level
+            furniture. */}
+        <ThemeToggle tone="onDark" />
         <p className={styles.madeFor}>Made for exam aspirants in India.</p>
       </div>
     </footer>
@@ -101,6 +106,16 @@ export function SiteFooterCompact() {
   return (
     <footer className={styles.compact}>
       <p className={styles.compactCopyright}>&copy; {new Date().getFullYear()} MockSathi</p>
+
+      {/*
+        Icons only, and before the links rather than after them.
+
+        This footnote is meant to be slim. The links alone already wrap to a
+        second row below about 500px, so a labelled control placed last took it
+        to three rows (120px). Icons beside the copyright share the first row
+        instead, and the whole thing is 94px -- twelve more than without it.
+      */}
+      <ThemeToggle compact />
 
       <nav className={styles.compactLinks} aria-label="Company and policies">
         {SITE_LINKS.map((link) => (

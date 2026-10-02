@@ -1,0 +1,151 @@
+/*
+ * A segmented control, drawn on the radios rather than beside them.
+ *
+ * The inputs keep their place in the layout (they are not `display: none`,
+ * which would take them out of the tab order and out of the accessibility
+ * tree); they are clipped to a point instead, and the `<span>` after each one
+ * is what is painted.
+ */
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+}
+
+.legend {
+  /* Named for a screen reader, not shown: the three labels say it visually.
+     `color: inherit` because a <legend> carries a UA colour of its own, and a
+     clipped element with a stray colour is a contrast failure waiting to be
+     reported the day someone unclips it. */
+  color: inherit;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.option {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.option:hover .segment {
+  color: var(--text);
+}
+
+.input:checked + .segment {
+  background: var(--brand-soft);
+  color: var(--brand-on-soft);
+}
+
+/*
+ * The ring has to be drawn on the painted segment, because the input it
+ * actually belongs to is one pixel wide and invisible.
+ */
+.input:focus-visible + .segment {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+/*
+ * A thumb needs 44px. The segments are short rows of 12px text, so the hit
+ * area is grown around each one instead of the control being made four times
+ * taller than the footer line it sits on.
+ */
+@media (pointer: coarse) {
+  .option {
+    position: relative;
+  }
+
+  .option::after {
+    content: '';
+    position: absolute;
+    inset: calc((var(--target) - 100%) / -2) 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}
+
+/*
+ * Icons only. The label is clipped rather than removed, so it still provides
+ * each radio's accessible name.
+ */
+.compact .label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.compact .segment {
+  padding: var(--space-1) var(--space-2);
+}
+
+/*
+ * On the navy footer the control is a light object on a dark band, so it takes
+ * that surface's own palette rather than the page's.
+ */
+.onDark {
+  border-color: rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 6%);
+}
+
+.onDark .segment {
+  color: var(--footer-text-subtle);
+}
+
+.onDark .option:hover .segment {
+  color: var(--footer-link);
+}
+
+.onDark .input:checked + .segment {
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}
+
+.onDark .input:focus-visible + .segment {
+  outline-color: var(--footer-accent);
+}

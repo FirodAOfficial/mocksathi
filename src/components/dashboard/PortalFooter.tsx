@@ -1,4 +1,5 @@
 import { LegalNavLink } from '@/components/legal/LegalNavLink';
+import { ThemeToggle } from '@/components/site/ThemeToggle';
 import { SITE_LINKS } from '@/site/contact';
 import styles from './PortalFooter.module.css';
 
@@ -24,6 +25,8 @@ export function PortalFooter() {
           </LegalNavLink>
         ))}
       </nav>
+
+      <ThemeToggle />
     </footer>
   );
 }

@@ -37,7 +37,15 @@
   padding: 14px 12px;
   display: flex;
   flex-direction: column;
-  color: #475569;
+  /*
+   * The sidebar's inherited text colour, which every `.navItem` takes with
+   * `color: inherit`. It was #475569: fine on the white sidebar, 2.36:1 once
+   * the sidebar's own background flipped to the dark surface, which made the
+   * portal's primary navigation unreadable in dark mode. The token moves with
+   * the surface; on white it is 7.4:1 against the old value's 7.6:1, so light
+   * mode is unchanged to the eye.
+   */
+  color: var(--text-muted);
   overflow-y: auto;
 }
 
