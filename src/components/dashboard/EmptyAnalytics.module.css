@@ -21,14 +21,14 @@
 }
 
 .title {
-  font-size: 14.5px;
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--db-text);
   margin: 0;
 }
 
 .body {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--db-text-muted);
   line-height: 1.6;
   margin: 0;

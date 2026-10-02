@@ -15,7 +15,7 @@
   background: var(--db-bg);
   color: var(--db-text);
   font-family: var(--db-font, 'Inter', system-ui, -apple-system, sans-serif);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 /* Everything under the topbar: the sidebar and the main content, side by
@@ -104,7 +104,7 @@
 .sidebarSpacious .navButton {
   padding: 14px 14px;
   gap: 14px;
-  font-size: 15px;
+  font-size: var(--text-base);
   margin-bottom: 6px;
   border-radius: 10px;
 }
@@ -125,7 +125,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   color: #fff;
   margin-bottom: 4px;
@@ -136,7 +136,7 @@
 }
 
 .planCardDetail {
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: #93a6d6;
   margin-bottom: 12px;
 }
@@ -156,7 +156,7 @@
 }
 
 .planUsageLabel {
-  font-size: 10.5px;
+  font-size: var(--text-xs);
   color: #93a6d6;
   margin-bottom: 12px;
 }
@@ -170,7 +170,7 @@
   border-radius: 8px;
   background: #f5b942;
   color: #3a2a06;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-decoration: none;
 }
@@ -186,7 +186,7 @@
 }
 
 .navSectionTitle {
-  font-size: 9.5px;
+  font-size: var(--text-xs);
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--db-text-label);
@@ -201,7 +201,7 @@
   border-radius: 8px;
   color: inherit;
   text-decoration: none;
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .navButton {
@@ -234,7 +234,7 @@
   margin-left: auto;
   background: var(--db-accent);
   color: #fff;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 700;
   width: 17px;
   height: 17px;
@@ -311,7 +311,7 @@
   padding: 7px 11px;
   border: 1px solid var(--db-border);
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--db-text);
   background: none;
@@ -333,7 +333,7 @@ a.examPickerButton:hover {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: var(--db-text-muted);
   flex-wrap: wrap;
 }
@@ -360,7 +360,7 @@ a.examPickerButton:hover {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--db-accent);
 }
@@ -400,7 +400,7 @@ a.examPickerButton:hover {
   border-radius: 50%;
   background: #dc2626;
   color: #fff;
-  font-size: 9px;
+  font-size: var(--text-xs);
   font-weight: 700;
   display: grid;
   place-items: center;
@@ -462,7 +462,7 @@ a.examPickerButton:hover {
   width: 100%;
   text-align: left;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--db-text);
   text-decoration: none;
   cursor: pointer;
@@ -489,7 +489,7 @@ a.examPickerButton:hover {
   color: var(--db-accent);
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: var(--text-xs);
   font-weight: 700;
   flex: none;
 }
@@ -504,14 +504,14 @@ a.examPickerButton:hover {
 }
 
 .userName {
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--db-text);
   line-height: 1.1;
 }
 
 .userRole {
-  font-size: 10.5px;
+  font-size: var(--text-xs);
   color: var(--db-text-faint);
 }
 

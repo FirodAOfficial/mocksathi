@@ -70,7 +70,18 @@ export function PortalShell({
   // shown again on the next full load if still dismissed without picking
   // one, but not re-popped by every client-side navigation within this
   // session.
-  const [examModalOpen, setExamModalOpen] = useState(() => availableExams.length > 0);
+  //
+  // Gated on the account being new, not merely on it having no exam.
+  //
+  // This used to open whenever `availableExams` was non-empty, which is true
+  // for anyone who has not enrolled — so a candidate who had declined it
+  // yesterday was asked again today, over the first paint, on a phone. It now
+  // asks a genuinely new account once: `tourCompletedAt` is null only before
+  // the first visit has been completed. Someone who skips it still has
+  // "+ Add your exam" in the topbar, so declining is not a dead end.
+  const [examModalOpen, setExamModalOpen] = useState(
+    () => availableExams.length > 0 && !hasCompletedTour,
+  );
   // Doesn't auto-start alongside the exam prompt — two modals stacked on a
   // brand-new account's very first load would be a lot at once. It opens
   // right after that one closes instead (`handleExamModalClose`) if it still

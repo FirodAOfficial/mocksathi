@@ -27,14 +27,14 @@
 }
 
 .title {
-  font-size: 14px;
+  font-size: var(--text-base);
   font-weight: 700;
   color: #4a3610;
   margin: 0;
 }
 
 .detail {
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: #8a6a20;
   margin: 3px 0 0;
 }
@@ -45,7 +45,7 @@
   gap: 6px;
   background: #f5b942;
   color: #3a2a06;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   padding: 10px 18px;
   border-radius: 9px;

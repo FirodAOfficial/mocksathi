@@ -10,7 +10,7 @@
   border: 1px solid var(--db-border);
   background: var(--db-surface);
   color: var(--db-text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -32,14 +32,14 @@
 }
 
 .title {
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   font-weight: 700;
   color: #991b1b;
   margin: 0;
 }
 
 .detail {
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   line-height: 1.55;
   color: #7f1d1d;
   margin: 0;
@@ -52,7 +52,7 @@
 }
 
 .label {
-  font-size: 11.5px;
+  font-size: var(--text-xs);
   color: #7f1d1d;
 }
 
@@ -62,7 +62,7 @@
   border-radius: 8px;
   padding: 0 10px;
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: var(--db-text);
   background: #fff;
 }
@@ -87,7 +87,7 @@
   border: none;
   background: #dc2626;
   color: #fff;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;
 }
@@ -108,7 +108,7 @@
   border: 1px solid var(--db-border);
   background: var(--db-surface);
   color: var(--db-text);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -124,7 +124,7 @@
   border: 1px solid #fbdcdc;
   border-radius: 8px;
   padding: 9px 12px;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   line-height: 1.5;
   margin: 0;
 }

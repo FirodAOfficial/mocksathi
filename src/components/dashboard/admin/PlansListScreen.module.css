@@ -13,14 +13,14 @@
 }
 
 .title {
-  font-size: 19px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--db-text);
   margin: 0;
 }
 
 .subtitle {
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: var(--db-text-muted);
   margin: 0;
 }
@@ -33,7 +33,7 @@
   border-radius: 9px;
   background: var(--db-accent);
   color: #fff;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   text-decoration: none;
   flex: none;
@@ -57,7 +57,7 @@
   grid-template-columns: 1.4fr 90px 110px 100px 1fr 60px;
   align-items: center;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: #334155;
   padding: 11px 0;
   border-bottom: 1px solid #f8fafc;
@@ -69,7 +69,7 @@
 
 .headRow {
   composes: row;
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--db-text-faint);
@@ -97,7 +97,7 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -140,5 +140,5 @@
   padding: 32px 0;
   text-align: center;
   color: var(--db-text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }

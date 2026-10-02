@@ -5,14 +5,14 @@
 }
 
 .title {
-  font-size: 19px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--db-text);
   margin: 0;
 }
 
 .subtitle {
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: var(--db-text-muted);
   margin: 0;
 }

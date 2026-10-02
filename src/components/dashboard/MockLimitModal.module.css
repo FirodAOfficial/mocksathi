@@ -31,7 +31,7 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 800;
   color: var(--db-text);
   margin: 0;
@@ -46,7 +46,7 @@
   background: var(--db-surface);
   color: var(--db-text-muted);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1;
 }
 
@@ -56,7 +56,7 @@
 }
 
 .body {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--db-text-muted);
   line-height: 1.6;
   margin: 8px 0 18px;
@@ -75,7 +75,7 @@
   border: none;
   background: none;
   color: var(--db-text-muted);
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -92,7 +92,7 @@
   border: none;
   background: var(--db-accent);
   color: #fff;
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
