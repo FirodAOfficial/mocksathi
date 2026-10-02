@@ -1,7 +1,7 @@
 'use client';
 
 import type { Editor } from '@tiptap/react';
-import { useRef, type ChangeEvent } from 'react';
+import { useRef, type ChangeEvent, type CSSProperties } from 'react';
 import {
   FONT_FAMILIES,
   changeIndent,
@@ -21,7 +21,15 @@ import {
   PICTURE_TYPES,
 } from '@/editor/insertActions';
 import { ICONS, SHAPES, type VectorArt } from '@/editor/vectorArt';
+import { BLOCK_FORMAT_TYPES } from '@/editor/extensions/BlockFormat';
 import { INK_COLOURS, PEN_WIDTHS } from '@/editor/ink';
+import {
+  STYLE_SETS,
+  THEMES,
+  THEME_COLOURS,
+  headingStyleVars,
+  type HeadingStyle,
+} from '@/editor/themes';
 import {
   MARGIN_PRESETS,
   PAPER_SIZES,
@@ -64,6 +72,9 @@ const NO_SERVICE = 'this editor talks to no outside service';
 /** Needs a whole subsystem that does not exist in this build. */
 const NO_NODE = 'this build has no node type for it';
 
+/** Acts on a floating object; a picture here is a block in the text flow. */
+const NO_FLOAT = 'pictures sit in the text flow here, so there is nothing to float';
+
 const SYMBOLS = [
   '©', '®', '™', '°', '±', '×', '÷', '≠', '≤', '≥',
   '–', '—', '“', '”', '‘', '’', '…', '•', '§', '¶',
@@ -80,10 +91,12 @@ const toCm = (pixels: number | null | undefined): number =>
 
 const fromCm = (cm: number): number | null => (cm === 0 ? null : Math.round((cm / 2.54) * 96));
 
-const SPACING_OPTIONS = [0, 6, 12, 18, 24].map((points) => ({
-  value: points,
-  label: `${points} pt`,
-}));
+/** The presets the spacing combos offer; any value in range may be typed. */
+const SPACING_POINTS = [0, 6, 8, 10, 12, 18, 24] as const;
+
+/** Paragraph spacing is stored in pixels; Word states it in points. */
+const toPt = (pixels: number | null | undefined): number =>
+  pixels == null ? 0 : Math.round((pixels * 72) / 96 * 2) / 2;
 
 /* ---------------------------------------------------------------------- */
 
@@ -674,43 +687,186 @@ export function DesignTab({ editor }: { editor: Editor }) {
   const setWatermark = useUiStore((state) => state.setWatermark);
   const pageBorder = useUiStore((state) => state.pageBorder);
   const togglePageBorder = useUiStore((state) => state.togglePageBorder);
+  const heading = useUiStore((state) => state.heading);
+  const setHeading = useUiStore((state) => state.setHeading);
 
   return (
     <>
       <RibbonGroup label="Document Formatting">
-        <RibbonRow>
-          <SelectMenu
-            label="Fonts"
-            width={150}
-            value={null}
-            placeholder="Fonts"
-            options={FONT_FAMILIES.map((family) => ({
-              value: family,
-              label: family,
-              optionStyle: { fontFamily: family },
-            }))}
-            onChange={(family) => setDocumentFont(editor, family)}
-          />
-          <SelectMenu
-            label="Paragraph Spacing"
-            width={150}
-            value={null}
-            placeholder="Paragraph Spacing"
-            options={[
-              { value: 'none', label: 'No Paragraph Space' },
-              { value: 'compact', label: 'Compact' },
-              { value: 'open', label: 'Open' },
-              { value: 'relaxed', label: 'Relaxed' },
-            ]}
-            onChange={(preset) => {
-              const points = { none: 0, compact: 4, open: 10, relaxed: 18 }[preset] ?? 0;
-              setParagraphSpacing(editor, {
-                before: points === 0 ? null : pt(points),
-                after: points === 0 ? null : pt(points),
-              });
-            }}
-          />
-        </RibbonRow>
+        <Popover
+          trigger={({ open, toggle, id, controls }) => (
+            <button
+              id={id}
+              type="button"
+              data-popover-trigger
+              className={`${styles.largeMenuButton} ${open ? styles.largeMenuButtonOpen : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={open}
+              aria-controls={open ? controls : undefined}
+              title="Themes"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={toggle}
+            >
+              <Icon name="theme" size={24} />
+              <span className={styles.largeCaption}>Themes</span>
+              <Icon name="chevron-down" size={12} />
+            </button>
+          )}
+        >
+          {({ close }) => (
+            <div className={styles.themeGrid}>
+              {THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  role="menuitem"
+                  className={styles.themeCell}
+                  title={theme.label}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    // A theme is both: the body font is document content, the
+                    // heading look is page decoration.
+                    setDocumentFont(editor, theme.bodyFont);
+                    setHeading(theme.heading);
+                    close();
+                  }}
+                >
+                  <HeadingSpecimen style={theme.heading} />
+                  <span className={styles.themeLabel}>{theme.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Popover>
+
+        {/*
+          Word's style-set gallery: the same body text under a different
+          heading. A swatch could not show that, which is why each one previews
+          as a title over a line of text.
+        */}
+        <div className={styles.styleSets} role="radiogroup" aria-label="Style sets">
+          {STYLE_SETS.map((set) => {
+            const current = set.heading.colour === heading.colour && set.heading.font === heading.font;
+            return (
+              <button
+                key={set.id}
+                type="button"
+                role="radio"
+                aria-checked={current}
+                className={`${styles.styleSet} ${current ? styles.styleSetActive : ''}`}
+                title={set.label}
+                aria-label={set.label}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setHeading(set.heading)}
+              >
+                <HeadingSpecimen style={set.heading} />
+              </button>
+            );
+          })}
+        </div>
+
+        <RibbonColumn>
+          <RibbonRow>
+            <Popover
+              align="end"
+              trigger={({ open, toggle, id, controls }) => (
+                <button
+                  id={id}
+                  type="button"
+                  data-popover-trigger
+                  className={`${styles.menuButton} ${open ? styles.menuButtonOpen : ''}`}
+                  aria-haspopup="menu"
+                  aria-expanded={open}
+                  aria-controls={open ? controls : undefined}
+                  title="Colours"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={toggle}
+                >
+                  <span className={styles.themeSwatch} style={{ background: heading.colour }} />
+                  Colours
+                  <Icon name="chevron-down" size={12} />
+                </button>
+              )}
+            >
+              {({ close }) => (
+                <div className={styles.colourList}>
+                  {THEME_COLOURS.map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={entry.colour === heading.colour}
+                      className={styles.colourRow}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setHeading({ colour: entry.colour });
+                        close();
+                      }}
+                    >
+                      <span className={styles.themeSwatch} style={{ background: entry.colour }} />
+                      {entry.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Popover>
+
+            <SelectMenu
+              label="Fonts"
+              width={132}
+              value={null}
+              placeholder="Fonts"
+              options={FONT_FAMILIES.map((family) => ({
+                value: family,
+                label: family,
+                optionStyle: { fontFamily: family },
+              }))}
+              onChange={(family) => {
+                setDocumentFont(editor, family);
+                setHeading({ font: family });
+              }}
+            />
+          </RibbonRow>
+
+          <RibbonRow>
+            <SelectMenu
+              label="Paragraph Spacing"
+              width={132}
+              value={null}
+              placeholder="Paragraph Spacing"
+              options={[
+                { value: 'none', label: 'No Paragraph Space' },
+                { value: 'compact', label: 'Compact' },
+                { value: 'open', label: 'Open' },
+                { value: 'relaxed', label: 'Relaxed' },
+              ]}
+              onChange={(preset) => {
+                const points = { none: 0, compact: 4, open: 10, relaxed: 18 }[preset] ?? 0;
+                setParagraphSpacing(editor, {
+                  before: points === 0 ? null : pt(points),
+                  after: points === 0 ? null : pt(points),
+                });
+              }}
+            />
+            <ToolbarButton
+              label="Effects"
+              icon="shapes"
+              size="wide"
+              disabled
+              disabledReason="theme effects style shapes and SmartArt, which this build has none of"
+            />
+          </RibbonRow>
+
+          <RibbonRow>
+            <ToolbarButton
+              label="Set as Default"
+              icon="check"
+              size="wide"
+              disabled
+              disabledReason="a paper opens from its own template, so there is no default to set"
+            />
+          </RibbonRow>
+        </RibbonColumn>
       </RibbonGroup>
 
       <RibbonGroup label="Page Background">
@@ -746,7 +902,35 @@ export function DesignTab({ editor }: { editor: Editor }) {
   );
 }
 
+/**
+ * A theme's or style set's heading, drawn as Word draws it in the gallery.
+ *
+ * Built from `headingStyleVars`, the same function the page uses, so a preview
+ * cannot drift from what picking it actually does.
+ */
+function HeadingSpecimen({ style }: { style: HeadingStyle }) {
+  return (
+    <span className={styles.specimen} style={headingStyleVars(style) as CSSProperties} aria-hidden="true">
+      <span className={styles.specimenTitle}>Title</span>
+      <span className={styles.specimenBody} />
+      <span className={styles.specimenBody} />
+    </span>
+  );
+}
+
 /* ---------------------------------------------------------------------- */
+
+/** The attributes of the nearest block `BlockFormat` styles, from the cursor. */
+function currentBlockAttrs(editor: Editor): Record<string, unknown> {
+  const { $from } = editor.state.selection;
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const node = $from.node(depth);
+    if ((BLOCK_FORMAT_TYPES as readonly string[]).includes(node.type.name)) return node.attrs;
+  }
+
+  return {};
+}
 
 export function LayoutTab({ editor }: { editor: Editor }) {
   const orientation = useUiStore((state) => state.orientation);
@@ -758,7 +942,16 @@ export function LayoutTab({ editor }: { editor: Editor }) {
   const columns = useUiStore((state) => state.columns);
   const setColumns = useUiStore((state) => state.setColumns);
 
-  const attrs = editor.getAttributes('paragraph');
+  /*
+   * The block the cursor is in, not whatever `paragraph` happens to say.
+   *
+   * These boxes read `getAttributes('paragraph')`, which returns nothing when
+   * the cursor is in a heading or a quotation — so setting 18pt of space
+   * before a heading applied it to the document and left the box reading 0.
+   * Every type `BlockFormat` styles can carry these attributes, so the one
+   * under the cursor is the one to show.
+   */
+  const attrs = currentBlockAttrs(editor);
 
   return (
     <>
@@ -808,12 +1001,17 @@ export function LayoutTab({ editor }: { editor: Editor }) {
             ]}
             onChange={(value) => setColumns(value as 1 | 2 | 3)}
           />
+          <ToolbarButton label="Breaks" icon="page" size="wide" disabled disabledReason={NO_PAGES} />
           <ToolbarButton
-            label="Breaks"
-            icon="page"
+            label="Line Numbers"
+            icon="line-numbers"
             size="wide"
             disabled
-            disabledReason="the document is one continuous sheet, not paginated"
+            /* Word numbers laid-out lines, not paragraphs. Nothing in CSS can
+               count where the text wrapped, so this needs the same line boxes
+               pagination needs — numbering paragraphs instead would be a
+               different feature wearing this one's name. */
+            disabledReason="numbering laid-out lines needs the line boxes pagination would provide"
           />
           <ToolbarButton
             label="Hyphenation"
@@ -856,44 +1054,61 @@ export function LayoutTab({ editor }: { editor: Editor }) {
         </RibbonColumn>
 
         <RibbonColumn>
+          {/*
+            Word shows the paragraph's own spacing in these boxes, and these
+            did not: they were pickers with a placeholder, so the candidate
+            could set a value and had no way to read one back. Combos, like the
+            indent boxes beside them, which also makes a spacing the list does
+            not offer typeable.
+          */}
           <RibbonRow>
             <span className={styles.fieldLabel}>Before</span>
-            <SelectMenu
+            <NumberCombo
               label="Space Before"
               width={78}
-              value={null}
-              placeholder="Spacing"
-              options={SPACING_OPTIONS}
+              value={toPt(attrs.spaceBefore as number | null)}
+              options={SPACING_POINTS}
+              min={0}
+              max={200}
               onChange={(points) => setParagraphSpacing(editor, { before: points === 0 ? null : pt(points) })}
             />
           </RibbonRow>
           <RibbonRow>
             <span className={styles.fieldLabel}>After</span>
-            <SelectMenu
+            <NumberCombo
               label="Space After"
               width={78}
-              value={null}
-              placeholder="Spacing"
-              options={SPACING_OPTIONS}
+              value={toPt(attrs.spaceAfter as number | null)}
+              options={SPACING_POINTS}
+              min={0}
+              max={200}
               onChange={(points) => setParagraphSpacing(editor, { after: points === 0 ? null : pt(points) })}
             />
           </RibbonRow>
         </RibbonColumn>
       </RibbonGroup>
 
+      {/*
+        Every command here acts on a floating object — one positioned over the
+        text rather than flowing in it. A picture in this build is a block in
+        the flow, so there is nothing to position, wrap round, stack or rotate.
+        That is one reason, said once.
+      */}
       <RibbonGroup label="Arrange">
         <RibbonColumn>
           <RibbonRow>
-            <ToolbarButton label="Position" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Wrap Text" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Position" icon="picture" size="wide" disabled disabledReason={NO_FLOAT} />
+            <ToolbarButton label="Wrap Text" icon="page" size="wide" disabled disabledReason={NO_FLOAT} />
+            <ToolbarButton label="Selection Pane" icon="select-all" size="wide" disabled disabledReason={NO_FLOAT} />
           </RibbonRow>
           <RibbonRow>
-            <ToolbarButton label="Bring Forward" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
-            <ToolbarButton label="Send Backward" icon="page" size="wide"
-            disabled disabledReason={NO_NODE} />
+            <ToolbarButton label="Bring Forward" icon="shapes" size="wide" disabled disabledReason={NO_FLOAT} />
+            <ToolbarButton label="Send Backward" icon="shapes" size="wide" disabled disabledReason={NO_FLOAT} />
+            <ToolbarButton label="Align" icon="align-objects" size="wide" disabled disabledReason={NO_FLOAT} />
+          </RibbonRow>
+          <RibbonRow>
+            <ToolbarButton label="Group" icon="group" size="wide" disabled disabledReason={NO_FLOAT} />
+            <ToolbarButton label="Rotate" icon="rotate" size="wide" disabled disabledReason={NO_FLOAT} />
           </RibbonRow>
         </RibbonColumn>
       </RibbonGroup>

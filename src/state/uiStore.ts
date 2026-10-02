@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { INK_COLOURS, defaultWidthFor, type InkTool } from '@/editor/ink';
+import { DEFAULT_HEADING_STYLE, type HeadingStyle } from '@/editor/themes';
 
 /**
  * Chrome state that is not part of the document.
@@ -102,6 +103,15 @@ interface UiState {
   inkColour: string;
   inkWidth: number;
 
+  /*
+   * How the Design tab draws headings.
+   *
+   * Presentation, like the page colour and the watermark beside it: it is
+   * applied to the page as CSS custom properties and writes nothing into the
+   * document, so no theme can move a character offset the marker reads.
+   */
+  heading: HeadingStyle;
+
   setActiveTab: (tab: RibbonTabId) => void;
   setZoom: (zoom: number) => void;
   /** The canvas fitting the sheet to its column — not a choice the candidate made. */
@@ -124,6 +134,8 @@ interface UiState {
   setInkTool: (tool: InkTool | null) => void;
   setInkColour: (colour: string) => void;
   setInkWidth: (width: number) => void;
+  /** Merged, so Colours can change the colour without naming the font. */
+  setHeading: (style: Partial<HeadingStyle>) => void;
 }
 
 const clampZoom = (value: number): number =>
@@ -150,6 +162,7 @@ export const useUiStore = create<UiState>((set) => ({
   inkTool: null,
   inkColour: INK_COLOURS[0].value,
   inkWidth: defaultWidthFor('pen'),
+  heading: DEFAULT_HEADING_STYLE,
 
   setActiveTab: (activeTab) => set({ activeTab }),
   setZoom: (zoom) => set({ zoom: clampZoom(zoom), zoomChosen: true }),
@@ -184,6 +197,7 @@ export const useUiStore = create<UiState>((set) => ({
   setInkTool: (inkTool) => set({ inkTool, inkWidth: inkTool ? defaultWidthFor(inkTool) : defaultWidthFor('pen') }),
   setInkColour: (inkColour) => set({ inkColour }),
   setInkWidth: (inkWidth) => set({ inkWidth }),
+  setHeading: (style) => set((state) => ({ heading: { ...state.heading, ...style } })),
 }));
 
 /** Page box in CSS pixels for the chosen paper and orientation. */

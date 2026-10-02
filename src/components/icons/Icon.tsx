@@ -50,6 +50,12 @@ export type IconName =
   | 'eraser'
   | 'draw-canvas'
   | 'replay'
+  | 'theme'
+  | 'check'
+  | 'line-numbers'
+  | 'align-objects'
+  | 'group'
+  | 'rotate'
   | 'error'
   | 'warning';
 
@@ -236,6 +242,43 @@ const PATHS: Record<IconName, JSX.Element> = {
       <path d="M10 3.5a6.5 6.5 0 1 1-6.3 8" />
       <path d="M3.5 3.5v4h4" />
       <path d="m8.5 8 4 2-4 2z" />
+    </g>
+  ),
+  theme: (
+    <g {...STROKE}>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="1.5" />
+      <path d="M2.5 9h15M8 9v7.5" />
+    </g>
+  ),
+  check: (
+    <g {...STROKE}>
+      <circle cx="10" cy="10" r="7" />
+      <path d="m6.8 10.2 2.2 2.3 4.2-4.8" />
+    </g>
+  ),
+  'line-numbers': (
+    <g {...STROKE}>
+      <path d="M8 5h9M8 10h9M8 15h9" />
+      <path d="M3.4 3.6h1V7M3 12.2a1.4 1.4 0 1 1 2.4 1L3 16.4h2.6" />
+    </g>
+  ),
+  'align-objects': (
+    <g {...STROKE}>
+      <path d="M3 3.5v13" />
+      <rect x="6" y="5" width="11" height="3.6" rx="0.8" />
+      <rect x="6" y="11.4" width="7" height="3.6" rx="0.8" />
+    </g>
+  ),
+  group: (
+    <g {...STROKE}>
+      <rect x="2.5" y="2.5" width="8" height="8" rx="1" />
+      <rect x="9.5" y="9.5" width="8" height="8" rx="1" />
+    </g>
+  ),
+  rotate: (
+    <g {...STROKE}>
+      <path d="M16.5 10a6.5 6.5 0 1 1-2.1-4.8" />
+      <path d="M16.8 2.8v3.6h-3.6" />
     </g>
   ),
   picture: (

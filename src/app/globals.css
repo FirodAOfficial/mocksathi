@@ -95,11 +95,18 @@ button {
   margin: 0 0 10px;
 }
 
+/*
+ * Headings take their look from the page's custom properties, which the Design
+ * tab sets (`src/editor/themes.ts`). The fallbacks are Word's defaults, so a
+ * page that has never been themed — and the print stylesheet, and any heading
+ * rendered outside the canvas — looks exactly as it did.
+ */
 .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
-  color: #365f91;
+  color: var(--doc-heading-colour, #365f91);
   margin: 0 0 4px;
-  font-family: Cambria, Georgia, serif;
-  font-weight: 400;
+  font-family: var(--doc-heading-font, Cambria, Georgia, serif);
+  font-weight: var(--doc-heading-weight, 400);
+  text-transform: var(--doc-heading-caps, none);
 }
 
 .ProseMirror h1 {

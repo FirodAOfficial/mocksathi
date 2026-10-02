@@ -197,3 +197,123 @@
   width: 16px;
   display: block;
 }
+
+/*
+ * The Design tab's themes and style sets.
+ *
+ * Each previews as a title over two rules of body text, because that is what
+ * the choice changes — a swatch could not show a heading's font, weight or
+ * capitals.
+ */
+.specimen {
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  width: 54px;
+  height: 40px;
+  padding: 4px;
+  display: flex;
+  overflow: hidden;
+}
+
+.specimenTitle {
+  color: var(--doc-heading-colour);
+  font-family: var(--doc-heading-font);
+  font-weight: var(--doc-heading-weight);
+  text-transform: var(--doc-heading-caps);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.specimenBody {
+  background: #c9d4e0;
+  border-radius: 1px;
+  height: 2px;
+}
+
+.specimenBody:last-child {
+  width: 70%;
+}
+
+.themeGrid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 4px;
+  display: grid;
+}
+
+.themeCell {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  display: flex;
+}
+
+.themeCell:hover {
+  border-color: var(--control-hover-border);
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}
+
+.themeLabel {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.styleSets {
+  align-items: stretch;
+  gap: 3px;
+  display: flex;
+}
+
+.styleSet {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--control-border);
+  border-radius: 2px;
+  padding: 0;
+}
+
+.styleSet:hover {
+  border-color: var(--control-hover-border);
+}
+
+.styleSetActive {
+  border-color: #2e74b5;
+  outline: 1px solid #2e74b5;
+}
+
+.themeSwatch {
+  border: 1px solid #00000026;
+  border-radius: 2px;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+}
+
+.colourList {
+  flex-direction: column;
+  padding: 3px;
+  display: flex;
+}
+
+.colourRow {
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font: inherit;
+  display: flex;
+}
+
+.colourRow:hover {
+  background: linear-gradient(180deg, var(--control-hover-top), var(--control-hover-bottom));
+}

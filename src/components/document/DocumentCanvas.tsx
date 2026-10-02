@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, type Editor } from '@tiptap/react';
 import { useIsPhone } from '@/hooks/useMediaQuery';
+import { headingStyleVars } from '@/editor/themes';
 import { MARGIN_PRESETS, pageSize, useUiStore } from '@/state/uiStore';
 import { Ruler } from './Ruler';
 import styles from './DocumentCanvas.module.css';
@@ -34,6 +35,7 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
   const columns = useUiStore((state) => state.columns);
   const pageColor = useUiStore((state) => state.pageColor);
   const watermark = useUiStore((state) => state.watermark);
+  const heading = useUiStore((state) => state.heading);
   const pageBorder = useUiStore((state) => state.pageBorder);
   const viewMode = useUiStore((state) => state.viewMode);
 
@@ -165,6 +167,13 @@ export function DocumentCanvas({ editor, onPageCountChange }: DocumentCanvasProp
                 paddingLeft: margins.left,
                 transform: `scale(${zoom})`,
                 ...(pageColor ? { background: pageColor } : {}),
+                /*
+                 * The Design tab's heading look, as custom properties the
+                 * stylesheet reads. On the page rather than on the document,
+                 * because it is page decoration: the ProseMirror document is
+                 * untouched, so nothing here can shift what the marker reads.
+                 */
+                ...headingStyleVars(heading),
               }}
               onMouseDown={placeCaretFromPageClick}
             >

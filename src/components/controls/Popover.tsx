@@ -49,6 +49,8 @@ function portalHost(anchor: HTMLElement | null): HTMLElement {
 export function Popover({ trigger, children, align = 'start', className }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<CSSProperties | null>(null);
+  /** Resolved when the menu opens — reading a ref during render is not allowed. */
+  const [host, setHost] = useState<HTMLElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerId = useId();
@@ -68,6 +70,10 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
   // resize because fixed positioning does not follow the anchor on its own.
   useEffect(() => {
     if (!open) return;
+
+    // Resolved here rather than at render: an effect is where a ref may be
+    // read, and the panel does not paint until `position` is measured anyway.
+    setHost(portalHost(containerRef.current));
 
     const measure = (): void => {
       const anchor = containerRef.current?.querySelector<HTMLElement>('[data-popover-trigger]');
@@ -191,7 +197,7 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
             >
               {children({ close })}
             </div>,
-            portalHost(containerRef.current),
+            host ?? document.body,
           )
         : null}
     </div>
