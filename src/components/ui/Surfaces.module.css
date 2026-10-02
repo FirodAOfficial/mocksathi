@@ -1,0 +1,170 @@
+/*
+ * Card, Badge, Skeleton and EmptyState.
+ *
+ * One stylesheet because they are one family: a card holds the empty state, a
+ * badge sits in a card's header, a skeleton stands in for a card's contents
+ * while it loads. Splitting them into four files would mean four copies of the
+ * same radius and border decisions.
+ */
+
+/* ---- Card ------------------------------------------------------------ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+
+/*
+ * Raised, for a card that genuinely floats — a popover, a dialog's body. A
+ * shadow on a card that is simply sitting in the page is decoration, and the
+ * border already says where the card ends.
+ */
+.cardRaised {
+  box-shadow: var(--shadow-md);
+}
+
+.cardFlush {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ---- Badge ----------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badgeNeutral {
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+}
+
+.badgeBrand {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.badgeSuccess {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badgeWarning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.badgeDanger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ---- Skeleton -------------------------------------------------------- */
+
+/*
+ * A shape where the content will be, not a spinner.
+ *
+ * A spinner says "something is happening somewhere". A skeleton says "a
+ * paragraph is about to appear here, this wide", which is also what stops the
+ * page jumping when the real content lands.
+ */
+.skeleton {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--surface-sunken) 0%,
+    var(--border) 50%,
+    var(--surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonText {
+  height: 1em;
+  /* The last line of a paragraph is never full width. */
+  margin-bottom: var(--space-2);
+}
+
+.skeletonText:last-child {
+  width: 70%;
+  margin-bottom: 0;
+}
+
+.skeletonCircle {
+  border-radius: var(--radius-full);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * Still clearly a placeholder, without the travelling highlight. The shape
+   * is what carries the meaning; the shimmer only says "not yet".
+   */
+  .skeleton {
+    animation: none;
+    background: var(--surface-sunken);
+  }
+}
+
+/* ---- EmptyState ------------------------------------------------------ */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand);
+  margin-bottom: var(--space-1);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.emptyBody {
+  margin: 0;
+  max-width: 44ch;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.emptyAction {
+  margin-top: var(--space-3);
+}

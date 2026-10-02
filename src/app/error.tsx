@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { ErrorPage } from '@/components/site/ErrorPage';
-import styles from '@/components/site/ErrorPage.module.css';
+import { Button } from '@/components/ui/Button';
 
 /**
  * The route error boundary.
@@ -38,9 +38,9 @@ export default function RouteError({
       message="The page failed while it was being prepared. Trying again usually works; if it does not, the reference below will tell us what happened."
       action={{ href: '/dashboard', label: 'Go to Dashboard' }}
       secondary={
-        <button type="button" className={styles.secondary} onClick={reset}>
+        <Button variant="secondary" onClick={reset}>
           Try Again
-        </button>
+        </Button>
       }
       digest={error.digest}
     />

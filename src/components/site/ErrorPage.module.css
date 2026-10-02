@@ -74,65 +74,10 @@
 }
 
 /*
- * One filled action and one quiet one. Both clear the 44px target without a
- * pseudo-element, because here there is room to simply be that tall.
+ * The actions come from `ui/Button`; this row only places them. The bespoke
+ * `.primary` / `.secondary` rules that used to live here were a 34th copy of a
+ * button, which is the thing Phase 4 exists to stop.
  */
-.primary,
-.secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--target);
-  padding: 0 var(--space-6);
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color var(--duration) var(--ease),
-    border-color var(--duration) var(--ease), transform var(--duration-fast) var(--ease);
-}
-
-.primary {
-  background: var(--brand);
-  color: var(--text-on-brand);
-  border: 1px solid var(--brand);
-}
-
-.primary:hover {
-  background: var(--brand-hover);
-  border-color: var(--brand-hover);
-}
-
-.secondary {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-}
-
-.secondary:hover {
-  border-color: var(--text-subtle);
-}
-
-/* A pressed control moves, so a tap feels like it landed. */
-.primary:active,
-.secondary:active {
-  transform: translateY(1px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .primary,
-  .secondary {
-    transition: none;
-  }
-
-  .primary:active,
-  .secondary:active {
-    transform: none;
-  }
-}
-
 .links {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,102 @@
+/*
+ * A transient message.
+ *
+ * For things that happened, not things to decide: "Saved", "Could not reach
+ * the server". Anything the user must act on belongs inline, next to the thing
+ * it is about, where it will still be when they look for it.
+ */
+.region {
+  position: fixed;
+  z-index: var(--z-toast);
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(28rem, calc(100vw - var(--space-8)));
+  /* The region is always in the document so it can announce; it must not
+     swallow clicks on the page beneath it while it is empty. */
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  pointer-events: auto;
+  animation: rise var(--duration) var(--ease);
+}
+
+.success {
+  border-left: 3px solid var(--success);
+}
+
+.error {
+  border-left: 3px solid var(--danger);
+}
+
+.info {
+  border-left: 3px solid var(--brand);
+}
+
+.message {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dismiss {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  margin: -2px -4px 0 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dismiss:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+/* The hit area reaches 44px without the painted button growing. */
+.dismiss::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
+.dismiss {
+  position: relative;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

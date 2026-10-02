@@ -1,0 +1,96 @@
+/*
+ * A labelled form control, with its help and error text.
+ *
+ * The audit found form labels at 2.56:1 and 11px across every auth page, and
+ * no component that owned the label/input/error relationship — each form wired
+ * it by hand, which is why the wiring differed. This owns it once.
+ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/*
+ * Above the input, always. Never a placeholder standing in for a label: a
+ * placeholder disappears the moment someone types, which is exactly when they
+ * most need to know what the box was for.
+ */
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.optional {
+  margin-left: var(--space-2);
+  font-weight: var(--weight-normal);
+  color: var(--text-muted);
+}
+
+.control {
+  min-height: var(--target);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-base);
+  transition: border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease);
+}
+
+/* A textarea is the one control whose height is its own business. */
+textarea.control {
+  min-height: calc(var(--target) * 2);
+  padding: var(--space-3);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+.control::placeholder {
+  color: var(--text-subtle);
+}
+
+.control:focus-visible {
+  border-color: var(--brand);
+  /* The ring is drawn inside as well, so a focused field reads as one object
+     rather than a box with a halo. */
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+.control:disabled {
+  background: var(--surface-sunken);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.invalid {
+  border-color: var(--danger);
+}
+
+.invalid:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+.help {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/*
+ * Below the input, where the eye goes after reading what it typed — and
+ * announced, because a message that only appears visually is not a message to
+ * someone using a screen reader.
+ */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--danger);
+  margin: 0;
+}

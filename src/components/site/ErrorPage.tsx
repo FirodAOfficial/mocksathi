@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { ButtonLink } from '../ui/Button';
 import { BrandLogo } from './BrandLogo';
 import styles from './ErrorPage.module.css';
 
@@ -44,9 +45,7 @@ export function ErrorPage({ code, title, message, action, secondary, digest }: E
         <p className={styles.message}>{message}</p>
 
         <div className={styles.actions}>
-          <Link href={action.href} className={styles.primary}>
-            {action.label}
-          </Link>
+          <ButtonLink href={action.href}>{action.label}</ButtonLink>
           {secondary}
         </div>
 
