@@ -41,6 +41,43 @@
   --brand-on-soft: #1559c9;
   /* The navy the footer and marketing panel already use, as a real token. */
   --brand-deep: #0b1638;
+  /*
+   * The marketing panel's gradient, in three stops. A token set rather than
+   * three hexes because two stylesheets paint it: `MarketingPanel` itself, and
+   * `LoginScreen` below 901px where the panel is hidden and the page would
+   * otherwise go plain white. They drifted apart once already.
+   *
+   * These do not flip in dark mode. The panel is a dark poster in both
+   * schemes — the colours on it are checked against `--panel-bottom`, its
+   * lightest stop, in `MarketingPanel.module.css`.
+   */
+  --panel-top: #0b1638;
+  --panel-mid: #0f1e46;
+  --panel-bottom: #142a5c;
+
+  /*
+   * The footer is the page's one band of brand colour, and like the marketing
+   * panel it stays navy in both schemes. Ratios are against `--footer-bottom`,
+   * the lighter of its two stops.
+   */
+  --footer-top: #0b1638;
+  --footer-bottom: #101f48;
+  /* 9.43:1. */
+  --footer-text: #b9c7e6;
+  /* 6.61:1. */
+  --footer-text-muted: #93a6d6;
+  /*
+   * 5.45:1. Replaces #6f85ba, which was 4.38:1 — under AA, and it carried the
+   * column headings, the baseline copyright and the link icons.
+   */
+  --footer-text-subtle: #8396c6;
+  /* 10.66:1. */
+  --footer-link: #c7d3ee;
+  /* For icons and focus rings on the navy: 5.01:1, over the 3:1 a non-text
+     element needs, with room to spare. */
+  --footer-accent: #7ba9ff;
+  /* The fill behind a hovered social button, which then carries white. */
+  --footer-accent-solid: #1c6ef2;
 
   /* ---- Surfaces -------------------------------------------------------- */
   --surface: #ffffff;
