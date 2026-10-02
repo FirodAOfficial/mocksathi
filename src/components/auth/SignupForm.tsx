@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import { Button } from '@/components/ui/Button';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import cardStyles from './AuthCard.module.css';
@@ -70,6 +71,10 @@ export function SignupForm({
       highlightConsent();
       return;
     }
+
+    // `ui/Button` keeps a busy control focusable and therefore pressable; the
+    // guard against a second signup request is here rather than in `disabled`.
+    if (status !== 'idle') return;
 
     setError(null);
     setStatus('submitting');
@@ -203,13 +208,14 @@ export function SignupForm({
 
               <LegalLinks agreed={agreed} onAgreedChange={setAgreed} />
 
-              <button
+              <Button
                 type="submit"
-                className={!agreed ? `${cardStyles.primary} ${cardStyles.primaryBlocked}` : cardStyles.primary}
-                disabled={status !== 'idle'}
+                block
+                loading={status !== 'idle'}
+                className={agreed ? undefined : cardStyles.primaryBlocked}
               >
                 {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Creating account…' : 'Create account'}
-              </button>
+              </Button>
             </form>
 
             <div className={cardStyles.divider}>or sign up with</div>

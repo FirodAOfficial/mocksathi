@@ -8,7 +8,7 @@
   height: 100vh;
   overflow: hidden;
   display: flex;
-  background: #fff;
+  background: var(--surface);
 }
 
 @media (max-width: 900px) {
@@ -16,7 +16,7 @@
     /* `MarketingPanel` is hidden below 901px, so without this the whole
        screen goes plain white and loses the brand feel it otherwise carries
        on desktop — same gradient as `MarketingPanel.module.css`'s `.panel`. */
-    background: linear-gradient(155deg, #0b1638 0%, #0f1e46 55%, #142a5c 100%);
+    background: linear-gradient(155deg, var(--panel-top) 0%, var(--panel-mid) 55%, var(--panel-bottom) 100%);
   }
 }
 
@@ -28,8 +28,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding: 44px 32px;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-8);
   position: relative;
 }
 
@@ -48,7 +48,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-6);
   margin: auto 0;
   flex: none;
 }
@@ -63,7 +63,7 @@
 
 @media (max-width: 480px) {
   .formSide {
-    padding: 28px 16px;
+    padding: var(--space-8) var(--space-4);
   }
 }
 
@@ -74,10 +74,10 @@
      scrolling, an absolutely-positioned corner marker scrolls (and can
      overlap) with it instead of staying put — see the scrolling fix above. */
   position: fixed;
-  top: 32px;
-  right: 40px;
-  font-size: 12.5px;
-  color: var(--db-text-muted);
+  top: var(--space-8);
+  right: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -86,28 +86,28 @@
 
 .topTagline em {
   font-style: normal;
-  font-weight: 700;
-  color: var(--db-text);
+  font-weight: var(--weight-bold);
+  color: var(--text);
 }
 
 .topTagline::after {
   content: '';
-  width: 32px;
+  width: var(--space-8);
   height: 1px;
-  background: var(--db-border);
+  background: var(--border);
 }
 
 .passwordLabelRow {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .forgotLink {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--db-accent);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--brand);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -118,13 +118,13 @@
 
 .bottomTagline {
   position: fixed;
-  bottom: 28px;
-  right: 40px;
-  font-size: 12.5px;
+  bottom: var(--space-8);
+  right: var(--space-8);
+  font-size: var(--text-sm);
   font-style: italic;
-  color: var(--db-text-faint);
+  color: var(--text-muted);
   text-align: right;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   pointer-events: none;
 }
 
@@ -132,5 +132,21 @@
   .topTagline,
   .bottomTagline {
     display: none;
+  }
+}
+
+/*
+ * "Forgot password?" sits on the label's baseline, so it cannot simply grow to
+ * 44px without pushing the field down. The hit area grows instead of the box.
+ */
+@media (pointer: coarse) {
+  .forgotLink {
+    position: relative;
+  }
+
+  .forgotLink::after {
+    content: '';
+    position: absolute;
+    inset: calc((var(--target) - 1em) / -2) calc(var(--space-2) * -1);
   }
 }

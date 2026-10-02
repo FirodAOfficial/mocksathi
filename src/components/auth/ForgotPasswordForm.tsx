@@ -7,6 +7,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { OTP_LENGTH } from '@/auth/otpPolicy';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import { Button } from '@/components/ui/Button';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
@@ -57,6 +58,9 @@ export function ForgotPasswordForm() {
 
   async function handleRequestSubmit(event: FormEvent) {
     event.preventDefault();
+    // A busy `ui/Button` stays focusable, so it stays pressable. Both submit
+    // handlers guard against a second in-flight request themselves.
+    if (submitting) return;
     setError(null);
     setSubmitting(true);
     try {
@@ -79,6 +83,7 @@ export function ForgotPasswordForm() {
 
   async function handleResetSubmit(event: FormEvent) {
     event.preventDefault();
+    if (submitting) return;
     setError(null);
     setNotice(null);
     setSubmitting(true);
@@ -152,9 +157,9 @@ export function ForgotPasswordForm() {
                     />
                   </div>
 
-                  <button type="submit" className={cardStyles.primary} disabled={submitting}>
+                  <Button type="submit" block loading={submitting}>
                     {submitting ? 'Sending…' : 'Send reset code'}
-                  </button>
+                  </Button>
                 </form>
               </>
             ) : (
@@ -211,13 +216,16 @@ export function ForgotPasswordForm() {
                     </p>
                   )}
 
-                  <button
+                  <Button
                     type="submit"
-                    className={cardStyles.primary}
-                    disabled={submitting || code.length !== OTP_LENGTH || newPassword.length < MIN_PASSWORD_LENGTH}
+                    block
+                    loading={submitting}
+                    /* Genuinely disabled, not merely busy: there is nothing to
+                       send until the code and password are long enough. */
+                    disabled={code.length !== OTP_LENGTH || newPassword.length < MIN_PASSWORD_LENGTH}
                   >
                     {submitting ? 'Resetting…' : 'Reset password'}
-                  </button>
+                  </Button>
                 </form>
 
                 <p className={cardStyles.footer}>

@@ -90,11 +90,15 @@ export function MarketingPanel() {
 
         <div className={styles.badges}>
           <div className={styles.badge}>
-            <div className={`${styles.badgeIcon} ${styles.badgeIconWord}`}>W</div>
+            <div className={`${styles.badgeIcon} ${styles.badgeIconWord}`} aria-hidden="true">
+              W
+            </div>
             <span className={styles.badgeLabel}>Word Efficiency</span>
           </div>
           <div className={styles.badge}>
-            <div className={`${styles.badgeIcon} ${styles.badgeIconExcel}`}>X</div>
+            <div className={`${styles.badgeIcon} ${styles.badgeIconExcel}`} aria-hidden="true">
+              X
+            </div>
             <span className={styles.badgeLabel}>Excel Efficiency</span>
           </div>
         </div>

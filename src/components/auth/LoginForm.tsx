@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
+import { Button } from '@/components/ui/Button';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
 import cardStyles from './AuthCard.module.css';
 import { inter } from './authFont';
@@ -35,6 +36,11 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    // The submit button stays focusable while it works (`ui/Button` marks it
+    // `aria-disabled`, not `disabled`, so a keyboard user is not thrown back
+    // to the top of the form mid-submit). That means it can still be pressed,
+    // so the guard against a second request lives here.
+    if (status !== 'idle') return;
     setError(null);
     setStatus('submitting');
 
@@ -134,9 +140,9 @@ export function LoginForm({ googleError, clearStaleSession = false, initialEmail
                 </p>
               )}
 
-              <button type="submit" className={cardStyles.primary} disabled={status !== 'idle'}>
+              <Button type="submit" block loading={status !== 'idle'}>
                 {status === 'redirecting' ? 'Redirecting…' : status === 'submitting' ? 'Signing in…' : 'Sign in'}
-              </button>
+              </Button>
             </form>
 
             <div className={cardStyles.divider}>or</div>

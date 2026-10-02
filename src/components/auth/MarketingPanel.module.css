@@ -1,11 +1,26 @@
+/*
+ * The branding panel beside the auth card.
+ *
+ * It is always dark, in both colour schemes — it is a navy poster, not a
+ * surface, so it does not flip. The colours on it are therefore literal rather
+ * than semantic, and each one is checked against the *bottom* of the gradient
+ * (`--panel-bottom`, the lightest stop), which is the hardest ground on the
+ * panel. Contrast ratios below are against that stop.
+ */
 .panel {
   --panel-accent: #4d8dff;
+  /* 10.89:1 on `--panel-bottom`. */
+  --panel-text: #dbe4fb;
+  /* 7.25:1. */
+  --panel-text-muted: #aebbe0;
+  /* 5.72:1. */
+  --panel-text-subtle: #93a6d6;
 
   flex: 1 1 58%;
   min-width: 0;
-  background: linear-gradient(155deg, #0b1638 0%, #0f1e46 55%, #142a5c 100%);
-  color: #dbe4fb;
-  padding: 44px 56px;
+  background: linear-gradient(155deg, var(--panel-top) 0%, var(--panel-mid) 55%, var(--panel-bottom) 100%);
+  color: var(--panel-text);
+  padding: var(--space-12) var(--space-16);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -17,13 +32,15 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
+/* 12px, up from 10px. Tracked uppercase micro-copy is already slow to read;
+   below 12px it stops being read at all. */
 .logoTagline {
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.22em;
-  color: #93a6d6;
+  color: var(--panel-text-subtle);
 }
 
 .main {
@@ -31,12 +48,13 @@
 }
 
 .headline {
-  font-size: 34px;
-  line-height: 1.2;
-  font-weight: 800;
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
   color: #fff;
   letter-spacing: -0.01em;
-  margin: 28px 0 14px;
+  margin: var(--space-8) 0 var(--space-3);
+  text-wrap: balance;
 }
 
 .headlineAccent {
@@ -44,52 +62,58 @@
 }
 
 .subtitle {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #aebbe0;
-  margin: 0 0 26px;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  color: var(--panel-text-muted);
+  margin: 0 0 var(--space-6);
+  max-width: var(--measure);
 }
 
 .badges {
   display: flex;
-  gap: 12px;
-  margin-bottom: 22px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
 .badge {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 10%);
 }
 
 .badgeIcon {
   width: 40px;
   height: 40px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   display: grid;
   place-items: center;
   color: #fff;
-  font-weight: 800;
-  font-size: 17px;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
 }
 
 .badgeIconWord {
   background: linear-gradient(160deg, #2b6cf2, #1747a6);
 }
 
+/*
+ * Was #21a366 at the light end: white on it is 3.23:1, and the glyph is 18px
+ * bold, just under the 18.66px large-text threshold, so it needed 4.5. This
+ * green is 4.95:1 with white and still unmistakably Excel's.
+ */
 .badgeIconExcel {
-  background: linear-gradient(160deg, #21a366, #0f6b3f);
+  background: linear-gradient(160deg, #19804f, #0f6b3f);
 }
 
 .badgeLabel {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #dbe4fb;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--panel-text);
   text-align: center;
 }
 
@@ -97,52 +121,59 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  color: #93a6d6;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--panel-text-subtle);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgb(255 255 255 / 10%);
 }
 
+/* The separator was #4c5c8c — 2.12:1, invisible on the gradient's lighter
+   end. It is only a dot between items, but an invisible dot runs the items
+   together, which is the same defect the footer links had. */
 .featureStrip span:not(:last-child)::after {
   content: '·';
-  margin-left: 8px;
-  color: #4c5c8c;
+  margin-left: var(--space-2);
+  color: var(--panel-text-subtle);
 }
 
 .statsRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .stat {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .statIcon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 8%);
   display: grid;
   place-items: center;
   color: var(--panel-accent);
 }
 
 .statLabel {
-  font-size: 11.5px;
-  color: #c3cdec;
-  line-height: 1.4;
+  font-size: var(--text-xs);
+  color: var(--panel-text);
+  line-height: var(--leading-normal);
 }
 
+/*
+ * Was 10px in #5f6f9e: 2.81:1 against the bottom of the gradient, the worst
+ * contrast anywhere on this panel. Now 12px in the subtle tone at 5.72:1.
+ */
 .footerTagline {
-  font-size: 10px;
+  font-size: var(--text-xs);
   letter-spacing: 0.16em;
-  color: #5f6f9e;
-  margin-top: 22px;
+  color: var(--panel-text-subtle);
+  margin-top: var(--space-6);
 }
 
 @media (max-width: 900px) {

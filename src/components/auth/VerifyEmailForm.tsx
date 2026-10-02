@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from '@/auth/otpPolicy';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
+import { Button } from '@/components/ui/Button';
 import { inter } from './authFont';
 import cardStyles from './AuthCard.module.css';
 import styles from './VerifyEmailForm.module.css';
@@ -116,6 +117,9 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    // A busy `ui/Button` stays focusable and so stays pressable; this is the
+    // guard against sending a second confirm for the same code.
+    if (submitting) return;
     setError(null);
     setNotice(null);
     setSubmitting(true);
@@ -203,7 +207,7 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
             {remainingMs !== null && (
               <p className={expired ? styles.countdownExpired : styles.countdown}>
                 {expired
-                  ? 'This code has expired — taking you back…'
+                  ? 'This code has expired. Taking you back…'
                   : `Code expires in ${formatCountdown(remainingMs)}`}
               </p>
             )}
@@ -252,13 +256,16 @@ export function VerifyEmailForm({ name, email, codeExpiresAt, initialAttemptsRem
                 </p>
               ) : null}
 
-              <button
+              <Button
                 type="submit"
-                className={cardStyles.primary}
-                disabled={submitting || expired || exhausted || code.length !== OTP_LENGTH}
+                block
+                loading={submitting}
+                /* Really disabled, not merely busy: an expired or exhausted
+                   code, or a short one, has nothing to check. */
+                disabled={expired || exhausted || code.length !== OTP_LENGTH}
               >
                 {submitting ? 'Checking…' : 'Verify email'}
-              </button>
+              </Button>
             </form>
 
             <p className={cardStyles.footer}>
