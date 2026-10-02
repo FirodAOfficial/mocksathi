@@ -6,7 +6,7 @@ import { pageMetadata } from '@/site/seo';
 export const metadata: Metadata = pageMetadata({
   title: 'Terms and Conditions',
   description:
-    'The terms governing your use of MockSathi — accounts, paid plans and subscriptions, payments, coupons, permitted use of test content, and the limits of our liability.',
+    'The terms governing your use of MockSathi: accounts, paid plans and subscriptions, payments, coupons, permitted use of test content, and the limits of our liability.',
   path: '/legal/terms',
 });
 

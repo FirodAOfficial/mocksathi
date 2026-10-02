@@ -98,7 +98,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json(
       {
         code: 'EXAM_IN_USE',
-        detail: `This exam still has ${blocking.join(' and ')}, which would be deleted with it. Delete its tests first, or set its status to Archived instead — that hides the listing and keeps everything.`,
+        detail: `This exam still has ${blocking.join(' and ')}, which would be deleted with it. Delete its tests first, or set its status to Archived instead; that hides the listing and keeps everything.`,
       },
       { status: 409 },
     );

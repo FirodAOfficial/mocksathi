@@ -42,7 +42,7 @@ export default async function EditExamPage({ params }: { params: Promise<{ id: s
         </h2>
         <p className={headerStyles.subtitle}>
           {dependents.length > 0
-            ? `Not while it has ${dependents.join(' and ')}. Set its status to Archived instead — that hides the listing and keeps everything.`
+            ? `Not while it has ${dependents.join(' and ')}. Set its status to Archived instead; that hides the listing and keeps everything.`
             : 'Nothing depends on this exam, so it can be removed. For an exam that has already run, prefer Archived.'}
         </p>
       </div>

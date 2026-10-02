@@ -37,7 +37,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   // Checked here rather than left to the foreign key: a 23503 would come back
   // as a 500 with nothing an admin could act on.
   const [exam] = await db.select({ id: exams.id }).from(exams).where(eq(exams.id, parsed.fields.examId)).limit(1);
-  if (!exam) return badRequest('EXAM_NOT_FOUND', 'That exam no longer exists — pick another.');
+  if (!exam) return badRequest('EXAM_NOT_FOUND', 'That exam no longer exists. Pick another.');
 
   const created = await createTest(parsed.fields, admin.id);
   return NextResponse.json({ test: created }, { status: 201, headers: { 'cache-control': 'no-store' } });

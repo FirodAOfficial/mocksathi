@@ -65,7 +65,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const [exam] = await db.select({ id: exams.id }).from(exams).where(eq(exams.id, parsed.fields.examId)).limit(1);
-  if (!exam) return badRequest('EXAM_NOT_FOUND', 'That exam no longer exists — pick another.');
+  if (!exam) return badRequest('EXAM_NOT_FOUND', 'That exam no longer exists. Pick another.');
 
   const updated = await updateTest(id, parsed.fields, existing);
   if (!updated) return notFound();

@@ -82,7 +82,7 @@ export default function ContactPage() {
     <PublicPageLayout title="Contact Us">
       <p className={styles.intro}>
         Whether it&rsquo;s a question about a mock test, a problem with your account, or a refund
-        request — here is how to reach us.
+        request, here is how to reach us.
       </p>
 
       <div className={styles.grid}>
@@ -105,7 +105,7 @@ export default function ContactPage() {
       */}
       <p className={styles.note}>
         For refund and cancellation requests, please email us with your order or transaction ID so
-        we have a record of the request — WhatsApp is best kept for quick questions.
+        we have a record of the request. WhatsApp is best kept for quick questions.
       </p>
     </PublicPageLayout>
   );

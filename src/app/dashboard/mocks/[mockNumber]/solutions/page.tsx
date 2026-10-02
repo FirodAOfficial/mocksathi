@@ -13,7 +13,7 @@ export default async function MockSolutionsPage({ params }: { params: Promise<{ 
       icon="file-check-2"
       title={`Mock ${mockNumber} Solutions`}
       subtitle={mock ? `${mock.paperName} · ${mock.dateLabel}` : 'Question-by-question review'}
-      note="Per-question review — your answer vs. correct, explanation, and timing vs. the cohort — is planned here (same detail as the sample exam's solutions screen at /result)."
+      note="Per-question review is planned here: your answer against the correct one, the explanation, and your timing against the cohort. Same detail as the sample exam's solutions screen at /result."
     />
   );
 }

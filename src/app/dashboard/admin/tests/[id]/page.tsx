@@ -77,7 +77,7 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
             detail={
               questionCount === 0
                 ? 'It has no questions yet, so nothing else goes with it. This cannot be undone.'
-                : `Its ${questionCount} question${questionCount === 1 ? '' : 's'} — passages, sheets, solutions and all — are deleted with it. This cannot be undone.`
+                : `Its ${questionCount} question${questionCount === 1 ? '' : 's'}, passages, sheets, solutions and all, are deleted with it. This cannot be undone.`
             }
             requireTyping={questionCount > 0}
           />
@@ -92,7 +92,7 @@ export default async function TestPage({ params }: { params: Promise<{ id: strin
         <div className={styles.fact}>
           <span className={styles.factLabel}>Total marks</span>
           {/* Summed from the questions, so it cannot go stale the way a typed-in total would. */}
-          <span className={styles.factValue}>{questionCount === 0 ? '—' : identity.maximumMarks}</span>
+          <span className={styles.factValue}>{questionCount === 0 ? 'Not set' : identity.maximumMarks}</span>
         </div>
         <div className={styles.fact}>
           <span className={styles.factLabel}>Qualifying</span>

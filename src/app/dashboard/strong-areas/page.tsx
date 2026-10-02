@@ -11,7 +11,7 @@ export default async function StrongAreasPage() {
     <>
       <div className={styles.header}>
         <h1 className={styles.title}>Strong Areas</h1>
-        <p className={styles.subtitle}>Topics you&apos;ve mastered — keep them warm, don&apos;t re-drill them.</p>
+        <p className={styles.subtitle}>Topics you&apos;ve mastered. Keep them warm, don&apos;t re-drill them.</p>
       </div>
       <StrongAreasList strongAreas={data.strongAreas} />
     </>

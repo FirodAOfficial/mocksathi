@@ -18,7 +18,7 @@ export default async function SubscriptionPage() {
         icon="credit-card"
         title="Subscription"
         subtitle="Upgrade for full access."
-        note="No subscription plans have been set up yet — check back soon."
+        note="No subscription plans have been set up yet. Check back soon."
       />
     );
   }
