@@ -58,3 +58,50 @@
 .dark .wordmarkAccent {
   color: #1c6ef2;
 }
+
+/*
+ * Dark scheme.
+ *
+ * `tone` says what the mark sits ON, not what colour it is: `dark` means "a
+ * dark mark for a light background". Under a dark colour scheme that premise
+ * is false — the page is dark — so the dark tone has to paint itself the way
+ * the light tone does, or the barrel is navy on near-black. Which is exactly
+ * what it was: #16316b on #0d111a, invisible.
+ *
+ * The light tone is left alone: it is already drawn for a dark ground (the
+ * navy footer, the sign-in panel), and those grounds stay dark in both
+ * schemes.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .dark .markBarrel {
+    fill: #e8ecf4;
+  }
+
+  :root:not([data-theme='light']) .dark .markTip {
+    fill: #8fb0de;
+  }
+
+  :root:not([data-theme='light']) .dark .wordmark {
+    color: #e8ecf4;
+  }
+
+  :root:not([data-theme='light']) .dark .wordmarkAccent {
+    color: #8bb8ff;
+  }
+}
+
+:root[data-theme='dark'] .dark .markBarrel {
+  fill: #e8ecf4;
+}
+
+:root[data-theme='dark'] .dark .markTip {
+  fill: #8fb0de;
+}
+
+:root[data-theme='dark'] .dark .wordmark {
+  color: #e8ecf4;
+}
+
+:root[data-theme='dark'] .dark .wordmarkAccent {
+  color: #8bb8ff;
+}

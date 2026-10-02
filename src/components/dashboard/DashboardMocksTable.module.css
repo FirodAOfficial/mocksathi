@@ -49,7 +49,7 @@
 .pillActive {
   background: var(--db-accent);
   border-color: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
 }
 
 .table {
@@ -152,19 +152,24 @@
   border-radius: 999px;
 }
 
+/*
+ * Tokenised, because the grounds were hardcoded while the text was not.
+ * In dark mode the colour flipped to a light grey and the background stayed
+ * #eef2f7, so "Not Attempted" measured 1.99:1 — light on light.
+ */
 .statusDone {
-  background: #e1f7ea;
-  color: #15803d;
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .statusOpen {
-  background: #eef2f7;
-  color: var(--db-text-muted);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
 }
 
 .statusLocked {
-  background: #eef2f7;
-  color: var(--db-text-faint);
+  background: var(--surface-sunken);
+  color: var(--text-subtle);
 }
 
 .actionOutline,

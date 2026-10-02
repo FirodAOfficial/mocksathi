@@ -41,7 +41,7 @@
   border-radius: 50%;
   border: 2px solid var(--db-surface);
   background: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
   display: grid;
   place-items: center;
   cursor: pointer;

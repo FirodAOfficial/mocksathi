@@ -132,7 +132,7 @@
   border-radius: 7px;
   border: none;
   background: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
   font-size: var(--text-sm);
   font-weight: 700;
   cursor: pointer;

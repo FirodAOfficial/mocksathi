@@ -32,7 +32,7 @@
   padding: 10px 18px;
   border-radius: 9px;
   background: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
   font-size: var(--text-sm);
   font-weight: 700;
   text-decoration: none;

@@ -226,14 +226,14 @@
 .navItemActive,
 .navItemActive:hover {
   background: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
   font-weight: 600;
 }
 
 .navBadge {
   margin-left: auto;
   background: var(--db-accent);
-  color: #fff;
+  color: var(--text-on-brand);
   font-size: var(--text-xs);
   font-weight: 700;
   width: 17px;
