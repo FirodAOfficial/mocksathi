@@ -518,6 +518,11 @@ export function SpreadsheetGrid() {
     transformOrigin: '0 0',
   };
 
+  /*
+   * Headers are laid out in zoomed pixels rather than scaled: only their
+   * positions follow the zoom, so the labels keep a legible size and the
+   * fixed-size header strips never clip them.
+   */
   const headerOffset: CSSProperties = {
     transform: `translateX(${-scroll.left}px)`,
   };
@@ -533,7 +538,7 @@ export function SpreadsheetGrid() {
 
           <div className={styles.columnHeaders}>
             <div style={headerOffset}>
-              <div style={layerStyle} className={styles.headerLayer}>
+              <div className={styles.headerLayer}>
                 {columns.map((col) => (
                   <div
                     key={col}
@@ -541,8 +546,8 @@ export function SpreadsheetGrid() {
                       isColumnSelected(selection.ranges, col) ? styles.headerSelected : ''
                     }`}
                     style={{
-                      left: geometry.offsetOfColumn(col),
-                      width: geometry.columnWidth(col),
+                      left: geometry.offsetOfColumn(col) * zoom,
+                      width: geometry.columnWidth(col) * zoom,
                       height: COLUMN_HEADER_HEIGHT,
                     }}
                     onPointerDown={(event) => {
@@ -569,7 +574,7 @@ export function SpreadsheetGrid() {
 
           <div className={styles.rowHeaders}>
             <div style={rowHeaderOffset}>
-              <div style={layerStyle} className={styles.headerLayer}>
+              <div className={styles.headerLayer}>
                 {rows.map((row) => (
                   <div
                     key={row}
@@ -577,8 +582,8 @@ export function SpreadsheetGrid() {
                       isRowSelected(selection.ranges, row) ? styles.headerSelected : ''
                     }`}
                     style={{
-                      top: geometry.offsetOfRow(row),
-                      height: geometry.rowHeight(row),
+                      top: geometry.offsetOfRow(row) * zoom,
+                      height: geometry.rowHeight(row) * zoom,
                       width: ROW_HEADER_WIDTH,
                     }}
                     onPointerDown={(event) => {
