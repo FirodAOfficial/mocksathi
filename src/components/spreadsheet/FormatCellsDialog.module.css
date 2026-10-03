@@ -1,0 +1,395 @@
+/* Excel's Format Cells dialog. Sized like Excel's: wide enough for three list
+   columns, and no wider than a small laptop can show. */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #d7e0e9;
+}
+
+.tab {
+  padding: 5px 14px;
+  font: inherit;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: #eef3f9;
+}
+
+.tabActive {
+  font-weight: 600;
+  color: #17365d;
+  background: #fff;
+  border-color: #d7e0e9;
+}
+
+.page {
+  width: min(600px, calc(100vw - 4rem));
+  min-height: 320px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.input,
+.select,
+.list {
+  min-width: 0;
+  font: inherit;
+  border: 1px solid var(--control-border, #9db3c8);
+  border-radius: 2px;
+  background: #fff;
+}
+
+.input,
+.select {
+  height: 24px;
+  padding: 0 4px;
+}
+
+.list {
+  padding: 1px 0;
+}
+
+.list option {
+  padding: 1px 4px;
+}
+
+.invalid {
+  border-color: #c00000;
+}
+
+.numberInput {
+  width: 64px;
+  height: 24px;
+  padding: 0 4px;
+  font: inherit;
+  border: 1px solid var(--control-border, #9db3c8);
+  border-radius: 2px;
+}
+
+.group {
+  margin: 0 0 10px;
+  padding: 6px 10px 10px;
+  border: 1px solid #d7e0e9;
+  border-radius: 3px;
+}
+
+.group legend {
+  padding: 0 4px;
+  color: #17365d;
+}
+
+.help {
+  margin: 10px 0 0;
+  line-height: 1.4;
+  color: var(--text-muted, #52667a);
+}
+
+/* -- Number -- */
+
+.numberLayout {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 14px;
+}
+
+.numberOptions {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sample {
+  min-height: 20px;
+  font-family: Calibri, 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+/* -- Alignment -- */
+
+.alignmentLayout {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
+}
+
+.alignmentLayout .stack {
+  margin-top: 6px;
+}
+
+.orientation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  margin-bottom: 6px;
+  background: #fff;
+  border: 1px solid #d7e0e9;
+}
+
+.orientationText {
+  display: inline-block;
+  font-size: 13px;
+  color: #17365d;
+  transition: transform 80ms linear;
+}
+
+.orientation + input {
+  width: 100%;
+}
+
+/* -- Font -- */
+
+.fontLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+  align-items: start;
+}
+
+.fontLayout .list {
+  height: 110px;
+}
+
+.normalFont {
+  align-self: end;
+  margin-bottom: 4px;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  overflow: hidden;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid #d7e0e9;
+}
+
+.colorField {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.colorField .select {
+  flex: 1;
+}
+
+.colorField input[type='color'] {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--control-border, #9db3c8);
+}
+
+.colorWell {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #7f8c99;
+}
+
+/* -- Border -- */
+
+.borderLayout {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 14px;
+}
+
+.borderLayout .list {
+  height: 110px;
+}
+
+.borderMain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.presets {
+  display: flex;
+  gap: 8px;
+}
+
+.presetButton,
+.button {
+  min-width: 72px;
+  height: 26px;
+  padding: 0 10px;
+  font: inherit;
+  background: linear-gradient(180deg, #fff, #e4ecf6);
+  border: 1px solid var(--control-border, #9db3c8);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.presetButton:disabled,
+.button:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.primary {
+  font-weight: 600;
+}
+
+.borderGrid {
+  display: flex;
+  gap: 8px;
+}
+
+.edgeColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.edgeRow {
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  margin-left: 38px;
+}
+
+.edgeButton {
+  width: 30px;
+  height: 28px;
+  font-size: 16px;
+  background: #fff;
+  border: 1px solid #b9c9d9;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.edgeButton:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.edgePressed {
+  background: linear-gradient(180deg, var(--control-checked-top, #fde7a9), var(--control-checked-bottom, #f6c95a));
+  border-color: var(--control-hover-border, #e0b64f);
+}
+
+.borderPreview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 110px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.insideV {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+}
+
+.insideH {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+}
+
+.previewText {
+  font-size: 12px;
+  color: #52667a;
+}
+
+/* -- Fill -- */
+
+.fillLayout {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
+}
+
+.noColor {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  margin: 6px 0;
+  padding: 3px;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #b9c9d9;
+  cursor: pointer;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(7, 26px);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.swatch {
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #b9c9d9;
+  cursor: pointer;
+}
+
+.swatchActive {
+  outline: 2px solid #217346;
+  outline-offset: 1px;
+}
+
+.fillSample {
+  height: 70px;
+  border: 1px solid #d7e0e9;
+}
+
+@media (max-width: 560px) {
+  .numberLayout,
+  .alignmentLayout,
+  .borderLayout,
+  .fillLayout,
+  .fontLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

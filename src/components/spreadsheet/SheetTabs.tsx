@@ -21,6 +21,9 @@ export function SheetTabs() {
 
   const sheets = store.workbook.visibleSheets();
   const activeId = store.workbook.activeSheetId;
+  // Visible sheets, not all of them: deleting the last visible sheet would
+  // leave a strip of only hidden ones and nothing to show.
+  const canDelete = sheets.length > 1;
 
   const finishRename = (sheetId: string, name: string): void => {
     const trimmed = name.trim();
@@ -63,35 +66,42 @@ export function SheetTabs() {
               }}
             />
           ) : (
-            <button
+            // A wrapper, not one button: the close button cannot sit inside
+            // the tab button, since a button may not contain another.
+            <div
               key={sheet.id}
-              type="button"
-              role="tab"
-              aria-selected={sheet.id === activeId}
               className={`${styles.tab} ${sheet.id === activeId ? styles.tabActive : ''}`}
-              onClick={() => store.setActiveSheet(sheet.id)}
-              onDoubleClick={() => setRenaming(sheet.id)}
             >
-              {sheet.name}
-            </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={sheet.id === activeId}
+                className={styles.tabLabel}
+                onClick={() => store.setActiveSheet(sheet.id)}
+                onDoubleClick={() => setRenaming(sheet.id)}
+              >
+                {sheet.name}
+              </button>
+              {/*
+                Each tab carries its own ×, so the sheet that goes is the one
+                clicked — not whichever happened to be active. Absent on the
+                last visible sheet: a workbook must keep one.
+              */}
+              {canDelete ? (
+                <button
+                  type="button"
+                  className={styles.close}
+                  title={`Delete ${sheet.name}`}
+                  aria-label={`Delete ${sheet.name}`}
+                  onClick={() => store.removeSheet(sheet.id)}
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
           ),
         )}
       </div>
-
-      <button
-        type="button"
-        className={styles.remove}
-        title={
-          store.workbook.sheetCount > 1
-            ? 'Delete the active worksheet'
-            : 'Delete Sheet — a workbook must keep at least one sheet'
-        }
-        aria-label="Delete Sheet"
-        disabled={store.workbook.sheetCount <= 1}
-        onClick={() => store.removeSheet(activeId)}
-      >
-        ×
-      </button>
 
       {error ? (
         <span className={styles.error} role="alert">

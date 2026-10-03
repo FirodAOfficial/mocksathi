@@ -1,4 +1,5 @@
 import type { RangeAddress } from '../model/address';
+import type { AutoFilter } from '../model/autoFilter';
 import type { Cell } from '../model/Cell';
 import type { SheetSnapshot } from '../model/snapshot';
 import type { ColumnProps, RowProps, SheetView } from '../model/Worksheet';
@@ -97,6 +98,7 @@ export interface RemoveSheetOp {
   columns: Array<[number, ColumnProps]>;
   merges: RangeAddress[];
   frozen: { rows: number; columns: number };
+  autoFilter: AutoFilter | null;
 }
 
 export interface RenameSheetOp {
@@ -156,7 +158,16 @@ export interface ReplaceSheetOp {
   after: SheetSnapshot;
 }
 
+/** Data > Filter: the AutoFilter turned on, off, or given new conditions. */
+export interface SetAutoFilterOp {
+  kind: 'setAutoFilter';
+  sheetId: string;
+  before: AutoFilter | null;
+  after: AutoFilter | null;
+}
+
 export type Operation =
+  | SetAutoFilterOp
   | SetCellOp
   | SetStyleOp
   | SetRowPropsOp

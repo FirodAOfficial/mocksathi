@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoSumRange } from './autoSumRange';
+import { autoSumRange, autoSumTargets } from './autoSumRange';
 import { Worksheet } from './Worksheet';
 
 /**
@@ -92,5 +92,68 @@ describe('autoSumRange', () => {
       start: { row: 0, col: 0 },
       end: { row: 1, col: 0 },
     });
+  });
+});
+
+describe('autoSumTargets', () => {
+  const at = (row: number, col: number) => ({ row, col });
+  const range = (r0: number, c0: number, r1: number, c1: number) => ({ start: at(r0, c0), end: at(r1, c1) });
+
+  /** Two columns of numbers in A1:B3. */
+  const BLOCK = sheetWith([
+    [0, 0, 1],
+    [1, 0, 2],
+    [2, 0, 3],
+    [0, 1, 10],
+    [1, 1, 20],
+    [2, 1, 30],
+  ]);
+
+  it('totals into a single selected cell, as before', () => {
+    expect(autoSumTargets(BLOCK, range(3, 0, 3, 0), at(3, 0))).toEqual([
+      { cell: at(3, 0), range: range(0, 0, 2, 0) },
+    ]);
+  });
+
+  it('puts column totals below a selection of numbers, never inside it', () => {
+    // Dragging A1 to A3 leaves A3 active; the total must not replace its 3.
+    expect(autoSumTargets(BLOCK, range(0, 0, 2, 0), at(2, 0))).toEqual([
+      { cell: at(3, 0), range: range(0, 0, 2, 0) },
+    ]);
+    expect(autoSumTargets(BLOCK, range(0, 0, 2, 1), at(0, 0))).toEqual([
+      { cell: at(3, 0), range: range(0, 0, 2, 0) },
+      { cell: at(3, 1), range: range(0, 1, 2, 1) },
+    ]);
+  });
+
+  it('uses an empty last row or column of the selection as the totals', () => {
+    expect(autoSumTargets(BLOCK, range(0, 0, 3, 1), at(0, 0))).toEqual([
+      { cell: at(3, 0), range: range(0, 0, 2, 0) },
+      { cell: at(3, 1), range: range(0, 1, 2, 1) },
+    ]);
+    expect(autoSumTargets(BLOCK, range(0, 0, 2, 2), at(0, 0))).toEqual([
+      { cell: at(0, 2), range: range(0, 0, 0, 1) },
+      { cell: at(1, 2), range: range(1, 0, 1, 1) },
+      { cell: at(2, 2), range: range(2, 0, 2, 1) },
+    ]);
+  });
+
+  it('totals a selected row of numbers in the cell to its right', () => {
+    expect(autoSumTargets(BLOCK, range(0, 0, 0, 1), at(0, 0))).toEqual([
+      { cell: at(0, 2), range: range(0, 0, 0, 1) },
+    ]);
+  });
+
+  it('skips columns without numbers and proposes nothing for text alone', () => {
+    const labelled = sheetWith([
+      [0, 0, 'Name'],
+      [1, 0, 'Asha'],
+      [0, 1, 5],
+      [1, 1, 6],
+    ]);
+    expect(autoSumTargets(labelled, range(0, 0, 1, 1), at(0, 0))).toEqual([
+      { cell: at(2, 1), range: range(0, 1, 1, 1) },
+    ]);
+    expect(autoSumTargets(labelled, range(0, 0, 1, 0), at(0, 0))).toEqual([]);
   });
 });

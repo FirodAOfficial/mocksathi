@@ -64,6 +64,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
   font-size: 11px;
   color: #2c4a68;
   user-select: none;
@@ -111,6 +113,11 @@
   background: #fff;
   /* The cursor a spreadsheet uses over its cells. */
   cursor: cell;
+}
+
+/* Format Painter is holding a brush: the next selection takes its formatting. */
+.scroller[data-painting='on'] {
+  cursor: copy;
 }
 
 .frame[data-headings='off'] .scroller {

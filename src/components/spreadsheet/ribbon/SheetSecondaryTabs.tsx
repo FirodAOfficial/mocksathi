@@ -7,8 +7,6 @@ import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { RibbonColumn, RibbonGroup, RibbonRow } from '@/components/ribbon/RibbonGroup';
 import { GRID_ELEMENT_ID } from '@/components/spreadsheet/grid/SpreadsheetGrid';
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
-import { formatAddress } from '@/spreadsheet/model/address';
-import { autoSumRange } from '@/spreadsheet/model/autoSumRange';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { SHEET_ZOOM_LEVELS, useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
 import styles from './SpreadsheetRibbon.module.css';
@@ -44,7 +42,6 @@ const SYMBOLS = [
 
 export function SheetFormulasTab() {
   const store = useWorkbookStore();
-  const selection = useSelection();
   useWorkbookVersion();
 
   const showFormulas = useSpreadsheetUiStore((state) => state.showFormulas);
@@ -52,7 +49,6 @@ export function SheetFormulasTab() {
   const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
   const readOnly = useSpreadsheetUiStore((state) => state.readOnly);
 
-  const active = selection.active;
   const locked = readOnly ? 'the sheet is protected' : undefined;
 
   /**
@@ -63,19 +59,9 @@ export function SheetFormulasTab() {
    * nothing to total, say so rather than writing anything.
    */
   const insertAggregate = (fn: 'SUM' | 'AVERAGE' | 'COUNT'): void => {
-    const target = autoSumRange(store.activeSheet(), active);
-    if (!target) {
-      setNotice(`${fn} found no numbers above or to the left of ${formatAddress(active)}.`);
-      return;
+    if (!store.autoSum(fn, `formulas.library.${fn.toLowerCase()}`)) {
+      setNotice(`${fn} found no numbers to total above, to the left of, or in the selection.`);
     }
-
-    store.setCellInput(
-      active.row,
-      active.col,
-      `=${fn}(${formatAddress(target.start)}:${formatAddress(target.end)})`,
-      'ribbon',
-    );
-    void store.ensureEngine();
   };
 
   return (
@@ -291,8 +277,8 @@ export function SheetInsertTab() {
 
       <RibbonGroup label="Filters">
         <RibbonRow>
-          <ToolbarButton label="Slicer" size="wide" glyph="⧉" disabled disabledReason="filtering is not in this build" />
-          <ToolbarButton label="Timeline" size="wide" glyph="⏱" disabled disabledReason="filtering is not in this build" />
+          <ToolbarButton label="Slicer" size="wide" glyph="⧉" disabled disabledReason="slicers need table objects, which this build does not have — use Data > Filter" />
+          <ToolbarButton label="Timeline" size="wide" glyph="⏱" disabled disabledReason="timelines need table objects, which this build does not have — use Data > Filter" />
         </RibbonRow>
       </RibbonGroup>
 
@@ -505,12 +491,12 @@ export function SheetPageLayoutTab() {
 /**
  * The Data tab.
  *
- * Every command here rewrites rows in place — sorting moves them, filtering
- * hides them, removing duplicates deletes them — and the command layer has no
- * operation that shifts rows while the formulas that point at them follow. A
- * sort that left `=SUM(B3:B7)` pointing at the old positions would produce a
- * plausible, wrong number, which is the worst failure this editor has. So the
- * tab is here, where a candidate expects it, and says what is missing.
+ * Sort and Filter are wired: sorting refuses a range holding formulas rather
+ * than move rows out from under them, and a filter hides the rows that fail it,
+ * as Excel does. The rest rewrite rows in ways the command layer cannot yet
+ * follow with the formulas that point at them — a plausible wrong number is the
+ * worst failure this editor has — so they are here, where a candidate expects
+ * them, and say what is missing.
  */
 export function SheetDataTab() {
   const store = useWorkbookStore();
@@ -519,7 +505,7 @@ export function SheetDataTab() {
   const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
   const readOnly = useSpreadsheetUiStore((state) => state.readOnly);
 
-  const NO_ROW_OPS = 'this build sorts and fills rows, but does not add, hide or split them';
+  const NO_ROW_OPS = 'this build sorts, filters and fills rows, but does not split, group or consolidate them';
 
   /**
    * Sorts, or says why it could not.
@@ -531,6 +517,13 @@ export function SheetDataTab() {
   const sort = (direction: 'asc' | 'desc'): void => {
     const blocker = store.sortSelection(direction);
     if (blocker) setNotice(`The selection could not be sorted: ${blocker}.`);
+  };
+
+  const filter = store.activeSheet().autoFilter;
+  const filtered = Boolean(filter && Object.keys(filter.columns).length > 0);
+  const toggleFilter = (): void => {
+    const reason = store.toggleAutoFilter();
+    if (reason) setNotice(`A filter could not be added: ${reason}.`);
   };
 
   return (
@@ -583,12 +576,28 @@ export function SheetDataTab() {
             label="Filter"
             size="large"
             glyph="⊽"
-            disabled
-            disabledReason="filtering hides rows, which this build cannot do"
+            active={Boolean(filter)}
+            disabled={readOnly}
+            disabledReason={readOnly ? 'the sheet is protected' : undefined}
+            onClick={toggleFilter}
           />
           <RibbonColumn>
-            <ToolbarButton label="Clear" size="wide" glyph="✕" disabled disabledReason="there is no filter to clear" />
-            <ToolbarButton label="Reapply" size="wide" glyph="↻" disabled disabledReason="there is no filter to reapply" />
+            <ToolbarButton
+              label="Clear"
+              size="wide"
+              glyph="✕"
+              disabled={readOnly || !filtered}
+              disabledReason={readOnly ? 'the sheet is protected' : 'no column is filtered'}
+              onClick={() => store.clearFilters()}
+            />
+            <ToolbarButton
+              label="Reapply"
+              size="wide"
+              glyph="↻"
+              disabled={readOnly || !filter}
+              disabledReason={readOnly ? 'the sheet is protected' : 'there is no filter to reapply'}
+              onClick={() => store.reapplyFilter()}
+            />
             <ToolbarButton label="Advanced" size="wide" glyph="⚙" disabled disabledReason="advanced filters are not in this build" />
           </RibbonColumn>
         </RibbonRow>

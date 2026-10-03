@@ -2,6 +2,7 @@ import type { CellValue } from './Cell';
 import { shiftFormula, type SheetEdit } from './shiftFormula';
 import type { CellSnapshot, SheetSnapshot } from './snapshot';
 import type { RangeAddress } from './address';
+import type { AutoFilter } from './autoFilter';
 
 /**
  * Inserting and deleting rows and columns, and sorting a range.
@@ -48,6 +49,30 @@ function movePosition(position: number, edit: SheetEdit): number | null {
 }
 
 export function applySheetEdit(snapshot: SheetSnapshot, edit: SheetEdit): SheetSnapshot {
+  const { autoFilter, ...rest } = snapshot;
+  const movedFilter = autoFilter ? moveFilter(autoFilter, edit) : null;
+  return { ...applyEditWithoutFilter(rest, edit), ...(movedFilter ? { autoFilter: movedFilter } : {}) };
+}
+
+/**
+ * The filter after an edit: its range moved like any other, its column
+ * conditions following their columns. A deleted header row takes the filter
+ * with it, as in Excel, because the buttons have nowhere left to sit.
+ */
+function moveFilter(filter: AutoFilter, edit: SheetEdit): AutoFilter | null {
+  const range = movedRange(filter.range, edit);
+  if (!range) return null;
+  if (edit.axis === 'row' && movePosition(filter.range.start.row, edit) === null) return null;
+
+  const columns: AutoFilter['columns'] = {};
+  for (const [col, condition] of Object.entries(filter.columns)) {
+    const moved = edit.axis === 'column' ? movePosition(Number(col), edit) : Number(col);
+    if (moved !== null) columns[moved] = condition;
+  }
+  return { range, columns };
+}
+
+function applyEditWithoutFilter(snapshot: SheetSnapshot, edit: SheetEdit): SheetSnapshot {
   const cells: CellSnapshot[] = [];
 
   for (const cell of snapshot.cells) {

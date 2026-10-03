@@ -7,7 +7,19 @@ import type { Cell } from './model/Cell';
 import { formatCellValue, isDateTimeFormat } from './model/format';
 import { completeFormula, parseCellInput } from './model/parseInput';
 import { DEFAULT_STYLE_ID, type CellStyle, type StyleId } from './model/styles';
-import { isSingleCell, type CellAddress, type RangeAddress } from './model/address';
+import { formatAddress, isSingleCell, type CellAddress, type RangeAddress } from './model/address';
+import {
+  bodyRows,
+  cloneFilter,
+  columnValues,
+  currentRegion,
+  hiddenRows,
+  isNumberColumn,
+  type AutoFilter,
+  type FilterCondition,
+  type ReadCell,
+} from './model/autoFilter';
+import { autoSumTargets } from './model/autoSumRange';
 import { fillSeries } from './model/fillSeries';
 import { snapshotSheet } from './model/snapshot';
 import {
@@ -19,6 +31,7 @@ import {
 } from './model/structuralEdit';
 import { translateFormula } from './model/translateFormula';
 import { Workbook } from './model/Workbook';
+import type { Worksheet } from './model/Worksheet';
 import { SelectionModel } from './grid/SelectionModel';
 
 /**
@@ -40,6 +53,38 @@ import { SelectionModel } from './grid/SelectionModel';
  */
 
 export type WorkbookListener = () => void;
+
+/** The Paste menu's choices. */
+export type PasteMode = 'all' | 'values' | 'formulas' | 'formats';
+
+export type FillDirection = 'down' | 'right' | 'up' | 'left';
+
+export interface FindOptions {
+  matchCase: boolean;
+  /** Excel's "Match entire cell contents". */
+  entireCell: boolean;
+}
+
+const PASTE_LABELS: Record<PasteMode, string> = {
+  all: 'Paste',
+  values: 'Paste Values',
+  formulas: 'Paste Formulas',
+  formats: 'Paste Formatting',
+};
+
+const PASTE_CONTROLS: Record<PasteMode, string> = {
+  all: 'home.clipboard.paste',
+  values: 'home.clipboard.pasteValues',
+  formulas: 'home.clipboard.pasteFormulas',
+  formats: 'home.clipboard.pasteFormatting',
+};
+
+const FILL_LABELS: Record<FillDirection, string> = {
+  down: 'Fill Down',
+  right: 'Fill Right',
+  up: 'Fill Up',
+  left: 'Fill Left',
+};
 
 /** Where recalculation stands, for the status bar. */
 export type CalcState = 'idle' | 'loading' | 'calculating' | 'unavailable';
@@ -81,6 +126,9 @@ export class WorkbookStore {
    */
   private clipboard: ClipboardContents | null = null;
 
+  /** The formatting Format Painter picked up, waiting for a selection to paint. */
+  private formatBrush: FormatBrush | null = null;
+
   /**
    * The furthest cell reached, which extends the scrollable area.
    *
@@ -108,6 +156,7 @@ export class WorkbookStore {
     this.commands = new CommandBus(workbook);
     this.graph = new DependencyGraph();
     this.circular = new Set();
+    this.formatBrush = null;
     this.selection.selectCell({ row: 0, col: 0 });
     this.reach = { row: 0, col: 0 };
 
@@ -218,16 +267,7 @@ export class WorkbookStore {
     const existing = sheet.getCell(row, col);
     const baseStyleId = existing?.styleId ?? DEFAULT_STYLE_ID;
 
-    const isFormula = input.startsWith('=') && input.length > 1;
-
-    const cell = isFormula
-      ? // A formula replaces whatever the apostrophe said about the old text.
-        {
-          value: null,
-          formula: completeFormula(input),
-          styleId: this.workbook.styles.derive(baseStyleId, { quotePrefix: undefined }),
-        }
-      : this.buildValueCell(input, baseStyleId);
+    const { cell, isFormula } = this.cellFromInput(input, baseStyleId);
 
     this.commit({ label: isFormula ? 'Enter Formula' : 'Type', source }, (mutator) => {
       mutator.setCell(sheet.id, row, col, cell);
@@ -235,6 +275,49 @@ export class WorkbookStore {
 
     if (isFormula) void this.ensureEngine();
     else this.graph.clear(nodeId(sheet.id, row, col));
+  }
+
+  /** What typing `input` over a cell styled `baseStyleId` leaves in it. */
+  private cellFromInput(input: string, baseStyleId: StyleId): { cell: Cell | undefined; isFormula: boolean } {
+    const isFormula = input.startsWith('=') && input.length > 1;
+    return {
+      cell: isFormula ? this.buildFormulaCell(input, baseStyleId) : this.buildValueCell(input, baseStyleId),
+      isFormula,
+    };
+  }
+
+  /** A formula replaces whatever the apostrophe said about the old text. */
+  private buildFormulaCell(input: string, baseStyleId: StyleId): Cell {
+    return {
+      value: null,
+      formula: completeFormula(input),
+      styleId: this.workbook.styles.derive(baseStyleId, { quotePrefix: undefined }),
+    };
+  }
+
+  /**
+   * AutoSum, and its Average and Count siblings: totals where Excel would put
+   * them for the current selection (see `autoSumTargets`), as one undoable
+   * step. Returns false, writing nothing, when there is nothing to total.
+   */
+  autoSum(fn: 'SUM' | 'AVERAGE' | 'COUNT' | 'MAX' | 'MIN', control: string): boolean {
+    const sheet = this.activeSheet();
+    const selected = this.selection.getRanges()[0];
+    if (!selected) return false;
+
+    const writes = autoSumTargets(sheet, selected, this.selection.getActive());
+    if (writes.length === 0) return false;
+
+    this.commit({ label: 'AutoSum', source: 'ribbon', control }, (mutator) => {
+      for (const { cell, range } of writes) {
+        const reference = `${formatAddress(range.start)}:${formatAddress(range.end)}`;
+        const baseStyleId = sheet.getCell(cell.row, cell.col)?.styleId ?? DEFAULT_STYLE_ID;
+        mutator.setCell(sheet.id, cell.row, cell.col, this.buildFormulaCell(`=${fn}(${reference})`, baseStyleId));
+      }
+    });
+
+    void this.ensureEngine();
+    return true;
   }
 
   /**
@@ -277,6 +360,35 @@ export class WorkbookStore {
             ? undefined
             : { value: null, styleId: existing.styleId },
         );
+      }
+    });
+  }
+
+  /**
+   * Home > Clear > Clear Formats: every selected cell back to the default
+   * style, its value untouched. A cell that held nothing but formatting goes.
+   */
+  clearFormats(): void {
+    const sheet = this.activeSheet();
+
+    this.commit({ label: 'Clear Formats', source: 'ribbon', control: 'home.editing.clearFormats' }, (mutator) => {
+      for (const { row, col } of this.selection.addresses()) {
+        const existing = sheet.getCell(row, col);
+        if (!existing || existing.styleId === DEFAULT_STYLE_ID) continue;
+
+        if (existing.value === null && existing.formula === undefined) mutator.setCell(sheet.id, row, col, undefined);
+        else mutator.setStyle(sheet.id, row, col, DEFAULT_STYLE_ID);
+      }
+    });
+  }
+
+  /** Home > Clear > Clear All: contents and formatting both. */
+  clearAll(): void {
+    const sheet = this.activeSheet();
+
+    this.commit({ label: 'Clear All', source: 'ribbon', control: 'home.editing.clearAll' }, (mutator) => {
+      for (const { row, col } of this.selection.addresses()) {
+        if (sheet.getCell(row, col)) mutator.setCell(sheet.id, row, col, undefined);
       }
     });
   }
@@ -434,6 +546,189 @@ export class WorkbookStore {
     return null;
   }
 
+  /* -- AutoFilter --------------------------------------------------------- */
+
+  /** How a filter reads a cell: the text the grid shows, and the value behind it. */
+  private filterReader(sheet = this.activeSheet()): ReadCell {
+    return (row, col) => {
+      const cell = sheet.getCell(row, col);
+      if (!cell || cell.value === null) return { text: '', value: null };
+      return { text: formatCellValue(cell.value, this.workbook.styles.get(cell.styleId).numberFormat), value: cell.value };
+    };
+  }
+
+  /** The values a column's checklist offers, given the other columns' filters. */
+  filterValues(col: number): string[] {
+    const filter = this.activeSheet().autoFilter;
+    return filter ? columnValues(filter, col, this.filterReader()) : [];
+  }
+
+  /** Whether a filter column offers Number Filters rather than Text Filters. */
+  filterIsNumeric(col: number): boolean {
+    const filter = this.activeSheet().autoFilter;
+    return filter ? isNumberColumn(filter, col, this.filterReader()) : false;
+  }
+
+  /**
+   * Data > Filter: puts drop-down buttons on the table around the selection,
+   * or takes them off again — showing every row they had hidden.
+   *
+   * Returns why it could not, or null. The table is the selection when more
+   * than one cell is selected, otherwise the filled block around the cursor.
+   */
+  toggleAutoFilter(): string | null {
+    const sheet = this.activeSheet();
+    const existing = sheet.autoFilter;
+
+    if (existing) {
+      this.commit({ label: 'Filter', source: 'ribbon', control: 'data.filter' }, (mutator) => {
+        mutator.setAutoFilter(sheet.id, null);
+        this.setRowsHidden(mutator, sheet, bodyRows(existing), () => false);
+      });
+      return null;
+    }
+
+    const filled = (row: number, col: number): boolean => (sheet.getCell(row, col)?.value ?? null) !== null;
+    const selected = this.selection.getRanges()[0];
+    const active = this.selection.getActive();
+    const used = sheet.usedRange();
+    if (!used) return 'the sheet is empty — type the table first';
+
+    let range: RangeAddress =
+      selected && !isSingleCell(selected) ? selected : currentRegion({ start: active, end: active }, filled);
+    // A selected whole column is a million rows; the table ends where the data does.
+    range = {
+      start: range.start,
+      end: { row: Math.min(range.end.row, used.end.row), col: Math.min(range.end.col, used.end.col) },
+    };
+
+    let any = false;
+    for (let col = range.start.col; col <= range.end.col && !any; col += 1) any = filled(range.start.row, col);
+    if (!any) return 'select a cell in the table, with its headings in the first row';
+
+    this.commit({ label: 'Filter', source: 'ribbon', control: 'data.filter' }, (mutator) => {
+      mutator.setAutoFilter(sheet.id, { range, columns: {} });
+    });
+    return null;
+  }
+
+  /**
+   * A column's filter, from its drop-down: a condition, or null for Clear
+   * Filter From. Rows failing any column's condition are hidden.
+   */
+  setColumnFilter(col: number, condition: FilterCondition | null): void {
+    const sheet = this.activeSheet();
+    const filter = sheet.autoFilter;
+    if (!filter) return;
+
+    const next = this.grownFilter(filter);
+    if (condition) next.columns[col] = condition;
+    else delete next.columns[col];
+
+    this.commit(
+      { label: condition ? 'Filter' : 'Clear Filter', source: 'ribbon', control: 'data.filter.column' },
+      (mutator) => {
+        mutator.setAutoFilter(sheet.id, next);
+        this.applyFilterRows(mutator, sheet, next);
+      },
+    );
+  }
+
+  /** Data > Clear: every column's condition removed, every row shown. */
+  clearFilters(): void {
+    const sheet = this.activeSheet();
+    const filter = sheet.autoFilter;
+    if (!filter) return;
+
+    const next = this.grownFilter(filter);
+    next.columns = {};
+    this.commit({ label: 'Clear Filter', source: 'ribbon', control: 'data.filter.clear' }, (mutator) => {
+      mutator.setAutoFilter(sheet.id, next);
+      this.applyFilterRows(mutator, sheet, next);
+    });
+  }
+
+  /** Data > Reapply: the same conditions over the table as it is now. */
+  reapplyFilter(): void {
+    const sheet = this.activeSheet();
+    const filter = sheet.autoFilter;
+    if (!filter) return;
+
+    const next = this.grownFilter(filter);
+    this.commit({ label: 'Reapply', source: 'ribbon', control: 'data.filter.reapply' }, (mutator) => {
+      mutator.setAutoFilter(sheet.id, next);
+      this.applyFilterRows(mutator, sheet, next);
+    });
+  }
+
+  /**
+   * Sort A to Z (or Z to A) from a column's drop-down: the rows under the
+   * header, by that column, with the filter applied again afterwards.
+   */
+  sortFilterColumn(col: number, direction: SortDirection): string | null {
+    const sheet = this.activeSheet();
+    const filter = sheet.autoFilter;
+    if (!filter) return 'there is no filter';
+
+    const grown = this.grownFilter(filter);
+    if (grown.range.end.row <= grown.range.start.row) return 'there are no rows under the headings';
+    const body: RangeAddress = {
+      start: { row: grown.range.start.row + 1, col: grown.range.start.col },
+      end: grown.range.end,
+    };
+
+    const before = snapshotSheet(sheet, this.workbook);
+    const blocker = sortBlocker(before, body);
+    if (blocker) return blocker;
+    const after = sortSheetRange(before, body, col, direction);
+
+    this.commit(
+      { label: direction === 'asc' ? 'Sort A to Z' : 'Sort Z to A', source: 'ribbon', control: 'data.filter.sort' },
+      (mutator) => {
+        mutator.replaceSheet(sheet.id, before, after);
+        // Rebuilt by the replace, so the sheet is read again.
+        const sorted = this.workbook.sheetById(sheet.id);
+        if (!sorted) return;
+        mutator.setAutoFilter(sheet.id, grown);
+        this.applyFilterRows(mutator, sorted, grown);
+      },
+    );
+    return null;
+  }
+
+  /** The filter with its range grown over rows typed in directly below the table. */
+  private grownFilter(filter: AutoFilter): AutoFilter {
+    const sheet = this.activeSheet();
+    const next = cloneFilter(filter)!;
+    const rowFilled = (row: number): boolean => {
+      for (let col = next.range.start.col; col <= next.range.end.col; col += 1) {
+        if ((sheet.getCell(row, col)?.value ?? null) !== null) return true;
+      }
+      return false;
+    };
+    while (rowFilled(next.range.end.row + 1)) next.range.end.row += 1;
+    return next;
+  }
+
+  private applyFilterRows(mutator: WorkbookMutator, sheet: Worksheet, filter: AutoFilter): void {
+    const hidden = hiddenRows(filter, this.filterReader(sheet));
+    this.setRowsHidden(mutator, sheet, bodyRows(filter), (row) => hidden.has(row));
+  }
+
+  private setRowsHidden(
+    mutator: WorkbookMutator,
+    sheet: Worksheet,
+    rows: readonly number[],
+    hide: (row: number) => boolean,
+  ): void {
+    for (const row of rows) {
+      const want = hide(row);
+      const existing = sheet.rows.get(row);
+      if (Boolean(existing?.hidden) === want) continue;
+      mutator.setRowProps(sheet.id, row, cleanProps({ ...existing, hidden: want || undefined }));
+    }
+  }
+
   setColumnWidth(col: number, width: number): void {
     const sheet = this.activeSheet();
     const existing = sheet.columns.get(col);
@@ -450,6 +745,148 @@ export class WorkbookStore {
     this.commit({ label: 'Row Height', source: 'grid' }, (mutator) => {
       mutator.setRowProps(sheet.id, row, { ...existing, height: Math.max(0, Math.round(height)) });
     });
+  }
+
+  /**
+   * Format Cells' OK: everything its tabs changed, as one undoable step.
+   *
+   * `merge` is the Alignment tab's Merge cells box — true merges the selection,
+   * false unmerges every merge inside it, undefined leaves merges alone.
+   * Returns false when a requested merge was refused because it overlaps one
+   * that reaches outside the selection; the formatting is applied regardless.
+   */
+  formatCells(changesFor: (address: CellAddress) => Partial<CellStyle>, merge: boolean | undefined): boolean {
+    const sheet = this.activeSheet();
+    const range = this.selection.getRanges()[0];
+    let refused = false;
+
+    this.commit({ label: 'Format Cells', source: 'ribbon', control: 'home.formatCells' }, (mutator) => {
+      if (range && merge === false) {
+        for (const existing of sheet.mergedRanges()) {
+          const overlaps =
+            existing.start.row <= range.end.row &&
+            existing.end.row >= range.start.row &&
+            existing.start.col <= range.end.col &&
+            existing.end.col >= range.start.col;
+          if (overlaps) mutator.unmergeAt(sheet.id, existing.start.row, existing.start.col);
+        }
+      }
+      if (range && merge === true && !isSingleCell(range)) refused = !mutator.mergeCells(sheet.id, range);
+
+      for (const address of this.selection.addresses()) {
+        const existing = sheet.getCell(address.row, address.col);
+        mutator.setStyle(
+          sheet.id,
+          address.row,
+          address.col,
+          this.workbook.styles.derive(existing?.styleId ?? DEFAULT_STYLE_ID, changesFor(address)),
+        );
+      }
+    });
+
+    return !refused;
+  }
+
+  /**
+   * Home > Fill > Down, Right, Up and Left: the first line of the selection
+   * copied over the rest, formulas moved the way a paste moves them.
+   *
+   * A selection one line deep fills from its neighbour instead, which is what
+   * Ctrl+D does on a single cell: the cell above comes down into it.
+   */
+  fill(direction: FillDirection): boolean {
+    const sheet = this.activeSheet();
+    const selected = this.selection.getRanges()[0];
+    if (!selected) return false;
+
+    const vertical = direction === 'down' || direction === 'up';
+    const forward = direction === 'down' || direction === 'right';
+    const first = vertical ? selected.start.row : selected.start.col;
+    const last = vertical ? selected.end.row : selected.end.col;
+
+    const source = first === last ? (forward ? first - 1 : last + 1) : forward ? first : last;
+    if (source < 0) return false;
+
+    const targets: number[] = [];
+    for (let index = first; index <= last; index += 1) if (index !== source) targets.push(index);
+    if (targets.length === 0) return false;
+
+    const lines = vertical ? rangeColumns(selected) : rangeRows(selected);
+    let formulas = false;
+
+    this.commit(
+      { label: FILL_LABELS[direction], source: 'ribbon', control: `home.editing.fill.${direction}` },
+      (mutator) => {
+        for (const line of lines) {
+          const from = vertical ? { row: source, col: line } : { row: line, col: source };
+          const cell = sheet.getCell(from.row, from.col);
+          if (cell?.formula !== undefined) formulas = true;
+
+          for (const index of targets) {
+            const to = vertical ? { row: index, col: line } : { row: line, col: index };
+            mutator.setCell(
+              sheet.id,
+              to.row,
+              to.col,
+              cell
+                ? cell.formula === undefined
+                  ? { ...cell }
+                  : { ...cell, formula: translateFormula(cell.formula, to.row - from.row, to.col - from.col) }
+                : undefined,
+            );
+          }
+        }
+      },
+    );
+
+    if (formulas) void this.ensureEngine();
+    return true;
+  }
+
+  /**
+   * Sets the height of rows or the width of columns, as Home > Format's Row
+   * Height and Column Width do. `undefined` drops the override, which is what
+   * AutoFit Row Height means for a row with nothing wrapped in it. A function
+   * sizes each line on its own, as AutoFit Column Width does.
+   */
+  resize(
+    axis: 'row' | 'column',
+    indices: readonly number[],
+    size: number | undefined | ((index: number) => number | undefined),
+    label: string,
+    control: string,
+    source: CommandSource = 'ribbon',
+  ): void {
+    const sheet = this.activeSheet();
+
+    this.commit({ label, source, control }, (mutator) => {
+      for (const index of indices) {
+        const raw = typeof size === 'function' ? size(index) : size;
+        const value = raw === undefined ? undefined : Math.max(0, Math.round(raw));
+        if (axis === 'row') mutator.setRowProps(sheet.id, index, cleanProps({ ...sheet.rows.get(index), height: value }));
+        else mutator.setColumnProps(sheet.id, index, cleanProps({ ...sheet.columns.get(index), width: value }));
+      }
+    });
+  }
+
+  /** Home > Format > Hide & Unhide, for rows and columns. */
+  setHidden(axis: 'row' | 'column', indices: readonly number[], hidden: boolean): boolean {
+    const sheet = this.activeSheet();
+    const props = axis === 'row' ? sheet.rows : sheet.columns;
+    const changing = indices.filter((index) => Boolean(props.get(index)?.hidden) !== hidden);
+    if (changing.length === 0) return false;
+
+    const noun = axis === 'row' ? 'Rows' : 'Columns';
+    this.commit(
+      { label: `${hidden ? 'Hide' : 'Unhide'} ${noun}`, source: 'ribbon', control: `home.cells.format.${hidden ? 'hide' : 'unhide'}${noun}` },
+      (mutator) => {
+        for (const index of changing) {
+          if (axis === 'row') mutator.setRowProps(sheet.id, index, cleanProps({ ...sheet.rows.get(index), hidden: hidden || undefined }));
+          else mutator.setColumnProps(sheet.id, index, cleanProps({ ...sheet.columns.get(index), hidden: hidden || undefined }));
+        }
+      },
+    );
+    return true;
   }
 
   mergeSelection(): boolean {
@@ -482,6 +919,19 @@ export class WorkbookStore {
         const across = { start: { row, col: range.start.col }, end: { row, col: range.end.col } };
         if (mutator.mergeCells(sheet.id, across)) merged = true;
       }
+    });
+    return merged;
+  }
+
+  /** Home > Merge > Merge Cells: one merged block, alignment left alone. */
+  mergeCellsOnly(): boolean {
+    const sheet = this.activeSheet();
+    const range = this.selection.getRanges()[0];
+    if (!range) return false;
+
+    let merged = false;
+    this.commit({ label: 'Merge Cells', source: 'ribbon', control: 'home.alignment.mergeCells' }, (mutator) => {
+      merged = mutator.mergeCells(sheet.id, range);
     });
     return merged;
   }
@@ -550,17 +1000,27 @@ export class WorkbookStore {
    * Pastes at the cursor, translating relative references by how far the block
    * moved — the behaviour that makes a copied `=B1*2` still mean "the cell to
    * my left, doubled".
+   *
+   * `mode` is the Paste menu's choice. Values pastes what the cells showed,
+   * Formulas pastes their contents without their formatting, Formatting pastes
+   * only the formatting. A cut only pastes whole: Excel offers nothing else
+   * after one, because a move that left the formatting behind is not a move.
    */
-  paste(): boolean {
+  paste(mode: PasteMode = 'all'): boolean {
     const clipboard = this.clipboard;
-    if (!clipboard) return false;
+    if (!clipboard || (clipboard.cut && mode !== 'all')) return false;
 
     const sheet = this.activeSheet();
     const target = this.selection.getActive();
     const rowDelta = target.row - clipboard.origin.row;
     const colDelta = target.col - clipboard.origin.col;
+    let formulas = false;
 
-    this.commit({ label: clipboard.cut ? 'Cut' : 'Paste', source: 'ribbon', control: 'home.clipboard.paste' }, (mutator) => {
+    const meta: CommandMeta = clipboard.cut
+      ? { label: 'Cut', source: 'ribbon', control: 'home.clipboard.paste' }
+      : { label: PASTE_LABELS[mode], source: 'ribbon', control: PASTE_CONTROLS[mode] };
+
+    this.commit(meta, (mutator) => {
       if (clipboard.cut) {
         for (const { row, col } of clipboard.cells) {
           this.graph.clear(nodeId(clipboard.sheetId, row, col));
@@ -572,25 +1032,211 @@ export class WorkbookStore {
         const to = { row: row + rowDelta, col: col + colDelta };
         if (to.row < 0 || to.col < 0) continue;
 
-        mutator.setCell(
-          sheet.id,
-          to.row,
-          to.col,
-          cell.formula === undefined
-            ? { ...cell }
-            : {
-                ...cell,
-                // The value is left as the source's until recalculation runs;
-                // it is replaced a few lines later, before anything paints.
-                formula: clipboard.cut ? cell.formula : translateFormula(cell.formula, rowDelta, colDelta),
-              },
-        );
+        const targetStyle = sheet.getCell(to.row, to.col)?.styleId ?? DEFAULT_STYLE_ID;
+        const formula =
+          cell.formula === undefined || clipboard.cut ? cell.formula : translateFormula(cell.formula, rowDelta, colDelta);
+
+        switch (mode) {
+          case 'formats':
+            mutator.setStyle(sheet.id, to.row, to.col, cell.styleId);
+            break;
+
+          case 'values':
+            mutator.setCell(
+              sheet.id,
+              to.row,
+              to.col,
+              cell.value === null && targetStyle === DEFAULT_STYLE_ID ? undefined : { value: cell.value, styleId: targetStyle },
+            );
+            break;
+
+          case 'formulas':
+            if (formula !== undefined) formulas = true;
+            mutator.setCell(sheet.id, to.row, to.col, {
+              value: cell.value,
+              ...(formula === undefined ? {} : { formula }),
+              styleId: targetStyle,
+            });
+            break;
+
+          case 'all':
+            if (formula !== undefined) formulas = true;
+            // The value is left as the source's until recalculation runs; it
+            // is replaced a few lines later, before anything paints.
+            mutator.setCell(sheet.id, to.row, to.col, formula === undefined ? { ...cell } : { ...cell, formula });
+            break;
+        }
       }
     });
 
     // A cut is a move: the block is on the clipboard once.
     if (clipboard.cut) this.clipboard = null;
+    if (formulas) void this.ensureEngine();
     return true;
+  }
+
+  /** Whether the clipboard holds a cut, which only pastes whole. */
+  clipboardIsCut(): boolean {
+    return this.clipboard?.cut === true;
+  }
+
+  /* -- Format Painter ----------------------------------------------------- */
+
+  /**
+   * Picks up the formatting of the selection, for the next selection to take.
+   *
+   * Only the cells that exist are recorded: an unformatted cell is the default
+   * style, and a selected column of a million empty cells must not become a
+   * million-entry brush.
+   */
+  pickUpFormat(): boolean {
+    const sheet = this.activeSheet();
+    const range = this.selection.getRanges()[0];
+    if (!range) return false;
+
+    const styles = new Map<string, StyleId>();
+    for (const [address, cell] of sheet.entries()) {
+      if (
+        address.row >= range.start.row &&
+        address.row <= range.end.row &&
+        address.col >= range.start.col &&
+        address.col <= range.end.col
+      ) {
+        styles.set(`${address.row - range.start.row}:${address.col - range.start.col}`, cell.styleId);
+      }
+    }
+
+    this.formatBrush = {
+      height: range.end.row - range.start.row + 1,
+      width: range.end.col - range.start.col + 1,
+      styles,
+    };
+    this.changed();
+    return true;
+  }
+
+  hasFormatBrush(): boolean {
+    return this.formatBrush !== null;
+  }
+
+  dropFormatBrush(): void {
+    if (!this.formatBrush) return;
+    this.formatBrush = null;
+    this.changed();
+  }
+
+  /**
+   * Paints the picked-up formatting over the selection, then puts the brush down.
+   *
+   * A single cell takes the brush's whole shape, as clicking once with Excel's
+   * painter does; a larger selection is tiled with the pattern.
+   */
+  paintFormat(): boolean {
+    const brush = this.formatBrush;
+    const selected = this.selection.getRanges()[0];
+    this.formatBrush = null;
+    if (!brush || !selected) {
+      this.changed();
+      return false;
+    }
+
+    const sheet = this.activeSheet();
+    const target: RangeAddress = isSingleCell(selected)
+      ? {
+          start: selected.start,
+          end: { row: selected.start.row + brush.height - 1, col: selected.start.col + brush.width - 1 },
+        }
+      : selected;
+
+    this.commit({ label: 'Format Painter', source: 'ribbon', control: 'home.clipboard.formatPainter' }, (mutator) => {
+      for (let row = target.start.row; row <= target.end.row; row += 1) {
+        for (let col = target.start.col; col <= target.end.col; col += 1) {
+          const key = `${(row - target.start.row) % brush.height}:${(col - target.start.col) % brush.width}`;
+          mutator.setStyle(sheet.id, row, col, brush.styles.get(key) ?? DEFAULT_STYLE_ID);
+        }
+      }
+    });
+
+    this.selection.selectRange(target);
+    this.changed();
+    return true;
+  }
+
+  /* -- Find & Replace ----------------------------------------------------- */
+
+  /**
+   * Every cell on the active sheet whose contents match, in Excel's search
+   * order: across each row, then down.
+   *
+   * Matched against what the formula bar shows — the formula for a formula
+   * cell — because that is Excel's default "Look in: Formulas".
+   */
+  findAll(query: string, options: FindOptions): CellAddress[] {
+    if (query === '') return [];
+
+    const found: CellAddress[] = [];
+    for (const [address] of this.activeSheet().entries()) {
+      if (textMatches(this.editText(address.row, address.col), query, options)) found.push(address);
+    }
+    return found.sort((a, b) => a.row - b.row || a.col - b.col);
+  }
+
+  /** Selects the next match after the active cell, wrapping round. */
+  findNext(query: string, options: FindOptions): CellAddress | null {
+    const found = this.findAll(query, options);
+    const active = this.selection.getActive();
+    const next =
+      found.find((address) => address.row > active.row || (address.row === active.row && address.col > active.col)) ??
+      found[0];
+    if (!next) return null;
+
+    this.selection.selectCell(next);
+    this.extendReach(next);
+    return next;
+  }
+
+  /**
+   * Replaces the match in the active cell, if it is one, and moves to the next.
+   * Returns whether a replacement was made.
+   */
+  replaceNext(query: string, replacement: string, options: FindOptions): boolean {
+    const active = this.selection.getActive();
+    const replaced = textMatches(this.editText(active.row, active.col), query, options)
+      ? this.replaceIn([active], query, replacement, options, 'Replace') > 0
+      : false;
+
+    this.findNext(query, options);
+    return replaced;
+  }
+
+  /** Replaces every match on the sheet as one undoable step; returns how many. */
+  replaceAll(query: string, replacement: string, options: FindOptions): number {
+    return this.replaceIn(this.findAll(query, options), query, replacement, options, 'Replace All');
+  }
+
+  private replaceIn(
+    addresses: readonly CellAddress[],
+    query: string,
+    replacement: string,
+    options: FindOptions,
+    label: string,
+  ): number {
+    if (addresses.length === 0) return 0;
+
+    const sheet = this.activeSheet();
+    let formulas = false;
+
+    this.commit({ label, source: 'ribbon', control: 'home.editing.replace' }, (mutator) => {
+      for (const { row, col } of addresses) {
+        const input = replaceText(this.editText(row, col), query, replacement, options);
+        const { cell, isFormula } = this.cellFromInput(input, sheet.getCell(row, col)?.styleId ?? DEFAULT_STYLE_ID);
+        if (isFormula) formulas = true;
+        mutator.setCell(sheet.id, row, col, cell);
+      }
+    });
+
+    if (formulas) void this.ensureEngine();
+    return addresses.length;
   }
 
   /* -- Sheets ------------------------------------------------------------ */
@@ -856,6 +1502,32 @@ function columnsBetween(source: RangeAddress, target: RangeAddress): number[] {
   const columns: number[] = [];
   for (let col = source.end.col + 1; col <= target.end.col; col += 1) columns.push(col);
   return columns;
+}
+
+/** Row or column props with the cleared fields dropped; nothing left means none. */
+function cleanProps<T extends object>(props: T): T | undefined {
+  const entries = Object.entries(props).filter(([, value]) => value !== undefined);
+  return entries.length === 0 ? undefined : (Object.fromEntries(entries) as T);
+}
+
+function textMatches(text: string, query: string, options: FindOptions): boolean {
+  const haystack = options.matchCase ? text : text.toLowerCase();
+  const needle = options.matchCase ? query : query.toLowerCase();
+  return options.entireCell ? haystack === needle : haystack.includes(needle);
+}
+
+function replaceText(text: string, query: string, replacement: string, options: FindOptions): string {
+  if (options.entireCell) return replacement;
+  const pattern = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), options.matchCase ? 'g' : 'gi');
+  // A function, so a `$` in the replacement is text rather than a group reference.
+  return text.replace(pattern, () => replacement);
+}
+
+interface FormatBrush {
+  height: number;
+  width: number;
+  /** Style ids keyed by `row:col` offset within the picked-up range. */
+  styles: Map<string, StyleId>;
 }
 
 interface ClipboardCell {

@@ -28,6 +28,7 @@ export const NUMBER_FORMATS = {
   /** Excel's Currency with the decimal places set to zero. */
   currencyWhole: '₹#,##0',
   date: 'dd-mm-yyyy',
+  longDate: 'dd mmmm yyyy',
   /** What typing a date *and* a time into one cell applies. */
   dateTime: 'dd-mm-yyyy hh:mm',
   time: 'hh:mm:ss',
@@ -66,10 +67,11 @@ export function dateToSerial(date: Date): number {
 }
 
 /**
- * Numeric codes, as a family: an optional rupee sign, grouped or plain digits,
- * any number of decimal places, an optional trailing percent.
+ * Numeric codes, as a family: an optional currency sign (the ones the Home
+ * tab's Accounting menu offers), grouped or plain digits, any number of decimal
+ * places, an optional trailing percent.
  */
-const NUMERIC_CODE = /^(₹?)(#,##0|0)(?:\.(0+))?(%?)$/;
+export const NUMERIC_CODE = /^([₹$€£]?)(#,##0|0)(?:\.(0+))?(%?)$/;
 
 /**
  * Date and time codes, as a family.

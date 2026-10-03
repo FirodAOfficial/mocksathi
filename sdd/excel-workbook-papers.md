@@ -71,16 +71,18 @@ admin list. Set it to false to offer both again.
 
 ## Tested
 
-`src/exam/workbook/workbookActions.test.ts` drives a real `WorkbookStore` through 30 actions (font
+`src/exam/workbook/workbookActions.test.ts` drives a real `WorkbookStore` through 33 actions (font
 styles, font, size, colours, fill, alignment, wrap, indent, rotation, super/subscript, number formats,
 outside/all borders, remove bold, no fill, merge & center, unmerge, typed values, a changed number,
-SUM and arithmetic formulas, clear, column width, row height, freeze, gridlines, print area) — each
+SUM and arithmetic formulas, clear, column width, row height, hide a column, hide a row, a filter,
+Fill Down, freeze, gridlines, print area) — each
 detected as the standard value, described, replayed, marked right in either answer order (including
-a SUM answered after its inputs changed) and wrong for a near miss or an extra change.
+a SUM answered after its inputs changed) and wrong for a near miss or an extra change. A filter is
+detected as the rows it hides (`Hide row — 5`), which is also how it is marked: a candidate who
+filters the same rows away answers it, whichever conditions they used to get there.
 `src/spreadsheet/useSharedWorkbookAnswers.test.ts` covers the sitting.
 
-Not yet possible: hiding rows/columns (the spreadsheet has no command for it — detection and marking
-already handle it), and anything on a second sheet.
+Not yet possible: anything on a second sheet.
 
 ## Reverting
 

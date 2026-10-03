@@ -15,7 +15,8 @@
 }
 
 .tab {
-  padding: 3px 12px;
+  display: flex;
+  align-items: center;
   font-size: 12px;
   color: #23415d;
   white-space: nowrap;
@@ -23,13 +24,46 @@
   border: 1px solid #a5bcd4;
   border-bottom: none;
   border-radius: 3px 3px 0 0;
-  cursor: pointer;
 }
 
 .tabActive {
   background: #fff;
   font-weight: 700;
   color: #217346;
+}
+
+.tabLabel {
+  padding: 3px 4px 3px 12px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* The tab's own delete button: quiet until pointed at, red when it is. */
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+  color: #6b7f94;
+  background: transparent;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: #fff;
+  background: #c42b1c;
 }
 
 .rename {
@@ -40,8 +74,7 @@
   border: 1px solid #217346;
 }
 
-.add,
-.remove {
+.add {
   width: 22px;
   height: 20px;
   font-size: 14px;
@@ -53,15 +86,9 @@
   cursor: pointer;
 }
 
-.add:hover,
-.remove:hover:not(:disabled) {
+.add:hover {
   border-color: var(--control-hover-border, #e0b64f);
   background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
-}
-
-.remove:disabled {
-  color: var(--control-disabled-text, #9aa5b1);
-  cursor: default;
 }
 
 .error {
@@ -74,7 +101,7 @@
     padding: 1px 6px;
   }
 
-  .tab {
-    padding: 2px 12px;
+  .tabLabel {
+    padding: 2px 4px 2px 12px;
   }
 }

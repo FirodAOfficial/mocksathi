@@ -1,4 +1,5 @@
 import { eachAddress, type RangeAddress } from '../model/address';
+import { cloneFilter, type AutoFilter } from '../model/autoFilter';
 import type { Cell } from '../model/Cell';
 import type { Workbook } from '../model/Workbook';
 import { sheetFromSnapshot, type SheetSnapshot } from '../model/snapshot';
@@ -240,6 +241,14 @@ export class WorkbookMutator {
     sheet.printArea = range ? { start: { ...range.start }, end: { ...range.end } } : null;
   }
 
+  setAutoFilter(sheetId: string, filter: AutoFilter | null): void {
+    const sheet = this.workbook.sheetById(sheetId);
+    if (!sheet) return;
+
+    this.operations.push({ kind: 'setAutoFilter', sheetId, before: cloneFilter(sheet.autoFilter), after: cloneFilter(filter) });
+    sheet.autoFilter = cloneFilter(filter);
+  }
+
   setFrozen(sheetId: string, rows: number, columns: number): void {
     const sheet = this.workbook.sheetById(sheetId);
     if (!sheet) return;
@@ -264,6 +273,7 @@ function snapshotSheet(sheet: Worksheet) {
     ),
     merges: sheet.mergedRanges().map((merge) => ({ start: { ...merge.start }, end: { ...merge.end } })),
     frozen: { ...sheet.frozen },
+    autoFilter: cloneFilter(sheet.autoFilter),
   };
 }
 
@@ -455,6 +465,7 @@ export class CommandBus {
           for (const [col, props] of operation.columns) restored.setColumnProps(col, props);
           for (const range of operation.merges) restored.mergeCells(range);
           restored.freeze(operation.frozen.rows, operation.frozen.columns);
+          restored.autoFilter = cloneFilter(operation.autoFilter);
           this.workbook.addSheet(restored, operation.index);
         }
         return;
@@ -495,6 +506,10 @@ export class CommandBus {
 
       case 'setFrozen':
         sheet?.freeze(operation[direction].rows, operation[direction].columns);
+        return;
+
+      case 'setAutoFilter':
+        if (sheet) sheet.autoFilter = cloneFilter(operation[direction]);
         return;
     }
   }

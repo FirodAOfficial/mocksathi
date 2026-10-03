@@ -229,6 +229,57 @@ const CASES: ActionCase[] = [
     nearMiss: (store) => store.setRowHeight(1, 40),
   },
   {
+    name: 'Hide Columns',
+    where: range(0, 2),
+    action: (store) => void store.setHidden('column', [2], true),
+    standard: (steps) => expect(steps).toEqual([{ kind: 'column', col: 2, hidden: { from: false, to: true } }]),
+    describes: /^Hide column — C$/,
+    nearMiss: (store) => void store.setHidden('column', [1], true),
+  },
+  {
+    name: 'Hide Rows',
+    where: range(3, 0),
+    action: (store) => void store.setHidden('row', [3], true),
+    standard: (steps) => expect(steps).toEqual([{ kind: 'row', row: 3, hidden: { from: false, to: true } }]),
+    describes: /^Hide row — 4$/,
+    nearMiss: (store) => void store.setHidden('row', [4], true),
+  },
+  {
+    name: 'Filter',
+    where: range(1, 0, 4, 2),
+    action: (store) => {
+      store.toggleAutoFilter();
+      store.setColumnFilter(1, { kind: 'number', op: 'greater', value: 4500 });
+    },
+    // A filter is the rows it hides: Aman's 4000 goes.
+    standard: (steps) => expect(steps).toEqual([{ kind: 'row', row: 4, hidden: { from: false, to: true } }]),
+    describes: /^Hide row — 5$/,
+    nearMiss: (store) => {
+      store.toggleAutoFilter();
+      store.setColumnFilter(1, { kind: 'number', op: 'greater', value: 5500 });
+    },
+  },
+  {
+    name: 'Fill Down',
+    where: range(2, 3, 4, 3),
+    starts: { where: range(2, 3), action: type(2, 3, '=B3-C3') },
+    action: (store) => void store.fill('down'),
+    standard: (steps) =>
+      expect(steps).toEqual([
+        {
+          kind: 'content',
+          cells: [
+            { row: 3, col: 3, value: 0, formula: '=B4-C4', previous: null },
+            { row: 4, col: 3, value: 3000, formula: '=B5-C5', previous: null },
+          ],
+        },
+      ]),
+    describes: /^Formulas — D4:D5$/,
+    // Only the first row filled.
+    nearMiss: type(3, 3, '=B4-C4'),
+    other: { where: range(1, 3), action: type(1, 3, 'Due') },
+  },
+  {
     name: 'Freeze Panes',
     where: range(2, 0),
     action: (store) => store.freezePanes(2, 0),
