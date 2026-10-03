@@ -264,7 +264,7 @@ function QuestionNav({
         </div>
         <div>
           <dt>Avg. Time</dt>
-          <dd>{marked ? `${marked.averageTimeSeconds}s` : '—'}</dd>
+          <dd>{marked?.averageTimeSeconds != null ? `${marked.averageTimeSeconds}s` : '—'}</dd>
         </div>
       </dl>
     </div>

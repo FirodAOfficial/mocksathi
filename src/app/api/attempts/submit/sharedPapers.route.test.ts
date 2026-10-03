@@ -51,6 +51,10 @@ vi.mock('@/db/attempts', () => ({
   },
 }));
 
+// No cohort in these tests: the comparison is withheld, which is what a
+// paper nobody else has sat shows.
+vi.mock('@/db/benchmarks', () => ({ benchmarkViewForTest: () => Promise.resolve(null) }));
+
 const { POST } = await import('./route');
 
 const TEST_ID = '11111111-1111-4111-8111-111111111111';

@@ -12,13 +12,7 @@ import {
 } from '@/editor/ribbonActions';
 import { findQuestion, isWordQuestion, type Language, type WordQuestion } from '@/exam/types';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
-import {
-  PAPER,
-  REFERENCE_AVERAGE,
-  REFERENCE_AVERAGE_TIMES,
-  REFERENCE_TOPPER,
-  REFERENCE_TOPPER_TIMES,
-} from '@/exam/result';
+import { PAPER } from '@/exam/result';
 import { QUESTION_BANK, rubricFor } from '@/server/marking/questionBank';
 import { WORD_MARKER } from './wordMarker';
 import { markAttempt, markQuestion, validateQuestionBank } from './markAttempt';
@@ -337,12 +331,6 @@ describe('one answer key, both languages', () => {
 });
 
 describe('markAttempt', () => {
-  const reference = {
-    topper: REFERENCE_TOPPER,
-    average: REFERENCE_AVERAGE,
-    topperTimePerQuestion: [...REFERENCE_TOPPER_TIMES],
-    averageTimePerQuestion: [...REFERENCE_AVERAGE_TIMES],
-  };
   const paper = { testName: PAPER.testName, tagline: PAPER.tagline, qualifyingMarks: PAPER.qualifyingMarks };
 
   it('scores an empty paper as nothing attempted', () => {
@@ -350,7 +338,6 @@ describe('markAttempt', () => {
       SEED_ATTEMPT,
       QUESTION_BANK,
       { answers: {}, totalTimeSeconds: 0, language: 'en' },
-      reference,
       WORD_MARKER,
       paper,
     );
@@ -367,7 +354,6 @@ describe('markAttempt', () => {
       SEED_ATTEMPT,
       QUESTION_BANK,
       { answers: { 2: editor.getJSON() }, timePerQuestion: { 2: 42 }, totalTimeSeconds: 90, language: 'en' },
-      reference,
       WORD_MARKER,
       paper,
     );

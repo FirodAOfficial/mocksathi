@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import { OTP_MAX_ATTEMPTS, OTP_RESEND_COOLDOWN_MS, OTP_MAX_PER_WINDOW, OTP_TTL_MS, OTP_LENGTH, OTP_WINDOW_MS } from './otpConstants';
 
 /**
  * The rules a verification code obeys: how it is generated, how long it lives,
@@ -12,26 +13,16 @@ import { randomInt } from 'node:crypto';
  * would in practice be exercised by nobody.
  */
 
-/** Digits in a code. Six is what a person will retype from their phone. */
-export const OTP_LENGTH = 6;
+/** The limits themselves live in `otpConstants.ts`, importable by the browser. */
+export {
+  OTP_LENGTH,
+  OTP_TTL_MS,
+  OTP_MAX_ATTEMPTS,
+  OTP_RESEND_COOLDOWN_MS,
+  OTP_MAX_PER_WINDOW,
+  OTP_WINDOW_MS,
+} from './otpConstants';
 
-/** How long a code stays usable. */
-export const OTP_TTL_MS = 10 * 60 * 1000;
-
-/**
- * Wrong guesses a code survives.
- *
- * The fifth failure destroys it. Without this, six digits is a million
- * guesses — minutes of scripted requests against a ten-minute window.
- */
-export const OTP_MAX_ATTEMPTS = 5;
-
-/** Minimum gap between two requests, so "resend" cannot be held down. */
-export const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
-
-/** Codes one account may request inside `OTP_WINDOW_MS`. */
-export const OTP_MAX_PER_WINDOW = 5;
-export const OTP_WINDOW_MS = 15 * 60 * 1000;
 
 /**
  * A six-digit code from a cryptographically secure source.

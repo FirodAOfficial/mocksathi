@@ -204,7 +204,6 @@ describe('marking a candidate who answers in another order', () => {
       attempt,
       rubrics,
       { answers, language: 'en', totalTimeSeconds: 60 },
-      { topper: { score: 0, timeSeconds: 0 }, average: { score: 0, timeSeconds: 0 }, topperTimePerQuestion: [], averageTimePerQuestion: [] } as never,
       documentMarker(),
       { testName: 'Test', tagline: '', qualifyingMarks: 0 },
     );
@@ -360,7 +359,6 @@ describe('selection edges are not what is tested', () => {
       attempt,
       rubrics,
       { answers, language: 'en', totalTimeSeconds: 0 },
-      { topper: {}, average: {}, topperTimePerQuestion: [], averageTimePerQuestion: [] } as never,
       documentMarker(),
       { testName: '', tagline: '', qualifyingMarks: 0 },
     );

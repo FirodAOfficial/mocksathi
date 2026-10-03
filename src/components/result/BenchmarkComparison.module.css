@@ -1,0 +1,340 @@
+/*
+ * Series colours, by role. You / Best are a validated pair (blue / orange,
+ * adjacent CVD ΔE 27); the average is neutral ink, not a third hue — it is
+ * the reference line, not a competing series. The orange is under 3:1 on
+ * white, which is why every value is also written out beside the track.
+ */
+.section {
+  --you: #2a78d6;
+  --best: #e07b00;
+  --average: #3d4a57;
+  --track: #edf1f5;
+  --good: #1a7f43;
+  --good-bg: #ebf7ef;
+  --bad: #c42f45;
+  --bad-bg: #fdeef0;
+  --level: #52616f;
+  --level-bg: #f2f4f7;
+
+  padding: 16px 20px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4eaf0;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #6b7c8d;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #4a5c6e;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendYou {
+  width: 14px;
+  height: 8px;
+  border-radius: 0 4px 4px 0;
+  background: var(--you);
+}
+
+.legendAverage {
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--average);
+}
+
+.legendBest {
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  background: var(--best);
+}
+
+/* Headline verdicts -------------------------------------------------------- */
+
+.verdicts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.verdictMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #ffffff;
+}
+
+.verdictValue {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  color: #17365d;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdictLabel {
+  display: block;
+  font-size: 12.5px;
+  color: #4a5c6e;
+}
+
+.verdict.better {
+  background: var(--good-bg);
+  border-color: #cbead5;
+}
+
+.verdict.better .verdictMark {
+  color: var(--good);
+}
+
+.verdict.worse {
+  background: var(--bad-bg);
+  border-color: #f7d3d8;
+}
+
+.verdict.worse .verdictMark {
+  color: var(--bad);
+}
+
+.verdict.level,
+.verdict.neutral {
+  background: #f7f9fc;
+  border-color: #e4eaf0;
+}
+
+.verdict.level .verdictMark {
+  color: var(--level);
+}
+
+.verdict.neutral .verdictMark {
+  color: var(--best);
+}
+
+/* Measure rows ------------------------------------------------------------ */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 92px minmax(160px, 1fr) minmax(250px, auto) 168px;
+  align-items: center;
+  gap: 16px;
+  padding: 11px 0;
+  border-top: 1px solid #eef2f6;
+}
+
+.rowLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #35485c;
+}
+
+/* The bullet: a full-scale track, your bar, the average tick, the best marker. */
+.track {
+  position: relative;
+  height: 22px;
+}
+
+.track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 7px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--track);
+}
+
+.bar {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  height: 8px;
+  border-radius: 0 4px 4px 0;
+  background: var(--you);
+}
+
+.averageTick {
+  position: absolute;
+  top: 1px;
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--average);
+  /* A surface ring, so the tick stays visible where it crosses the bar. */
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.bestMarker {
+  position: absolute;
+  top: 5px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--best);
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.values div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.values dt {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7b8b9a;
+}
+
+.values dd {
+  margin: 0;
+  font-size: 13px;
+  color: #35485c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.values .youValue {
+  font-weight: 700;
+  color: #17365d;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chipMark {
+  font-size: 10px;
+}
+
+.chip.better {
+  color: var(--good);
+  background: var(--good-bg);
+}
+
+.chip.worse {
+  color: var(--bad);
+  background: var(--bad-bg);
+}
+
+.chip.level {
+  color: var(--level);
+  background: var(--level-bg);
+}
+
+.pending {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #f7f9fc;
+  border: 1px dashed #d5dde6;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4a5c6e;
+}
+
+@media (max-width: 1080px) {
+  .row {
+    grid-template-columns: 92px minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .values {
+    grid-column: 2;
+  }
+
+  .chip {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 600px) {
+  .verdicts {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .values,
+  .chip {
+    grid-column: 1;
+  }
+}

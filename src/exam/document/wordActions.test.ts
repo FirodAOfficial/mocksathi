@@ -166,7 +166,6 @@ function mark(
     attemptOf(passage),
     questions.map((steps, index) => documentRubricFor(index + 1, steps, project(passage))),
     { answers, language: 'en', totalTimeSeconds: 0 },
-    { topper: {}, average: {}, topperTimePerQuestion: [], averageTimePerQuestion: [] } as never,
     documentMarker(),
     { testName: '', tagline: '', qualifyingMarks: 0 },
   );

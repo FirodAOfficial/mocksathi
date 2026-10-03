@@ -1,9 +1,10 @@
 import 'server-only';
+import { cache } from 'react';
 import { and, asc, count, desc, eq, gt, max, or, sql, sum } from 'drizzle-orm';
 import { buildAttempt } from '@/exam/authoring';
 import type { MockSummary } from '@/dashboard/types';
 import type { ExamAttempt } from '@/exam/types';
-import { attemptsForUser, type StoredAttempt } from './attempts';
+import { allAttemptsForUser, type AttemptSummary } from './attempts';
 import { db } from './client';
 import {
   attemptFromDocumentPaper,
@@ -132,10 +133,11 @@ export async function listTests(options: { examId?: string } = {}): Promise<Test
   }));
 }
 
-export async function getTestById(id: string): Promise<Test | null> {
+/** `cache()`d per request: a page's `generateMetadata` and its body both look the test up. */
+export const getTestById = cache(async (id: string): Promise<Test | null> => {
   const [test] = await db.select().from(tests).where(eq(tests.id, id)).limit(1);
   return test ?? null;
-}
+});
 
 export async function getTestBySlug(slug: string): Promise<Test | null> {
   const [test] = await db.select().from(tests).where(eq(tests.slug, slug)).limit(1);
@@ -375,33 +377,11 @@ export function attemptFromTest(
  * should assume one). Every row then reads as `available`, as before.
  */
 export async function publishedTestRows(userId?: string): Promise<MockSummary[]> {
-  const rows = await db
-    .select({
-      test: tests,
-      questionCount: count(testQuestions.id),
-      totalMarks: sum(testQuestions.marks),
-      documentCount: documentQuestionCount,
-      documentMarks: documentQuestionMarks,
-      workbookCount: workbookQuestionCount,
-      workbookMarks: workbookQuestionMarks,
-    })
-    .from(tests)
-    .innerJoin(exams, eq(tests.examId, exams.id))
-    .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
-    // An empty paper is not a mock. It is a paper an admin created and has not
-    // written yet, and listing it offers a candidate a Start button that leads
-    // to a blank page and a running clock. Which table its questions must be in
-    // is `hasOfferableQuestions`'s call.
-    .where(and(eq(tests.status, 'published'), hasOfferableQuestions()))
-    .groupBy(tests.id)
-    .orderBy(asc(tests.createdAt));
-
-  const attempts: Map<string, StoredAttempt> = userId
-    ? await attemptsForUser(
-        userId,
-        rows.map(({ test }) => test.id),
-      )
-    : new Map();
+  // Both at once: the candidate's sittings don't depend on which papers are
+  // published, and `allAttemptsForUser` is the same cached query the
+  // dashboard's analytics already makes for this request.
+  const [rows, sittings] = await Promise.all([publishedTestQuery(), userId ? allAttemptsForUser(userId) : []]);
+  const attempts = new Map<string, AttemptSummary>(sittings.map((attempt) => [attempt.testId, attempt]));
 
   return rows.map(({ test, questionCount, totalMarks, documentCount, documentMarks, workbookCount, workbookMarks }, index) => {
     const questions = Number(questionCount ?? 0) + Number(documentCount ?? 0) + Number(workbookCount ?? 0);
@@ -436,6 +416,30 @@ export async function publishedTestRows(userId?: string): Promise<MockSummary[]>
       dateLabel: `${test.durationMinutes} min`,
     };
   });
+}
+
+/** Every published, non-empty paper with its question count and marks — `publishedTestRows`' half that doesn't depend on the candidate. */
+function publishedTestQuery() {
+  return db
+    .select({
+      test: tests,
+      questionCount: count(testQuestions.id),
+      totalMarks: sum(testQuestions.marks),
+      documentCount: documentQuestionCount,
+      documentMarks: documentQuestionMarks,
+      workbookCount: workbookQuestionCount,
+      workbookMarks: workbookQuestionMarks,
+    })
+    .from(tests)
+    .innerJoin(exams, eq(tests.examId, exams.id))
+    .leftJoin(testQuestions, eq(testQuestions.testId, tests.id))
+    // An empty paper is not a mock. It is a paper an admin created and has not
+    // written yet, and listing it offers a candidate a Start button that leads
+    // to a blank page and a running clock. Which table its questions must be in
+    // is `hasOfferableQuestions`'s call.
+    .where(and(eq(tests.status, 'published'), hasOfferableQuestions()))
+    .groupBy(tests.id)
+    .orderBy(asc(tests.createdAt));
 }
 
 /**
@@ -491,11 +495,17 @@ export interface LoadedPaper {
 }
 
 export async function loadPaper(test: Test, candidateName?: string): Promise<LoadedPaper | null> {
-  const questions = await questionsForTest(test.id);
-  // A Word paper with no per-question rows may be a single-document one.
-  if (questions.length === 0 && test.subject === 'word') return loadDocumentPaper(test, candidateName);
-  // And an Excel one may be a single-workbook one.
-  if (questions.length === 0 && test.subject === 'excel') return loadWorkbookPaper(test, candidateName);
+  // The per-question rows and the single-document/workbook paper are fetched
+  // together rather than one after the other: a paper is one kind or the
+  // other, so one of the two comes back empty, but asking both at once saves
+  // a database round trip on every exam start.
+  const [questions, singlePaper] = await Promise.all([
+    questionsForTest(test.id),
+    test.subject === 'word' ? loadDocumentPaper(test, candidateName) : loadWorkbookPaper(test, candidateName),
+  ]);
+  // A paper with no per-question rows may be a single-document (Word) or
+  // single-workbook (Excel) one.
+  if (questions.length === 0 && singlePaper) return singlePaper;
   // A paper with no questions is not a paper. Better to fall back to the sample
   // than to open a timed sitting with an empty question palette.
   if (questions.length === 0) return null;

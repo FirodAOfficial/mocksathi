@@ -55,26 +55,41 @@ describe('ResultScreen — qualified', () => {
     expect(within(summary).getByLabelText('Question 6, unattempted')).toBeInTheDocument();
   });
 
-  it('compares the candidate against the topper and the average', () => {
-    const section = screen.getByRole('region', { name: 'Compare with topper' });
+  it('compares the candidate against the best and the average, measure by measure', () => {
+    const section = screen.getByRole('region', { name: 'How you compare' });
 
-    expect(within(section).getByRole('table', { name: 'TOPPER' })).toBeInTheDocument();
-    expect(within(section).getByRole('table', { name: 'YOU' })).toBeInTheDocument();
-    expect(within(section).getByRole('table', { name: 'AVERAGE' })).toBeInTheDocument();
-    expect(within(section).getByText('197.50 / 200.00')).toBeInTheDocument();
-    expect(within(section).getByText('28.00 / 50.00')).toBeInTheDocument();
-    expect(within(section).getByText('01:00:00')).toBeInTheDocument();
+    expect(within(section).getByText(/Against 248 candidates/)).toBeInTheDocument();
+    // 28 against an average of 22.5 and a best of 47.5.
+    expect(within(section).getByText('5.5 marks')).toBeInTheDocument();
+    expect(within(section).getByText('above the average')).toBeInTheDocument();
+    expect(within(section).getByText('19.5 marks')).toBeInTheDocument();
+    expect(
+      within(section).getByRole('listitem', { name: /^Score: you 28 \/ 50, average 22\.5 \/ 50, best 47\.5 \/ 50\./ }),
+    ).toBeInTheDocument();
+    expect(within(section).getByRole('listitem', { name: /^Wrong: you 3, average 6, best 1\. 3 Qs below avg\.$/ })).toBeInTheDocument();
   });
 
-  it('totals the plotted times, not the topper’s whole paper', () => {
+  it('says when there is no one to compare with yet, instead of inventing figures', () => {
+    cleanup();
+    render(
+      <ResultScreen
+        result={{ ...QUALIFIED_RESULT, topper: null, average: null, benchmark: { cohortSize: 1, minCohortSize: 3, computedAt: null } }}
+      />,
+    );
+    const section = screen.getByRole('region', { name: 'How you compare' });
+    expect(section).toHaveTextContent('appear once at least 3 candidates have sat it — 1 so far');
+  });
+
+  it('totals the plotted times and says where the time went', () => {
     const analysis = screen.getByRole('region', {
       name: 'Question-wise performance and time analysis',
     });
 
     expect(within(analysis).getByText('00:08:12')).toBeInTheDocument();
     expect(within(analysis).getByText('00:08:45')).toBeInTheDocument();
-    // The topper's table time is 01:00:00 for 100 questions; these 15 took 04:35.
     expect(within(analysis).getByText('00:04:35')).toBeInTheDocument();
+    expect(within(analysis).getByText(/Faster than average on/)).toHaveTextContent('Faster than average on 13 of 15 questions');
+    expect(within(analysis).getByLabelText(/^Question 3, incorrect, you 60 seconds, average 45 seconds, best 22 seconds$/)).toBeInTheDocument();
   });
 
   it('offers a way back and a way on', () => {

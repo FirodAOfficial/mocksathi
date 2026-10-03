@@ -33,12 +33,6 @@ import { buildAttempt } from '../src/exam/authoring';
 import { draftFromRow } from '../src/db/questionRow';
 import { excelRubricFor, wordRubricFor } from '../src/server/marking/rubricFromOperations';
 import type { TestQuestion } from '../src/db/schema';
-import {
-  REFERENCE_AVERAGE,
-  REFERENCE_AVERAGE_TIMES,
-  REFERENCE_TOPPER,
-  REFERENCE_TOPPER_TIMES,
-} from '../src/exam/result';
 import type { AnswerPayload, Language } from '../src/exam/types';
 
 const write = process.argv.includes('--write');
@@ -97,13 +91,6 @@ function stable(value: unknown): string {
  * comparison the chart is drawn from — which is what a first version of this
  * script did, silently.
  */
-const REFERENCE = {
-  topper: REFERENCE_TOPPER,
-  average: REFERENCE_AVERAGE,
-  topperTimePerQuestion: [...REFERENCE_TOPPER_TIMES],
-  averageTimePerQuestion: [...REFERENCE_AVERAGE_TIMES],
-};
-
 const client = new pg.Client({
   connectionString: env.MIGRATION_DATABASE_URL ?? env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -185,7 +172,6 @@ for (const attempt of attempts) {
             timePerQuestion,
             totalTimeSeconds: previous?.you?.timeSeconds ?? 0,
           },
-          REFERENCE,
           WORD_MARKER,
           {
             testName: attempt.name,
@@ -202,7 +188,6 @@ for (const attempt of attempts) {
             timePerQuestion,
             totalTimeSeconds: previous?.you?.timeSeconds ?? 0,
           },
-          REFERENCE,
           SHEET_MARKER,
           {
             testName: attempt.name,

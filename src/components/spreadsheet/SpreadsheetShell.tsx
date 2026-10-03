@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { ExamDrawerBar, ExamPanel, type DrawerSide } from '@/components/exam/ExamPanels';
@@ -8,7 +9,6 @@ import { RotateGate } from '@/components/exam/RotateGate';
 import { ExamSummaryPanel } from '@/components/exam/ExamSummaryPanel';
 import { InstructionStrip } from '@/components/exam/InstructionStrip';
 import { QuestionListPanel } from '@/components/exam/QuestionListPanel';
-import { ResultView } from '@/components/result/ResultView';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import type { ExamResult } from '@/exam/result';
 import { SubmissionError, submitAttempt } from '@/exam/submitAttempt';
@@ -28,6 +28,9 @@ import { SpreadsheetGrid } from './grid/SpreadsheetGrid';
 import { SpreadsheetRibbon } from './ribbon/SpreadsheetRibbon';
 import { SpreadsheetStatusBar } from './SpreadsheetStatusBar';
 import styles from './SpreadsheetShell.module.css';
+
+// Shown only after a submission, so it is not part of the editor's first load.
+const ResultView = dynamic(() => import('@/components/result/ResultView').then((module) => module.ResultView));
 
 /**
  * The spreadsheet editor, assembled.

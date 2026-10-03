@@ -43,8 +43,24 @@ export interface QuestionResult {
   /** Per-criterion verdicts. Absent on the design fixtures, which are not marked. */
   feedback?: CriterionFeedback[];
   yourTimeSeconds: number;
-  averageTimeSeconds: number;
-  topperTimeSeconds: number;
+  /** The cohort's mean on this question — null until there is a cohort (`src/exam/benchmark.ts`). */
+  averageTimeSeconds: number | null;
+  /** The best sitting's time on this question — null until there is one. */
+  topperTimeSeconds: number | null;
+}
+
+/**
+ * Who the best/average comparison was computed from.
+ *
+ * Present whenever a real comparison was attempted, including when it was
+ * withheld for too small a cohort — that is what lets the screen say "shows
+ * once 3 candidates have sat this paper" instead of just showing nothing.
+ */
+export interface BenchmarkMeta {
+  cohortSize: number;
+  minCohortSize: number;
+  /** ISO timestamp of the compute run the figures came from; null before the first run. */
+  computedAt: string | null;
 }
 
 export interface ExamResult {
@@ -55,8 +71,15 @@ export interface ExamResult {
   maximumMarks: number;
   qualifyingMarks: number;
   you: ScoreLine;
-  topper: ScoreLine;
-  average: ScoreLine;
+  /**
+   * The best sitting of this paper so far, and the cohort mean — both real,
+   * filled in at read time by `withBenchmark` (`src/exam/benchmark.ts`).
+   * Null when there is nothing honest to compare against yet: the sample
+   * paper, or a paper too few candidates have sat.
+   */
+  topper: ScoreLine | null;
+  average: ScoreLine | null;
+  benchmark?: BenchmarkMeta;
   questions: QuestionResult[];
 }
 
@@ -97,17 +120,17 @@ function sum(values: number[]): number {
  * at /result and iterated on without sitting an exam.
  * ---------------------------------------------------------------------- */
 
-export const REFERENCE_TOPPER: ScoreLine = {
-  score: 197.5,
-  maxScore: 200,
-  accuracy: 99,
-  correct: 99,
+const REFERENCE_TOPPER_TIMES = [14, 16, 22, 16, 15, 16, 28, 15, 17, 15, 22, 14, 15, 28, 22];
+
+const REFERENCE_TOPPER: ScoreLine = {
+  score: 47.5,
+  maxScore: 50,
+  accuracy: 93.33,
+  correct: 14,
   wrong: 1,
   unattempted: 0,
-  timeSeconds: 3600,
+  timeSeconds: sum(REFERENCE_TOPPER_TIMES),
 };
-
-export const REFERENCE_TOPPER_TIMES = [14, 16, 22, 16, 15, 16, 28, 15, 17, 15, 22, 14, 15, 28, 22];
 
 const C: QuestionOutcome = 'correct';
 const X: QuestionOutcome = 'incorrect';
@@ -128,7 +151,7 @@ function buildQuestions(
 }
 
 const QUALIFIED_YOUR_TIMES = [20, 30, 60, 25, 22, 28, 45, 26, 24, 26, 50, 22, 26, 50, 38];
-export const REFERENCE_AVERAGE_TIMES = [28, 32, 45, 30, 28, 30, 52, 28, 32, 28, 45, 26, 28, 52, 41];
+const REFERENCE_AVERAGE_TIMES = [28, 32, 45, 30, 28, 30, 52, 28, 32, 28, 45, 26, 28, 52, 41];
 
 /** 11 correct, 3 incorrect, 1 unattempted — matching the headline figures. */
 const QUALIFIED_OUTCOMES: QuestionOutcome[] = [C, C, X, C, C, U, X, C, C, C, C, C, C, X, C];
@@ -155,6 +178,16 @@ export const PAPER = {
   qualifyingMarks: 12.5,
 } as const;
 
+const REFERENCE_AVERAGE_LINE: ScoreLine = {
+  score: 22.5,
+  maxScore: 50,
+  accuracy: 54,
+  correct: 8,
+  wrong: 6,
+  unattempted: 1,
+  timeSeconds: sum(REFERENCE_AVERAGE_TIMES),
+};
+
 export const QUALIFIED_RESULT: ExamResult = {
   testName: PAPER.testName,
   tagline: PAPER.tagline,
@@ -173,15 +206,8 @@ export const QUALIFIED_RESULT: ExamResult = {
     timeSeconds: sum(QUALIFIED_YOUR_TIMES),
   },
   topper: REFERENCE_TOPPER,
-  average: {
-    score: 22.5,
-    maxScore: 50,
-    accuracy: 54,
-    correct: 8,
-    wrong: 6,
-    unattempted: 1,
-    timeSeconds: sum(REFERENCE_AVERAGE_TIMES),
-  },
+  benchmark: { cohortSize: 248, minCohortSize: 3, computedAt: null },
+  average: REFERENCE_AVERAGE_LINE,
   questions: buildQuestions(QUALIFIED_OUTCOMES, QUALIFIED_YOUR_TIMES, REFERENCE_AVERAGE_TIMES),
 };
 
@@ -203,7 +229,7 @@ export const NOT_QUALIFIED_RESULT: ExamResult = {
     timeSeconds: sum(FAILED_YOUR_TIMES),
   },
   average: {
-    ...QUALIFIED_RESULT.average,
+    ...REFERENCE_AVERAGE_LINE,
     timeSeconds: sum(FAILED_AVERAGE_TIMES),
   },
   questions: buildQuestions(FAILED_OUTCOMES, FAILED_YOUR_TIMES, FAILED_AVERAGE_TIMES),
@@ -212,8 +238,3 @@ export const NOT_QUALIFIED_RESULT: ExamResult = {
 export function fixtureFor(outcome: ResultOutcome): ExamResult {
   return outcome === 'qualified' ? QUALIFIED_RESULT : NOT_QUALIFIED_RESULT;
 }
-
-/* ---------------------------------------------------------------------- */
-
-/** Cohort figures, until there is a real cohort to compute them from. */
-export const REFERENCE_AVERAGE: ScoreLine = QUALIFIED_RESULT.average;

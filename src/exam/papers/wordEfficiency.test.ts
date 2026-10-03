@@ -3,7 +3,7 @@ import { buildAttempt, buildWordQuestion, stepsOf } from '@/exam/authoring';
 import { markAttempt, markQuestion } from '@/exam/marking/markAttempt';
 import { WORD_MARKER } from '@/exam/marking/wordMarker';
 import { modelAnswerDocument } from '@/exam/modelAnswerDocument';
-import { outcomeOf, type ScoreLine } from '@/exam/result';
+import { outcomeOf } from '@/exam/result';
 import { isWordQuestion, type Language } from '@/exam/types';
 import { wordRubricFor } from '@/server/marking/rubricFromOperations';
 import { WORD_EFFICIENCY_PAPERS, type WordPaper } from './wordEfficiency';
@@ -24,15 +24,6 @@ import { WORD_EFFICIENCY_PAPERS, type WordPaper } from './wordEfficiency';
  */
 
 const LANGUAGES: Language[] = ['en', 'hi'];
-
-/**
- * The comparison lines a result carries.
- *
- * Zeroed here: there is no cohort, and what this test is about is the
- * candidate's own score, which is computed from the answer key rather than from
- * anything these figures say.
- */
-const EMPTY_LINE: ScoreLine = { score: 0, maxScore: 0, accuracy: 0, correct: 0, wrong: 0, unattempted: 0, timeSeconds: 0 };
 
 function attemptFor(paper: WordPaper) {
   return buildAttempt({
@@ -170,12 +161,6 @@ describe.each(WORD_EFFICIENCY_PAPERS)('$name', (paper) => {
   it('scores a full set of worked answers as full marks, and an empty paper as zero', () => {
     const attempt = attemptFor(paper);
     const rubrics = paper.questions.map(wordRubricFor);
-    const reference = {
-      topper: EMPTY_LINE,
-      average: EMPTY_LINE,
-      topperTimePerQuestion: [],
-      averageTimePerQuestion: [],
-    };
     const identity = {
       testName: paper.name,
       tagline: paper.tagline,
@@ -193,7 +178,6 @@ describe.each(WORD_EFFICIENCY_PAPERS)('$name', (paper) => {
       attempt,
       rubrics,
       { answers: answers as never, language: 'en', totalTimeSeconds: 600 },
-      reference,
       WORD_MARKER,
       identity,
     );
@@ -207,7 +191,6 @@ describe.each(WORD_EFFICIENCY_PAPERS)('$name', (paper) => {
       attempt,
       rubrics,
       { answers: {}, language: 'en', totalTimeSeconds: 600 },
-      reference,
       WORD_MARKER,
       identity,
     );
@@ -235,12 +218,6 @@ describe.each(WORD_EFFICIENCY_PAPERS)('$name', (paper) => {
       attempt,
       rubrics,
       { answers: answers as never, language: 'en', totalTimeSeconds: 600 },
-      {
-        topper: EMPTY_LINE,
-        average: EMPTY_LINE,
-        topperTimePerQuestion: [],
-        averageTimePerQuestion: [],
-      },
       WORD_MARKER,
       { testName: paper.name, tagline: paper.tagline, qualifyingMarks: paper.qualifyingMarks },
     );

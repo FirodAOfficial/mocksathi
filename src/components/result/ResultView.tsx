@@ -1,10 +1,26 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import type { ExamResult } from '@/exam/result';
 import type { AnswerPayload, ExamAttempt, Language } from '@/exam/types';
 import { ResultScreen } from './ResultScreen';
-import { SolutionsScreen } from './SolutionsScreen';
+
+/**
+ * The solutions screen is loaded on demand. It renders the candidate's Word
+ * answers in a real tiptap editor (`PassagePreview`) and their workbooks from
+ * the spreadsheet model — ~160 KB of gzipped JavaScript that every result page
+ * used to download up front, whether or not "View Solutions" was ever clicked.
+ * `preloadSolutions` starts that download on hover/focus of the button, so by
+ * the click it is usually already there.
+ */
+const loadSolutions = () => import('./SolutionsScreen');
+const preloadSolutions = () => {
+  void loadSolutions();
+};
+const SolutionsScreen = dynamic(() => loadSolutions().then((module) => module.SolutionsScreen), {
+  loading: () => <p style={{ padding: 24, color: '#4a5c6e' }}>Loading solutions…</p>,
+});
 
 export interface ResultViewProps {
   result: ExamResult;
@@ -45,6 +61,7 @@ export function ResultView({ result, attempt, answers, language, backHref = '/',
       result={result}
       backHref={backHref}
       onViewSolutions={() => setShowingSolutions(true)}
+      onSolutionsIntent={preloadSolutions}
       attemptCount={attemptCount}
     />
   );

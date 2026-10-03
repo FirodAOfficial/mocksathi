@@ -1,11 +1,11 @@
 import { BrandLogo } from '@/components/site/BrandLogo';
 import { outcomeOf, type ExamResult } from '@/exam/result';
 import { BackToTestsLink } from './BackToTestsLink';
+import { BenchmarkComparison } from './BenchmarkComparison';
 import { OverallPerformance } from './OverallPerformance';
 import { PerformanceBreakdown } from './PerformanceBreakdown';
 import { HandNote, MetaIconMark, type MetaIcon } from './ResultArt';
 import { TimeAnalysis } from './TimeAnalysis';
-import { TopperComparison } from './TopperComparison';
 import styles from './ResultScreen.module.css';
 
 export interface ResultScreenProps {
@@ -15,6 +15,8 @@ export interface ResultScreenProps {
    * result to draw them from, and the button then says so rather than lying.
    */
   onViewSolutions?: () => void;
+  /** Called on hover/focus of a "View Solutions" button — a cue to start loading that screen before the click. */
+  onSolutionsIntent?: () => void;
   /**
    * Where "Back to Tests" goes. The result screen has no opinion about what
    * came before it, so the destination is supplied by whoever renders it.
@@ -36,7 +38,13 @@ export interface ResultScreenProps {
  * is what lets the preview route render the approved design figures and the
  * live app render a real submission through the same components.
  */
-export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptCount }: ResultScreenProps) {
+export function ResultScreen({
+  result,
+  onViewSolutions,
+  onSolutionsIntent,
+  backHref = '/',
+  attemptCount,
+}: ResultScreenProps) {
   const qualified = outcomeOf(result) === 'qualified';
 
   const meta: { icon: MetaIcon; tone: string; value: string; label: string }[] = [
@@ -68,7 +76,7 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
           <BackToTestsLink href={backHref} className={styles.ghostButton ?? ''}>
             <span aria-hidden="true">←</span> Back to Tests
           </BackToTestsLink>
-          <ViewSolutionsButton onClick={onViewSolutions} />
+          <ViewSolutionsButton onClick={onViewSolutions} onIntent={onSolutionsIntent} />
         </div>
       </header>
 
@@ -89,7 +97,7 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
 
       <OverallPerformance result={result} />
       <PerformanceBreakdown result={result} />
-      <TopperComparison result={result} />
+      <BenchmarkComparison result={result} />
       <TimeAnalysis result={result} />
 
       <section className={styles.solutions}>
@@ -102,7 +110,7 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
             Review detailed solutions, answer explanations and topic-wise analysis.
           </span>
         </span>
-        <ViewSolutionsButton variant="outline" onClick={onViewSolutions} />
+        <ViewSolutionsButton variant="outline" onClick={onViewSolutions} onIntent={onSolutionsIntent} />
       </section>
 
       <footer className={styles.footer}>
@@ -130,9 +138,11 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
 function ViewSolutionsButton({
   variant = 'solid',
   onClick,
+  onIntent,
 }: {
   variant?: 'solid' | 'outline';
   onClick?: () => void;
+  onIntent?: () => void;
 }) {
   return (
     <button
@@ -140,6 +150,8 @@ function ViewSolutionsButton({
       className={variant === 'solid' ? styles.primaryButton : styles.outlineButton}
       disabled={!onClick}
       onClick={onClick}
+      onPointerEnter={onClick ? onIntent : undefined}
+      onFocus={onClick ? onIntent : undefined}
       title={onClick ? 'View Solutions' : 'View Solutions — not available for this result'}
     >
       <MetaIconMark name="paper" />

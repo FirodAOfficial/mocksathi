@@ -6,7 +6,6 @@ import {
   type ExamResult,
   type QuestionOutcome,
   type QuestionResult,
-  type ScoreLine,
 } from '../result';
 
 export interface QuestionMark {
@@ -97,19 +96,10 @@ export interface MarkedAttempt {
   marks: QuestionMark[];
 }
 
-/** Reference figures until there is a real cohort to compute them from. */
-export interface ReferenceLines {
-  topper: ScoreLine;
-  average: ScoreLine;
-  topperTimePerQuestion: number[];
-  averageTimePerQuestion: number[];
-}
-
 export function markAttempt<Projection, C>(
   attempt: ExamAttempt,
   rubrics: QuestionRubric<C>[],
   submission: AttemptSubmission,
-  reference: ReferenceLines,
   marker: SubjectMarker<Projection, C>,
   paper: { testName: string; tagline: string; qualifyingMarks: number },
 ): MarkedAttempt {
@@ -137,8 +127,10 @@ export function markAttempt<Projection, C>(
     outcome: marks[index]?.outcome ?? 'unattempted',
     feedback: marks[index]?.criteria ?? [],
     yourTimeSeconds: Math.round(submission.timePerQuestion?.[question.number] ?? 0),
-    averageTimeSeconds: reference.averageTimePerQuestion[index] ?? 0,
-    topperTimeSeconds: reference.topperTimePerQuestion[index] ?? 0,
+    // Filled in from the real cohort at read time (`withBenchmark`,
+    // `src/exam/benchmark.ts`) — marking knows only this one sitting.
+    averageTimeSeconds: null,
+    topperTimeSeconds: null,
   }));
 
   return {
@@ -161,8 +153,8 @@ export function markAttempt<Projection, C>(
         unattempted,
         timeSeconds: Math.round(submission.totalTimeSeconds),
       },
-      topper: reference.topper,
-      average: reference.average,
+      topper: null,
+      average: null,
       questions: questionResults,
     },
   };

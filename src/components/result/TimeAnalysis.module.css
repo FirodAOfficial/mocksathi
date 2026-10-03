@@ -1,4 +1,16 @@
+/*
+ * Same series roles as `BenchmarkComparison.module.css`: you blue, best
+ * orange, the average neutral ink. The gap view's two colours mean
+ * faster/slower — good/bad — so they are status colours, always paired with
+ * ▲/▼ and the words in the legend and tooltip.
+ */
 .section {
+  --you: #2a78d6;
+  --best: #e07b00;
+  --average: #3d4a57;
+  --faster: #1a7f43;
+  --slower: #c42f45;
+
   padding: 16px 20px 20px;
   border-radius: 12px;
   background: #ffffff;
@@ -9,9 +21,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px 16px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
 }
 
 .title {
@@ -28,11 +39,62 @@
   font-size: 15px;
 }
 
+/* View toggle ------------------------------------------------------------ */
+
+.toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 9px;
+  background: #eef2f6;
+}
+
+.toggleButton,
+.toggleActive {
+  border: none;
+  border-radius: 7px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggleButton {
+  background: transparent;
+  color: #52616f;
+}
+
+.toggleButton:hover {
+  color: #17365d;
+}
+
+.toggleActive {
+  background: #ffffff;
+  color: #17365d;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+}
+
+.toggleButton:focus-visible,
+.toggleActive:focus-visible {
+  outline: 2px solid var(--you);
+  outline-offset: 1px;
+}
+
+.insight {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #4a5c6e;
+}
+
+.insight strong {
+  color: #17365d;
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin: 0;
+  gap: 6px 16px;
+  margin: 10px 0 4px;
   padding: 0;
   list-style: none;
 }
@@ -40,32 +102,91 @@
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 12px;
   color: #4a5c6e;
 }
 
-.swatch {
+.swatchYou,
+.swatchAverage,
+.swatchBest,
+.swatchSlower,
+.swatchFaster {
+  display: inline-block;
+  flex: none;
+}
+
+.swatchYou,
+.swatchSlower,
+.swatchFaster {
   width: 10px;
   height: 10px;
   border-radius: 3px;
 }
 
-/* The chart keeps its aspect ratio and scrolls rather than squashing. */
+.swatchYou {
+  background: var(--you);
+}
+
+.swatchSlower {
+  background: var(--slower);
+}
+
+.swatchFaster {
+  background: var(--faster);
+}
+
+.swatchAverage {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--average);
+}
+
+.swatchBest {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--best);
+}
+
+/* Chart ------------------------------------------------------------------ */
+
+.chartWrap {
+  position: relative;
+}
+
+/* The chart keeps its proportions and scrolls rather than squashing. */
 .chartScroll {
   overflow-x: auto;
+}
+
+.chartInner {
+  position: relative;
 }
 
 .chart {
   display: block;
   width: 100%;
-  min-width: 640px;
   height: auto;
+}
+
+.gridLine {
+  stroke: #edf1f5;
+}
+
+.zeroLine {
+  stroke: #9aa5b1;
+}
+
+.axisLine {
+  stroke: #cfd8e0;
 }
 
 .axisText {
   font-size: 11px;
   fill: #7b8b9a;
+  font-variant-numeric: tabular-nums;
 }
 
 .axisTitle {
@@ -73,11 +194,151 @@
   fill: #5b6b7b;
 }
 
-/* Totals --------------------------------------------------------------- */
+.questionText {
+  font-size: 11.5px;
+  font-weight: 600;
+  fill: #4a5c6e;
+}
+
+.outcomeText {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.outcomeText.correct,
+.tooltipOutcome.correct {
+  fill: #1f7a35;
+  color: #1f7a35;
+}
+
+.outcomeText.incorrect,
+.tooltipOutcome.incorrect {
+  fill: #c42f45;
+  color: #c42f45;
+}
+
+.outcomeText.unattempted,
+.tooltipOutcome.unattempted {
+  fill: #7b8b9a;
+  color: #7b8b9a;
+}
+
+.column {
+  cursor: default;
+  outline: none;
+}
+
+.band {
+  fill: transparent;
+}
+
+.bandActive {
+  fill: #f2f6fb;
+}
+
+.column:focus-visible .band,
+.column:focus-visible .bandActive {
+  fill: #e8f0fb;
+  stroke: var(--you);
+  stroke-width: 1;
+}
+
+.barYou {
+  fill: var(--you);
+}
+
+.barSlower {
+  fill: var(--slower);
+}
+
+.barFaster {
+  fill: var(--faster);
+}
+
+.averageTick {
+  stroke: var(--average);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* A surface ring, so the dot reads where it overlaps the bar or the tick. */
+.bestDot {
+  fill: var(--best);
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+/* Tooltip ---------------------------------------------------------------- */
+
+.tooltip {
+  position: absolute;
+  top: 4px;
+  z-index: 2;
+  min-width: 170px;
+  margin: 0 10px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #ffffff;
+  border: 1px solid #dbe3eb;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.12);
+  pointer-events: none;
+}
+
+.tooltipHead {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #17365d;
+}
+
+.tooltipOutcome {
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.tooltipRows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+}
+
+.tooltipRows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 12px;
+}
+
+.tooltipRows dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #52616f;
+}
+
+.tooltipRows dd {
+  margin: 0;
+  font-weight: 600;
+  color: #17365d;
+  font-variant-numeric: tabular-nums;
+}
+
+.slowerText {
+  color: var(--slower);
+  font-weight: 600;
+}
+
+.fasterText {
+  color: var(--faster);
+  font-weight: 600;
+}
+
+/* Totals ----------------------------------------------------------------- */
 
 .totals {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(240px, 1.5fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 14px;
 }
@@ -110,57 +371,17 @@
   color: #6b7c8d;
 }
 
-.tip {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #eef6fd;
-  border: 1px solid #cfe3f5;
-}
-
-.tipIcon {
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.tipTitle {
+.totalNote {
   display: block;
-  color: #2f6ea5;
-  margin-bottom: 1px;
-}
-
-.tipBody {
-  display: block;
-  line-height: 1.45;
+  margin-top: 2px;
+  font-size: 11.5px;
   color: #4a5c6e;
 }
 
-@media (max-width: 1080px) {
-  .totals {
-    /* `minmax(0, 1fr)`, not a bare `1fr` — see the same note in
-       `ResultScreen.module.css`'s `.metaRow`. This was the grid actually
-       forcing the page wider than a phone screen: three stat cards refusing
-       to shrink below "00:08:45" / "Average Time"'s content width. */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .tip {
-    grid-column: span 3;
-  }
-}
-
 @media (max-width: 600px) {
-  /* `minmax(0, 1fr)` stopped the page overflowing, but three columns still
-     squeezed each card too narrow for its own content ("00:08:45" clipped
-     mid-digit). Below 600px the cards stack into one column instead — full
-     card width, nothing to shrink. */
+  /* Below 600px the cards stack — three columns squeezed "00:08:45" until it
+     clipped mid-digit (see git history of this file). */
   .totals {
     grid-template-columns: 1fr;
-  }
-
-  .tip {
-    grid-column: auto;
   }
 }

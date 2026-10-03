@@ -1,6 +1,5 @@
 import { detectDocumentFormat } from './detectFormat';
 import { DocumentError, toDocumentError } from './errors';
-import { resolveParser } from './parsers/registry';
 import { isDocumentEmpty, type DocumentModel } from './types';
 import { validateDocumentUrl } from './validateUrl';
 
@@ -104,6 +103,10 @@ export class UrlDocumentLoader implements DocumentLoader {
         filename: source.filename,
       });
 
+      // Imported here, not at the top: the .docx parser brings jszip and an
+      // XML parser (~40 KB gzipped), needed only when a document is actually
+      // opened — not by every Word exam that starts from a blank page.
+      const { resolveParser } = await import('./parsers/registry');
       const parser = resolveParser(format);
       const model = await parser.parse({
         bytes: source.bytes,

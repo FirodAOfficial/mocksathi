@@ -4,7 +4,7 @@ import { BrandMark } from '@/components/site/BrandLogo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
-import { OTP_LENGTH } from '@/auth/otpPolicy';
+import { OTP_LENGTH } from '@/auth/otpConstants';
 import { MIN_PASSWORD_LENGTH } from '@/auth/validation';
 import { DashboardIcon } from '@/components/dashboard/icons/DashboardIcon';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
