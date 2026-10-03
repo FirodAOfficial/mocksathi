@@ -298,7 +298,6 @@ function mark(start: WorkbookSnapshot, questions: WorkbookStep[][], timeline: { 
     attemptOf(start),
     questions.map((steps, index) => workbookRubricFor(index + 1, steps)) as never,
     { answers, language: 'en', totalTimeSeconds: 0 },
-    { topper: {}, average: {}, topperTimePerQuestion: [], averageTimePerQuestion: [] } as never,
     workbookMarker(formulas) as never,
     { testName: '', tagline: '', qualifyingMarks: 0 },
   ).marks;

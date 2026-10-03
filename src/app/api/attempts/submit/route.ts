@@ -5,14 +5,9 @@ import { WORD_MARKER } from '@/exam/marking/wordMarker';
 import { SHEET_MARKER } from '@/exam/marking/sheet/sheetMarker';
 import { markAttempt, validateQuestionBank, type SubjectMarker } from '@/exam/marking/markAttempt';
 import type { QuestionRubric } from '@/exam/marking/criteria';
-import {
-  EXCEL_PAPER,
-  PAPER,
-  REFERENCE_AVERAGE,
-  REFERENCE_AVERAGE_TIMES,
-  REFERENCE_TOPPER,
-  REFERENCE_TOPPER_TIMES,
-} from '@/exam/result';
+import { EXCEL_PAPER, PAPER } from '@/exam/result';
+import { withBenchmark } from '@/exam/benchmark';
+import { benchmarkViewForTest } from '@/db/benchmarks';
 import { EXCEL_SEED_ATTEMPT } from '@/exam/excelSeedAttempt';
 import { SEED_ATTEMPT } from '@/exam/seedAttempt';
 import { isLanguage, type AnswerPayload, type ExamAttempt, type Subject } from '@/exam/types';
@@ -310,12 +305,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // begin from the one the candidate actually saw.
       language,
     },
-    {
-      topper: REFERENCE_TOPPER,
-      average: REFERENCE_AVERAGE,
-      topperTimePerQuestion: [...REFERENCE_TOPPER_TIMES],
-      averageTimePerQuestion: [...REFERENCE_AVERAGE_TIMES],
-    },
     paper.marker,
     {
       testName: paper.identity.testName,
@@ -338,6 +327,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // Compared against the paper's real best and average as of the last
+  // benchmark run — this sitting itself joins them on the next one. The
+  // sample paper has no stored sittings to compare with.
+  const shown = withBenchmark(result, paper.testId ? await benchmarkViewForTest(paper.testId) : null);
+
   // Only the result crosses back — never the criteria, which would leak the key.
-  return NextResponse.json(result, { headers: { 'cache-control': 'no-store' } });
+  return NextResponse.json(shown, { headers: { 'cache-control': 'no-store' } });
 }

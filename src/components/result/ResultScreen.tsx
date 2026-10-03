@@ -1,11 +1,11 @@
 import { BrandLogo } from '@/components/site/BrandLogo';
 import { outcomeOf, type ExamResult } from '@/exam/result';
 import { BackToTestsLink } from './BackToTestsLink';
+import { BenchmarkComparison } from './BenchmarkComparison';
 import { OverallPerformance } from './OverallPerformance';
 import { PerformanceBreakdown } from './PerformanceBreakdown';
 import { HandNote, MetaIconMark, type MetaIcon } from './ResultArt';
 import { TimeAnalysis } from './TimeAnalysis';
-import { TopperComparison } from './TopperComparison';
 import styles from './ResultScreen.module.css';
 
 export interface ResultScreenProps {
@@ -89,7 +89,7 @@ export function ResultScreen({ result, onViewSolutions, backHref = '/', attemptC
 
       <OverallPerformance result={result} />
       <PerformanceBreakdown result={result} />
-      <TopperComparison result={result} />
+      <BenchmarkComparison result={result} />
       <TimeAnalysis result={result} />
 
       <section className={styles.solutions}>

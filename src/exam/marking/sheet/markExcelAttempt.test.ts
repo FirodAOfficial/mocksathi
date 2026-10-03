@@ -6,13 +6,7 @@ import {
   PREFIXED_IDS,
   TARGETS,
 } from '@/exam/excelSeedAttempt';
-import {
-  EXCEL_PAPER,
-  REFERENCE_AVERAGE,
-  REFERENCE_AVERAGE_TIMES,
-  REFERENCE_TOPPER,
-  REFERENCE_TOPPER_TIMES,
-} from '@/exam/result';
+import { EXCEL_PAPER } from '@/exam/result';
 import { findQuestion, isExcelQuestion, type Language } from '@/exam/types';
 import { EXCEL_QUESTION_BANK, excelRubricFor } from '@/server/marking/excelQuestionBank';
 import { markAttempt, markQuestion, validateQuestionBank } from '../markAttempt';
@@ -340,12 +334,6 @@ describe('markAttempt over the Excel paper', () => {
       EXCEL_SEED_ATTEMPT,
       EXCEL_QUESTION_BANK,
       { answers, language: 'en', totalTimeSeconds: 900 },
-      {
-        topper: REFERENCE_TOPPER,
-        average: REFERENCE_AVERAGE,
-        topperTimePerQuestion: REFERENCE_TOPPER_TIMES,
-        averageTimePerQuestion: REFERENCE_AVERAGE_TIMES,
-      },
       SHEET_MARKER,
       EXCEL_PAPER,
     );

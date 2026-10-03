@@ -1,6 +1,8 @@
 import type { WordScope } from '@/exam/authoring/types';
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
   doublePrecision,
   index,
@@ -8,6 +10,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -557,12 +560,29 @@ export const testAttempts = pgTable(
      * submission now forwards to that page instead of rendering inline.
      */
     answers: jsonb('answers').notNull().default({}),
+    /**
+     * Exactly what this row last added to its paper's `test_benchmarks` sums
+     * — a `BenchmarkContribution` (`src/exam/benchmark.ts`), or null when it
+     * is not counted (not processed yet, or excluded by the admin's cohort
+     * rules). Written only by the benchmark run (`src/db/benchmarks.ts`), never
+     * by `recordAttempt`: a resit changes `result` and `updated_at`, the next
+     * run sees the row in its window, and swaps this old contribution for the
+     * new one — which is what makes the averages incremental *and* exact.
+     */
+    benchmarkContribution: jsonb('benchmark_contribution'),
     submittedAt: timestamp('submitted_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  // The upsert target that makes a resit overwrite rather than accumulate.
-  (table) => [unique('test_attempts_user_test_unique').on(table.userId, table.testId)],
+  (table) => [
+    // The upsert target that makes a resit overwrite rather than accumulate.
+    unique('test_attempts_user_test_unique').on(table.userId, table.testId),
+    // The benchmark run's "what changed since the last compute" scan.
+    index('test_attempts_updated_at_idx').on(table.updatedAt),
+    // Per-paper lookups — the unique index above leads with `user_id`, so it
+    // can't serve these. Used to re-find a paper's best sitting.
+    index('test_attempts_test_id_idx').on(table.testId),
+  ],
 );
 
 export type TestAttemptRow = typeof testAttempts.$inferSelect;
@@ -696,3 +716,84 @@ export const excelDocQuestions = pgTable(
 
 export type ExcelDocQuestion = typeof excelDocQuestions.$inferSelect;
 export type NewExcelDocQuestion = typeof excelDocQuestions.$inferInsert;
+
+/**
+ * Best-and-average figures per paper, maintained by the benchmark run
+ * (`src/db/benchmarks.ts`) — see `sdd/benchmarks.md`.
+ *
+ * `aggregate` is running sums (`BenchmarkAggregate`, `src/exam/benchmark.ts`),
+ * not means: a run adds and subtracts contributions rather than re-reading
+ * every sitting. `best` is the best sitting's own figures
+ * (`BenchmarkBest`), copied rather than referenced so a result page needs
+ * nothing but this row. One row per test, gone with the test.
+ */
+export const testBenchmarks = pgTable('test_benchmarks', {
+  testId: uuid('test_id')
+    .primaryKey()
+    .references(() => tests.id, { onDelete: 'cascade' }),
+  cohortSize: integer('cohort_size').notNull().default(0),
+  aggregate: jsonb('aggregate').notNull(),
+  best: jsonb('best'),
+  /** When a run last changed this row. */
+  computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TestBenchmarkRow = typeof testBenchmarks.$inferSelect;
+
+/**
+ * The admin's benchmark settings and the run's bookkeeping — a single row
+ * (`id = 1`, enforced by the check), edited at `/dashboard/admin/benchmarks`.
+ *
+ * `computedThrough` is the "last compute time" an incremental run continues
+ * from. `runningSince` is a lease, not a lock: taken with a conditional
+ * `UPDATE` so it works through Supabase's transaction pooler (which can't
+ * hold a session advisory lock), and expires on its own if a run dies holding
+ * it.
+ */
+export const benchmarkSettings = pgTable(
+  'benchmark_settings',
+  {
+    id: smallint('id').primaryKey().default(1),
+    enabled: boolean('enabled').notNull().default(true),
+    /** A 5-field cron expression, read with `node-cron`. */
+    schedule: text('schedule').notNull().default('0 * * * *'),
+    timezone: text('timezone').notNull().default('Asia/Kolkata'),
+    minCohortSize: integer('min_cohort_size').notNull().default(3),
+    excludeEmptyAttempts: boolean('exclude_empty_attempts').notNull().default(true),
+    excludeStaffAttempts: boolean('exclude_staff_attempts').notNull().default(true),
+    /**
+     * Whether a run may ever reset and rebuild every paper's sums. Off, nothing
+     * does — not the timer below, not a rules change, not an admin's button;
+     * the cases that would have forced one get a re-check of every sitting
+     * instead (`src/db/benchmarks.ts`), which is exact for everything except
+     * sittings deleted along with an account.
+     */
+    fullRecomputeEnabled: boolean('full_recompute_enabled').notNull().default(true),
+    /** With full recompute on, an incremental run turns into one once the last is this old. 0 = only when asked. */
+    fullRebuildHours: integer('full_rebuild_hours').notNull().default(24),
+    /** Set when a change makes the running sums wrong (an eligibility rule changed); the next run re-reads every sitting. */
+    rebuildRequested: boolean('rebuild_requested').notNull().default(true),
+    nextRunAt: timestamp('next_run_at', { withTimezone: true }),
+    computedThrough: timestamp('computed_through', { withTimezone: true }),
+    lastFullRebuildAt: timestamp('last_full_rebuild_at', { withTimezone: true }),
+    runningSince: timestamp('running_since', { withTimezone: true }),
+    lastRunStartedAt: timestamp('last_run_started_at', { withTimezone: true }),
+    lastRunFinishedAt: timestamp('last_run_finished_at', { withTimezone: true }),
+    /** 'success' | 'failed' */
+    lastRunStatus: text('last_run_status'),
+    /** 'incremental' | 'recheck' | 'full' */
+    lastRunMode: text('last_run_mode'),
+    /** 'scheduler' | 'cron-endpoint' | 'admin' */
+    lastRunTrigger: text('last_run_trigger'),
+    lastRunRowsScanned: integer('last_run_rows_scanned'),
+    lastRunRowsChanged: integer('last_run_rows_changed'),
+    lastRunTestsUpdated: integer('last_run_tests_updated'),
+    lastRunDurationMs: integer('last_run_duration_ms'),
+    lastRunError: text('last_run_error'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: uuid('updated_by').references(() => users.id, { onDelete: 'set null' }),
+  },
+  (table) => [check('benchmark_settings_singleton', sql`${table.id} = 1`)],
+);
+
+export type BenchmarkSettingsRow = typeof benchmarkSettings.$inferSelect;

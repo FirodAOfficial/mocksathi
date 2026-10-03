@@ -417,6 +417,7 @@ export async function dashboardDataFor(
               { label: 'Test Enigma', icon: 'list-checks' as const, href: '/dashboard/admin/tests' },
               { label: 'Subscriptions', icon: 'credit-card' as const, href: '/dashboard/admin/subscriptions' },
               { label: 'Manage Plans', icon: 'credit-card' as const, href: '/dashboard/admin/plans' },
+              { label: 'Best & Average', icon: 'git-compare' as const, href: '/dashboard/admin/benchmarks' },
             ],
           },
         ]

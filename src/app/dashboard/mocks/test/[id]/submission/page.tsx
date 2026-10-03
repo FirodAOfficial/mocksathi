@@ -5,6 +5,8 @@ import { ResultView } from '@/components/result/ResultView';
 import headerStyles from '@/components/dashboard/AnalysisScreen.module.css';
 import emptyStyles from '@/components/dashboard/ComingSoonScreen.module.css';
 import { attemptFor } from '@/db/attempts';
+import { benchmarkViewForTest } from '@/db/benchmarks';
+import { withBenchmark } from '@/exam/benchmark';
 import { attemptFromTest, getTestById, loadPaper, questionsForTest } from '@/db/tests';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -54,7 +56,7 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
     );
   }
 
-  const questions = await questionsForTest(test.id);
+  const [questions, benchmark] = await Promise.all([questionsForTest(test.id), benchmarkViewForTest(test.id)]);
   // A single-document paper has no `test_questions` rows; `loadPaper` builds it
   // from its own tables, and falls back to null for an emptied paper.
   const examAttempt =
@@ -64,7 +66,10 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
 
   return (
     <ResultView
-      result={attempt.result}
+      // The stored result's own best/average were whatever was true (or, before
+      // `sdd/benchmarks.md`, placeholder) when it was marked; the current
+      // figures replace them on every view.
+      result={withBenchmark(attempt.result, benchmark)}
       attempt={examAttempt}
       answers={attempt.answers}
       language={attempt.language}

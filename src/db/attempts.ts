@@ -78,7 +78,10 @@ export async function recordAttempt(params: {
     result,
     answers,
     submittedAt: now,
-    updatedAt: now,
+    // The database's clock, not this server's: the benchmark run
+    // (`src/db/benchmarks.ts`) finds changed rows by comparing this against
+    // its own `now()`, and a skewed app clock would hide a row from it.
+    updatedAt: sql`now()`,
   };
 
   await db

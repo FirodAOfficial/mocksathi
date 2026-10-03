@@ -1,0 +1,1 @@
+ALTER TABLE "benchmark_settings" ADD COLUMN "full_recompute_enabled" boolean DEFAULT true NOT NULL;
