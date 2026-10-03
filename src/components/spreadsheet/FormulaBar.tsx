@@ -29,9 +29,19 @@ export function FormulaBar() {
   const first = ranges[0];
 
   // Excel shows the range while a multi-cell selection is being made, and the
-  // single address otherwise.
+  // single address otherwise — a merged block selected on its own counts as a
+  // single cell, so it reads `D4`, not `D4:I4`.
+  const merge = store.activeSheet().mergeCovering(active.row, active.col);
+  const isOneBlock =
+    !first ||
+    (merge
+      ? first.start.row === merge.start.row &&
+        first.start.col === merge.start.col &&
+        first.end.row === merge.end.row &&
+        first.end.col === merge.end.col
+      : first.start.row === first.end.row && first.start.col === first.end.col);
   const nameBoxText =
-    first && (first.start.row !== first.end.row || first.start.col !== first.end.col)
+    !isOneBlock && first
       ? formatRange({
           start: { ...first.start, anchor: { colAbsolute: false, rowAbsolute: false } },
           end: { ...first.end, anchor: { colAbsolute: false, rowAbsolute: false } },

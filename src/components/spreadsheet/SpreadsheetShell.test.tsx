@@ -359,3 +359,113 @@ describe('the controls the new tabs actually wire', () => {
     expect(screen.getByText('150%')).toBeInTheDocument();
   });
 });
+
+/**
+ * Formula AutoComplete: the function list Excel shows while a formula is typed.
+ */
+describe('formula autocomplete', () => {
+  function editorFor(address: string): HTMLElement {
+    return screen.getByRole('textbox', { name: `Edit ${address}` });
+  }
+
+  it('lists every function as soon as = is typed', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=');
+
+    const list = screen.getByRole('listbox', { name: 'Functions' });
+    expect(within(list).getByRole('option', { name: 'SUM' })).toBeInTheDocument();
+    expect(within(list).getByRole('option', { name: 'VLOOKUP' })).toBeInTheDocument();
+  });
+
+  it('narrows to the typed prefix and inserts the pick with Tab', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=AVE');
+
+    const names = within(screen.getByRole('listbox', { name: 'Functions' }))
+      .getAllByRole('option')
+      .map((option) => option.textContent?.replace('ƒx', ''));
+    expect(names).toEqual(['AVEDEV', 'AVERAGE', 'AVERAGEA', 'AVERAGEIF']);
+
+    await userEvent.keyboard('{ArrowDown}{Tab}');
+    expect(editorFor('A1')).toHaveValue('=AVERAGE(');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('takes the highlighted function on Enter instead of committing the cell', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=VL{Enter}');
+
+    expect(editorFor('A1')).toHaveValue('=VLOOKUP(');
+    expect(screen.getByLabelText('Name Box')).toHaveValue('A1');
+  });
+
+  it('takes a function hovered after a bare = on Enter', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=');
+
+    await userEvent.hover(screen.getByRole('option', { name: 'SUM' }));
+    await userEvent.keyboard('{Enter}');
+    expect(editorFor('A1')).toHaveValue('=SUM(');
+  });
+
+  it('inserts a function clicked in the list without closing the editor', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=su');
+
+    await userEvent.click(screen.getByRole('option', { name: 'SUMIF' }));
+    expect(editorFor('A1')).toHaveValue('=SUMIF(');
+  });
+
+  it('leaves the arrows pointing at cells after a bare =', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('7{Enter}=');
+    await userEvent.keyboard('{ArrowUp}');
+
+    expect(editorFor('A2')).toHaveValue('=A1');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('closes the list on Escape and keeps the edit open', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('=SU');
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(editorFor('A1')).toHaveValue('=SU');
+  });
+});
+
+describe('merged cells', () => {
+  it('hides the gridlines inside a merge and outlines the whole block', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('Title');
+
+    // Re-queried each time: the Name Box remounts whenever its text changes.
+    const nameBox = () => screen.getByLabelText('Name Box');
+    await userEvent.click(nameBox());
+    await userEvent.keyboard('A1:C2{Enter}');
+    await userEvent.click(screen.getByRole('button', { name: /Merge & Center/ }));
+
+    const mask = document.querySelector<HTMLElement>('[class*="mergeMask"]');
+    expect(mask).not.toBeNull();
+    // Three default columns by two default rows, less the block's own outline.
+    const cell = screen.getByRole('gridcell', { name: 'Title' });
+    expect(parseFloat(mask!.style.width)).toBe(parseFloat(cell.style.width) - 1);
+    expect(parseFloat(mask!.style.height)).toBe(parseFloat(cell.style.height) - 1);
+
+    // Going to a covered cell lands on the merge: its anchor is active, so the
+    // formula bar shows the block's content and every column it spans lights up.
+    await userEvent.click(nameBox());
+    await userEvent.keyboard('B2{Enter}');
+    expect(nameBox()).toHaveValue('A1');
+    expect(screen.getByLabelText('Formula bar, A1')).toHaveValue('Title');
+    for (const column of ['A', 'B', 'C']) {
+      expect(screen.getByText(column, { selector: '[class*="columnHeader"]' }).className).toMatch(/headerSelected/);
+    }
+    expect(screen.getByText('D', { selector: '[class*="columnHeader"]' }).className).not.toMatch(/headerSelected/);
+
+    // Typing edits the merged cell, not a hidden cell behind it.
+    await userEvent.keyboard('x');
+    expect(screen.getByRole('textbox', { name: 'Edit A1' })).toHaveValue('x');
+  });
+});

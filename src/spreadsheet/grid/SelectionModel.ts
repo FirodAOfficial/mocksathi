@@ -51,7 +51,30 @@ function single(address: CellAddress): RangeAddress {
   return { start: address, end: address };
 }
 
+/**
+ * How the selection learns about merged cells, which belong to the sheet.
+ *
+ * Read through functions rather than handed over as data, because the active
+ * sheet — and its merges — change underneath a selection that outlives them.
+ */
+export interface MergeLookup {
+  /** The merge covering a cell, if any; its `start` is the anchor. */
+  covering(row: number, col: number): RangeAddress | undefined;
+  /** Every merge on the sheet. */
+  all(): readonly RangeAddress[];
+}
+
+const NO_MERGES: MergeLookup = { covering: () => undefined, all: () => [] };
+
 export class SelectionModel {
+  /**
+   * @param merges Excel treats a merged block as one cell: clicking anywhere
+   *   in it selects all of it and makes its top-left cell the active one, so
+   *   the formula bar shows the block's content and the headers light up
+   *   across every column it spans.
+   */
+  constructor(private readonly merges: MergeLookup = NO_MERGES) {}
+
   private active: CellAddress = ORIGIN;
   private anchor: CellAddress = ORIGIN;
   private ranges: RangeAddress[] = [single(ORIGIN)];
@@ -113,12 +136,59 @@ export class SelectionModel {
     for (const listener of this.listeners) listener(this.snapshot);
   }
 
+  /** The cell itself, or the anchor of the merge it is hidden behind. */
+  private snap(address: CellAddress): CellAddress {
+    const merge = this.merges.covering(address.row, address.col);
+    return merge ? { row: merge.start.row, col: merge.start.col } : address;
+  }
+
+  /** The block a single cell stands for: the whole merge when it is in one. */
+  private blockAt(address: CellAddress): RangeAddress {
+    const merge = this.merges.covering(address.row, address.col);
+    return merge ? { start: { ...merge.start }, end: { ...merge.end } } : single(address);
+  }
+
+  /**
+   * A range widened until no merge straddles its edge, as Excel's selection
+   * is. Repeated until nothing changes, because taking in one merge can carry
+   * the edge across another.
+   */
+  private growToMerges(range: RangeAddress): RangeAddress {
+    const merges = this.merges.all();
+    let { start, end } = range;
+    let grown = merges.length > 0;
+
+    while (grown) {
+      grown = false;
+      for (const merge of merges) {
+        const overlaps =
+          merge.start.row <= end.row &&
+          merge.end.row >= start.row &&
+          merge.start.col <= end.col &&
+          merge.end.col >= start.col;
+        const inside =
+          merge.start.row >= start.row &&
+          merge.end.row <= end.row &&
+          merge.start.col >= start.col &&
+          merge.end.col <= end.col;
+        if (!overlaps || inside) continue;
+
+        start = { row: Math.min(start.row, merge.start.row), col: Math.min(start.col, merge.start.col) };
+        end = { row: Math.max(end.row, merge.end.row), col: Math.max(end.col, merge.end.col) };
+        grown = true;
+      }
+    }
+
+    return { start, end };
+  }
+
   /** Clicking a cell: collapses the selection to it. */
   selectCell(address: CellAddress): void {
-    const at = clampAddress(address);
+    const clicked = clampAddress(address);
+    const at = this.snap(clicked);
     this.active = at;
     this.anchor = at;
-    this.ranges = [single(at)];
+    this.ranges = [this.blockAt(clicked)];
     this.commit();
   }
 
@@ -132,16 +202,20 @@ export class SelectionModel {
 
     this.ranges = [
       ...this.ranges.slice(0, -1),
-      { start: { row: extended.start.row, col: extended.start.col }, end: { row: extended.end.row, col: extended.end.col } },
+      this.growToMerges({
+        start: { row: extended.start.row, col: extended.start.col },
+        end: { row: extended.end.row, col: extended.end.col },
+      }),
     ];
-    this.active = to;
+    this.active = this.snap(to);
     this.commit();
   }
 
   /** Ctrl-click: begins an additional rectangle, leaving the others intact. */
   addRange(address: CellAddress): void {
-    const at = clampAddress(address);
-    this.ranges = [...this.ranges, single(at)];
+    const clicked = clampAddress(address);
+    const at = this.snap(clicked);
+    this.ranges = [...this.ranges, this.blockAt(clicked)];
     this.active = at;
     this.anchor = at;
     this.commit();
@@ -150,10 +224,10 @@ export class SelectionModel {
   selectRange(range: RangeAddress): void {
     const start = clampAddress(range.start);
     const end = clampAddress(range.end);
-    const ordered = {
+    const ordered = this.growToMerges({
       start: { row: Math.min(start.row, end.row), col: Math.min(start.col, end.col) },
       end: { row: Math.max(start.row, end.row), col: Math.max(start.col, end.col) },
-    };
+    });
 
     this.ranges = [ordered];
     this.anchor = ordered.start;
@@ -168,9 +242,12 @@ export class SelectionModel {
    * `extend` is a parameter rather than two near-identical methods.
    */
   moveBy(rowDelta: number, colDelta: number, extend = false): void {
+    // Out of a merge the step is taken from the block's far edge: Right from
+    // a merged D4:I4 lands on J4, not on the hidden E4.
+    const from = this.blockAt(this.active);
     const target = clampAddress({
-      row: this.active.row + rowDelta,
-      col: this.active.col + colDelta,
+      row: (rowDelta > 0 ? from.end.row : from.start.row) + rowDelta,
+      col: (colDelta > 0 ? from.end.col : from.start.col) + colDelta,
     });
 
     if (extend) this.extendTo(target);

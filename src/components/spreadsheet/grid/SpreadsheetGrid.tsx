@@ -23,6 +23,8 @@ import {
   DEFAULT_FONT_SIZE_PT,
   type CellStyle,
 } from '@/spreadsheet/model/styles';
+import type { Cell } from '@/spreadsheet/model/Cell';
+import type { Worksheet } from '@/spreadsheet/model/Worksheet';
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
@@ -297,8 +299,9 @@ export function SpreadsheetGrid() {
     // the formula; it must not also open an editor on the cell it landed on.
     if (pointAnchor.current) return;
 
-    const address = pointToCell(event.clientX, event.clientY);
-    if (!address) return;
+    const clicked = pointToCell(event.clientX, event.clientY);
+    if (!clicked) return;
+    const address = editTarget(clicked);
 
     setEditing({
       row: address.row,
@@ -342,10 +345,19 @@ export function SpreadsheetGrid() {
 
   /* -- Keyboard ----------------------------------------------------------- */
 
+  /**
+   * The cell an edit lands in: the merge's anchor when the cursor is inside a
+   * merge. A covered cell is hidden behind the merged block, so typing into it
+   * would write a value nobody can see — Excel edits the merged cell instead.
+   */
+  const editTarget = (address: CellAddress): CellAddress =>
+    sheet.mergeCovering(address.row, address.col)?.start ?? address;
+
   const beginTyping = (initial: string): void => {
     // Typing opens the editor in Excel's Enter mode: arrow keys and clicks
     // still reach the sheet, so `=` followed by an arrow points at a cell.
-    setEditing({ row: active.row, col: active.col, initial, selectAll: false, mode: 'enter' });
+    const { row, col } = editTarget(active);
+    setEditing({ row, col, initial, selectAll: false, mode: 'enter' });
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
@@ -381,16 +393,12 @@ export function SpreadsheetGrid() {
       case 'PageUp':
         store.selection.moveBy(-Math.floor(viewport.height / zoom / 20), 0, extend);
         break;
-      case 'F2':
+      case 'F2': {
         if (readOnly) break;
-        setEditing({
-          row: active.row,
-          col: active.col,
-          initial: store.editText(active.row, active.col),
-          selectAll: false,
-          mode: 'edit',
-        });
+        const { row, col } = editTarget(active);
+        setEditing({ row, col, initial: store.editText(row, col), selectAll: false, mode: 'edit' });
         break;
+      }
       case 'Delete':
       case 'Backspace':
         if (!readOnly) store.clearContents();
@@ -438,6 +446,64 @@ export function SpreadsheetGrid() {
 
   const columns: number[] = [];
   for (let col = window_.firstColumn; col <= window_.lastColumn; col += 1) columns.push(col);
+
+  /**
+   * Merges that reach into the visible window.
+   *
+   * Two things need them. The gridlines are drawn straight across the sheet,
+   * so a merged block would show its interior lines unless something covers
+   * them; and a merge whose anchor has scrolled out of the window still has to
+   * draw its value across the part that is in view.
+   */
+  const visibleMerges = sheet
+    .mergedRanges()
+    .filter(
+      (merge) =>
+        merge.end.row >= window_.firstRow &&
+        merge.start.row <= window_.lastRow &&
+        merge.end.col >= window_.firstColumn &&
+        merge.start.col <= window_.lastColumn,
+    );
+
+  const inWindow = (address: CellAddress): boolean =>
+    address.row >= window_.firstRow &&
+    address.row <= window_.lastRow &&
+    address.col >= window_.firstColumn &&
+    address.col <= window_.lastColumn;
+
+  /** The rectangle a cell occupies: the whole block when it anchors a merge. */
+  const cellRect = (address: CellAddress) =>
+    geometry.rectOf(sheet.mergeCovering(address.row, address.col) ?? { start: address, end: address });
+
+  const renderCell = (row: number, col: number, cell: Cell) => {
+    const style = store.workbook.styles.get(cell.styleId);
+    const rect = cellRect({ row, col });
+
+    const text = showFormulas
+      ? (cell.formula ?? formatCellValue(cell.value, style.numberFormat))
+      : formatCellValue(cell.value, style.numberFormat);
+
+    return (
+      <div
+        key={`${row}:${col}`}
+        id={`cell-${row}-${col}`}
+        role="gridcell"
+        aria-rowindex={row + 1}
+        aria-colindex={col + 1}
+        className={styles.cell}
+        style={{
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+          textAlign: alignmentOf(cell, style),
+          ...cellCss(style),
+        }}
+      >
+        <span className={styles.cellText}>{text}</span>
+      </div>
+    );
+  };
 
   /** The rectangle the fill handle hangs off: the primary selection. */
   const fillSource = selection.ranges[0] ?? null;
@@ -592,6 +658,30 @@ export function SpreadsheetGrid() {
             ) : null}
 
             {/*
+              A merged block is one cell, so the gridlines inside it go. The mask
+              stops one pixel short on the right and bottom, which is where the
+              block's own gridlines are drawn — the outline stays, as in Excel.
+            */}
+            {showGridlines
+              ? visibleMerges.map((merge) => {
+                  const rect = geometry.rectOf(merge);
+                  return (
+                    <div
+                      key={`merge-${merge.id}`}
+                      className={styles.mergeMask}
+                      aria-hidden="true"
+                      style={{
+                        left: rect.left,
+                        top: rect.top,
+                        width: Math.max(0, rect.width - 1),
+                        height: Math.max(0, rect.height - 1),
+                      }}
+                    />
+                  );
+                })
+              : null}
+
+            {/*
               The print area's boundary. Excel draws a dashed outline around it,
               and drawing it here is what keeps Set Print Area from being a
               control that stores a value nobody can see.
@@ -604,50 +694,21 @@ export function SpreadsheetGrid() {
               />
             ) : null}
 
-            <SelectionOverlay geometry={geometry} />
+            <SelectionOverlay geometry={geometry} sheet={sheet} />
 
             {/* Only occupied cells exist as elements. A blank cell is nothing. */}
             {rows.map((row) =>
               [...sheet.cellsInRow(row, window_.firstColumn, window_.lastColumn)].map(
-                ([col, cell]) => {
-                  if (sheet.isCovered(row, col)) return null;
-
-                  const merge = sheet.mergeCovering(row, col);
-                  const style = store.workbook.styles.get(cell.styleId);
-                  const width = merge
-                    ? geometry.offsetOfColumn(merge.end.col + 1) - geometry.offsetOfColumn(col)
-                    : geometry.columnWidth(col);
-                  const height = merge
-                    ? geometry.offsetOfRow(merge.end.row + 1) - geometry.offsetOfRow(row)
-                    : geometry.rowHeight(row);
-
-                  const text = showFormulas
-                    ? (cell.formula ?? formatCellValue(cell.value, style.numberFormat))
-                    : formatCellValue(cell.value, style.numberFormat);
-
-                  return (
-                    <div
-                      key={`${row}:${col}`}
-                      id={`cell-${row}-${col}`}
-                      role="gridcell"
-                      aria-rowindex={row + 1}
-                      aria-colindex={col + 1}
-                      className={styles.cell}
-                      style={{
-                        left: geometry.offsetOfColumn(col),
-                        top: geometry.offsetOfRow(row),
-                        width,
-                        height,
-                        textAlign: alignmentOf(cell, style),
-                        ...cellCss(style),
-                      }}
-                    >
-                      <span className={styles.cellText}>{text}</span>
-                    </div>
-                  );
-                },
+                ([col, cell]) => (sheet.isCovered(row, col) ? null : renderCell(row, col, cell)),
               ),
             )}
+
+            {/* A merge whose anchor has scrolled out of view still shows its value. */}
+            {visibleMerges.map((merge) => {
+              if (inWindow(merge.start)) return null;
+              const cell = sheet.getCell(merge.start.row, merge.start.col);
+              return cell ? renderCell(merge.start.row, merge.start.col, cell) : null;
+            })}
 
             {/*
               The fill handle: the small square at the bottom-right corner of the
@@ -709,10 +770,10 @@ export function SpreadsheetGrid() {
                 origin={{ row: editing.row, col: editing.col }}
                 handleRef={editorRef}
                 onPointChange={setPointed}
-                left={geometry.offsetOfColumn(editing.col)}
-                top={geometry.offsetOfRow(editing.row)}
-                width={geometry.columnWidth(editing.col)}
-                height={geometry.rowHeight(editing.row)}
+                left={cellRect(editing).left}
+                top={cellRect(editing).top}
+                width={cellRect(editing).width}
+                height={cellRect(editing).height}
                 label={`Edit ${formatAddress({ row: editing.row, col: editing.col })}`}
                 onCommit={commitEdit}
                 onCancel={() => {
@@ -735,9 +796,15 @@ export function SpreadsheetGrid() {
  * A separate component so that a drag re-renders three absolutely positioned
  * divs and nothing else — the cells above do not subscribe to the selection.
  */
-function SelectionOverlay({ geometry }: { geometry: GridGeometry }) {
+function SelectionOverlay({ geometry, sheet }: { geometry: GridGeometry; sheet: Worksheet }) {
   const selection = useSelection();
   const active = selection.active;
+
+  // Excel treats a merged block as one cell, so the cursor outlines all of it.
+  // The ranges need no such help: the selection model already grows them.
+  const cursor = geometry.rectOf(
+    sheet.mergeCovering(active.row, active.col) ?? { start: active, end: active },
+  );
 
   return (
     <div className={styles.selectionLayer} aria-hidden="true">
@@ -754,12 +821,7 @@ function SelectionOverlay({ geometry }: { geometry: GridGeometry }) {
 
       <div
         className={styles.cursor}
-        style={{
-          left: geometry.offsetOfColumn(active.col),
-          top: geometry.offsetOfRow(active.row),
-          width: geometry.columnWidth(active.col),
-          height: geometry.rowHeight(active.row),
-        }}
+        style={{ left: cursor.left, top: cursor.top, width: cursor.width, height: cursor.height }}
       />
     </div>
   );
