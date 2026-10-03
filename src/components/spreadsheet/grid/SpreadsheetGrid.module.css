@@ -151,6 +151,13 @@
   background: #d4d4d4;
 }
 
+/* Covers the gridlines inside a merged block; see SpreadsheetGrid. */
+.mergeMask {
+  position: absolute;
+  background: #fff;
+  pointer-events: none;
+}
+
 .printArea {
   position: absolute;
   box-sizing: border-box;
@@ -229,6 +236,62 @@
   overflow: hidden;
   text-overflow: clip;
   text-align: inherit;
+}
+
+/*
+ * Formula AutoComplete: the function list under the cell being edited, with
+ * the highlighted function's ScreenTip below it.
+ */
+.functionPopup {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  margin-top: 1px;
+  font-family: Calibri, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  cursor: default;
+}
+
+.functionList {
+  max-height: 168px;
+  margin: 0;
+  padding: 2px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #9db3c8;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 18%);
+}
+
+.functionOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  color: #1f2937;
+}
+
+.functionOption[aria-selected='true'] {
+  background: #cfe2f5;
+}
+
+.functionGlyph {
+  font-style: italic;
+  font-size: 10px;
+  color: #217346;
+}
+
+.functionTip {
+  margin-top: 2px;
+  padding: 4px 8px;
+  background: #fffbe6;
+  border: 1px solid #d6c98a;
+  color: #374151;
+  white-space: normal;
+  line-height: 1.3;
 }
 
 .editor {

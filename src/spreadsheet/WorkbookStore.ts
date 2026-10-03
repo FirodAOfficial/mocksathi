@@ -54,7 +54,10 @@ export class WorkbookStore {
    */
   workbook: Workbook;
   commands: CommandBus;
-  readonly selection = new SelectionModel();
+  readonly selection = new SelectionModel({
+    covering: (row, col) => this.activeSheet().mergeCovering(row, col),
+    all: () => this.activeSheet().mergedRanges(),
+  });
 
   private graph = new DependencyGraph();
   private readonly listeners = new Set<WorkbookListener>();

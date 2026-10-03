@@ -190,3 +190,43 @@ describe('SelectionModel', () => {
     });
   });
 });
+
+describe('SelectionModel with merged cells', () => {
+  // D4:I4 merged, as Merge & Center leaves it.
+  const merge = { start: { row: 3, col: 3 }, end: { row: 3, col: 8 } };
+  const lookup = {
+    covering: (row: number, col: number) =>
+      row === 3 && col >= 3 && col <= 8 ? merge : undefined,
+    all: () => [merge],
+  };
+
+  it('selects the whole block and makes its anchor active when any part is clicked', () => {
+    const selection = new SelectionModel(lookup);
+    selection.selectCell({ row: 3, col: 7 });
+
+    expect(selection.getActive()).toEqual({ row: 3, col: 3 });
+    expect(selection.getRanges()).toEqual([merge]);
+  });
+
+  it('steps out of the block from its far edge', () => {
+    const selection = new SelectionModel(lookup);
+    selection.selectCell({ row: 3, col: 5 });
+
+    selection.moveBy(0, 1);
+    expect(selection.getActive()).toEqual({ row: 3, col: 9 });
+
+    selection.moveBy(0, -1);
+    expect(selection.getActive()).toEqual({ row: 3, col: 3 });
+
+    selection.moveBy(0, -1);
+    expect(selection.getActive()).toEqual({ row: 3, col: 2 });
+  });
+
+  it('grows a drag that clips the block to take in all of it', () => {
+    const selection = new SelectionModel(lookup);
+    selection.selectCell({ row: 2, col: 4 });
+    selection.extendTo({ row: 3, col: 4 });
+
+    expect(selection.getRanges()).toEqual([{ start: { row: 2, col: 3 }, end: { row: 3, col: 8 } }]);
+  });
+});

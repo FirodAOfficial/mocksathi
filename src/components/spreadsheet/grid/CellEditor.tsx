@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from 'react';
 import { MAX_COLUMNS, MAX_ROWS, formatAddress, type CellAddress, type RangeAddress } from '@/spreadsheet/model/address';
+import { completionSlot, functionsStartingWith } from '@/spreadsheet/calc/functionCatalog';
 import styles from './SpreadsheetGrid.module.css';
 
 /** Where a committed edit leaves the cursor. */
@@ -111,6 +112,37 @@ export function CellEditor({
   const [text, setText] = useState(initial);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /** Where the caret is, which decides what Formula AutoComplete offers. */
+  const [caret, setCaret] = useState(initial.length);
+  /**
+   * The function list is shut: Escape closed it, or the last change was a
+   * pointed reference rather than typing. The next keystroke reopens it.
+   */
+  const [listClosed, setListClosed] = useState(false);
+  /** The highlighted function, remembered against the prefix it was chosen for. */
+  const [highlight, setHighlight] = useState({ prefix: '', index: -1 });
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const slot = listClosed ? null : completionSlot(text, caret);
+  const suggestions = slot ? functionsStartingWith(slot.prefix) : [];
+  const listOpen = slot !== null && suggestions.length > 0;
+  /**
+   * The highlighted function's index, or -1 for none.
+   *
+   * None on a bare `=` until the mouse picks one: there an arrow still points
+   * at the neighbouring cell, as Excel's does, and Enter must not turn `=`
+   * into `=ABS(`. Once a letter is typed the first match is highlighted.
+   */
+  const highlighted = !slot
+    ? -1
+    : highlight.prefix === slot.prefix
+      ? Math.min(highlight.index, suggestions.length - 1)
+      : slot.prefix === ''
+        ? -1
+        : 0;
+  /** Whether Up, Down, Enter and Tab act on the list rather than the cell. */
+  const listOwnsKeys = listOpen && highlighted >= 0;
+
   /**
    * The mode can change after opening: F2 switches out of point mode, and so
    * does clicking into the text, exactly as Excel does.
@@ -167,16 +199,34 @@ export function CellEditor({
     onCancel();
   };
 
-  const write = (next: string, caret: number): void => {
+  const write = (next: string, at: number): void => {
     textRef.current = next;
     setText(next);
+    setCaret(at);
 
     // After React has painted the new value; setting it now would be undone by
     // the controlled update that follows.
     queueMicrotask(() => {
-      inputRef.current?.setSelectionRange(caret, caret);
+      inputRef.current?.setSelectionRange(at, at);
     });
   };
+
+  /** Puts `NAME(` in place of the half-typed name, ready for its arguments. */
+  const acceptFunction = (name: string): void => {
+    if (!slot) return;
+    const value = textRef.current;
+    const call = `${name}(`;
+    span.current = null;
+    target.current = null;
+    onPointChange?.(null);
+    write(`${value.slice(0, slot.start)}${call}${value.slice(slot.end)}`, slot.start + call.length);
+  };
+
+  // Keeps the highlighted function in view as Up and Down walk the list.
+  useEffect(() => {
+    const item = listRef.current?.children[highlighted] as HTMLElement | undefined;
+    item?.scrollIntoView?.({ block: 'nearest' });
+  }, [highlighted, listOpen]);
 
   /** True when the caret sits where a formula expects a cell reference. */
   const awaitingOperand = (): boolean => {
@@ -206,6 +256,8 @@ export function CellEditor({
 
     span.current = { start: from, end: from + reference.length };
     write(`${value.slice(0, from)}${reference}${value.slice(to)}`, from + reference.length);
+    // `=B2` is a reference, not the start of a function name.
+    setListClosed(true);
     onPointChange?.(range);
   };
 
@@ -261,6 +313,34 @@ export function CellEditor({
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+    // Formula AutoComplete first: Up and Down walk the list, Enter or Tab takes
+    // the highlighted function, Escape closes the list but not the edit.
+    // Committing while the list is up would save a half-typed name — or a bare
+    // `=`, which blanks the cell — and move the cursor away from it.
+    if (listOwnsKeys && slot && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+      event.preventDefault();
+      event.stopPropagation();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      const index = (highlighted + step + suggestions.length) % suggestions.length;
+      setHighlight({ prefix: slot.prefix, index });
+      return;
+    }
+
+    if (listOwnsKeys && (event.key === 'Tab' || event.key === 'Enter')) {
+      event.preventDefault();
+      event.stopPropagation();
+      const chosen = suggestions[highlighted];
+      if (chosen) acceptFunction(chosen.name);
+      return;
+    }
+
+    if (listOpen && event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      setListClosed(true);
+      return;
+    }
+
     // Every key here is one this editor owns; letting them bubble would move
     // the selection underneath while the editor was still open.
     if (event.key === 'Enter') {
@@ -310,48 +390,93 @@ export function CellEditor({
     event.stopPropagation();
   };
 
+  const activeOption = listOpen ? suggestions[highlighted] : undefined;
+
   return (
-    <input
-      ref={inputRef}
-      className={styles.editor}
-      aria-label={label}
-      value={text}
-      style={{ left, top, minWidth: width, height }}
-      onChange={(event) => {
-        // The user typed, so the last pointed reference is now their text: the
-        // next click must insert beside it rather than overwrite it.
-        span.current = null;
-        target.current = null;
-        onPointChange?.(null);
-        textRef.current = event.target.value;
-        setText(event.target.value);
-      }}
-      onKeyDown={onKeyDown}
-      // Clicking into the text is Excel's other way out of point mode — you are
-      // editing the formula now, not pointing at cells with it. The event must
-      // not reach the sheet underneath, which would read it as a click on the
-      // cell and close the editor mid-word.
-      onPointerDown={(event) => {
-        event.stopPropagation();
-        modeRef.current = 'edit';
-        span.current = null;
-        target.current = null;
-        onPointChange?.(null);
-      }}
-      // Double-clicking a word to select it is not a double-click on the cell.
-      onDoubleClick={(event) => event.stopPropagation()}
-      // Clicking away commits, as Excel does — losing what was typed because
-      // the user clicked the ribbon would be the worst possible behaviour.
-      onBlur={() => {
-        if (pointingBlur.current) {
-          inputRef.current?.focus();
-          return;
-        }
-        finish('none');
-      }}
-    />
+    <>
+      <input
+        ref={inputRef}
+        className={styles.editor}
+        aria-label={label}
+        value={text}
+        style={{ left, top, minWidth: width, height }}
+        aria-autocomplete="list"
+        aria-controls={listOpen ? FUNCTION_LIST_ID : undefined}
+        aria-activedescendant={activeOption ? `${FUNCTION_LIST_ID}-${activeOption.name}` : undefined}
+        onChange={(event) => {
+          // The user typed, so the last pointed reference is now their text: the
+          // next click must insert beside it rather than overwrite it.
+          span.current = null;
+          target.current = null;
+          onPointChange?.(null);
+          textRef.current = event.target.value;
+          setText(event.target.value);
+          setCaret(event.target.selectionStart ?? event.target.value.length);
+          setListClosed(false);
+        }}
+        onSelect={(event) => setCaret(event.currentTarget.selectionStart ?? textRef.current.length)}
+        onKeyDown={onKeyDown}
+        // Clicking into the text is Excel's other way out of point mode — you are
+        // editing the formula now, not pointing at cells with it. The event must
+        // not reach the sheet underneath, which would read it as a click on the
+        // cell and close the editor mid-word.
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          modeRef.current = 'edit';
+          span.current = null;
+          target.current = null;
+          onPointChange?.(null);
+        }}
+        // Double-clicking a word to select it is not a double-click on the cell.
+        onDoubleClick={(event) => event.stopPropagation()}
+        // Clicking away commits, as Excel does — losing what was typed because
+        // the user clicked the ribbon would be the worst possible behaviour.
+        onBlur={() => {
+          if (pointingBlur.current) {
+            inputRef.current?.focus();
+            return;
+          }
+          finish('none');
+        }}
+      />
+
+      {listOpen ? (
+        <div
+          className={styles.functionPopup}
+          style={{ left, top: top + height }}
+          // The input keeps the focus — a blur would commit the half-typed
+          // formula — and the sheet must not read a click here as a cell click.
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.preventDefault()}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          <ul ref={listRef} id={FUNCTION_LIST_ID} role="listbox" aria-label="Functions" className={styles.functionList}>
+            {suggestions.map((entry, index) => (
+              <li
+                key={entry.name}
+                id={`${FUNCTION_LIST_ID}-${entry.name}`}
+                role="option"
+                aria-selected={index === highlighted}
+                className={styles.functionOption}
+                title={entry.description}
+                onMouseEnter={() => slot && setHighlight({ prefix: slot.prefix, index })}
+                onClick={() => acceptFunction(entry.name)}
+              >
+                <span className={styles.functionGlyph} aria-hidden="true">
+                  ƒx
+                </span>
+                {entry.name}
+              </li>
+            ))}
+          </ul>
+          {activeOption?.description ? <div className={styles.functionTip}>{activeOption.description}</div> : null}
+        </div>
+      ) : null}
+    </>
   );
 }
+
+const FUNCTION_LIST_ID = 'cell-editor-functions';
 
 /** Corners in reading order, which is the only order a reference is written in. */
 function ordered(a: CellAddress, b: CellAddress): RangeAddress {
