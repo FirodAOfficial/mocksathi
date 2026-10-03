@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrawerLayout } from '@/hooks/useMediaQuery';
 import { useClipboard } from '@/editor/useClipboard';
@@ -30,9 +31,11 @@ import { ExamDrawerBar, ExamPanel, type DrawerSide } from './exam/ExamPanels';
 import { RotateGate } from './exam/RotateGate';
 import { DocumentErrorOverlay, LoadingOverlay, UnsupportedNotice } from './document/DocumentOverlays';
 import { InstructionStrip } from './exam/InstructionStrip';
-import { ResultView } from './result/ResultView';
 import { Ribbon } from './ribbon/Ribbon';
 import styles from './WordShell.module.css';
+
+// Shown only after a submission, so it is not part of the editor's first load.
+const ResultView = dynamic(() => import('./result/ResultView').then((module) => module.ResultView));
 
 export interface WordShellProps {
   /** The `docUrl` query parameter, or null for a blank document. */

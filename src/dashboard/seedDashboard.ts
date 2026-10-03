@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { enrollmentsForUser } from '@/db/enrollments';
 import type { DashboardData, ExamEnrollment, MockSummary, NavSection } from './types';
 
@@ -402,8 +403,12 @@ export function initialsFor(name: string): string {
  * (`src/db/enrollments.ts`), not fixture — this is the one field on
  * `DashboardData` that genuinely comes from the database for every caller,
  * rather than being fixture with the odd real field overlaid.
+ *
+ * `cache()`d per request: the dashboard layout and the page under it both
+ * call this with the same (itself cached) user, which used to mean the
+ * enrollments query ran twice per page view.
  */
-export async function dashboardDataFor(
+export const dashboardDataFor = cache(async function dashboardDataFor(
   identity: { id: string; name: string; role: string; avatarUrl?: string | null },
 ): Promise<DashboardData> {
   const navSections: NavSection[] =
@@ -441,4 +446,4 @@ export async function dashboardDataFor(
     navSections,
     enrollments,
   };
-}
+});

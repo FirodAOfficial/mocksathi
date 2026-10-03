@@ -3,7 +3,7 @@
 import { BrandMark } from '@/components/site/BrandLogo';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from '@/auth/otpPolicy';
+import { OTP_LENGTH, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from '@/auth/otpConstants';
 import { SiteFooterCompact } from '@/components/site/SiteFooter';
 import { inter } from './authFont';
 import cardStyles from './AuthCard.module.css';

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { requireVerifiedUser } from '@/auth/cookies';
-import { attemptFor } from '@/db/attempts';
+import { allAttemptsForUser } from '@/db/attempts';
 import { paperFor } from '@/db/tests';
 import { mockLimitStatusForUser } from '@/dashboard/mockLimit';
 import { EXCEL_PAPER, PAPER } from '@/exam/result';
@@ -62,20 +62,23 @@ export default async function ExamInstructionsPage({
   // has always meant and what every existing link points at.
   const subject = first(params.subject) === 'excel' ? 'excel' : 'word';
 
-  const paper = await paperFor({ slug: first(params.test), subject }, user.name);
+  // All three at once: the candidate's sittings and plan limit don't depend on
+  // which paper this is, and each sequential database round trip is felt here.
+  const [paper, sittings, limitStatus] = await Promise.all([
+    paperFor({ slug: first(params.test), subject }, user.name),
+    allAttemptsForUser(user.id),
+    mockLimitStatusForUser(user.id),
+  ]);
 
   // The free-plan gate: only a *new* real paper counts against the limit — a
-  // retake never does (`attemptFor` finding a row means this candidate has
+  // retake never does (a stored sitting of it means this candidate has
   // already sat it), and neither does the local sample fallback below, which
   // isn't a real entitlement to protect. Closes the direct-URL bypass around
   // `StartMockAction`'s client-side check, which only guards the dashboard's
   // own Start buttons.
   if (paper) {
-    const alreadyAttempted = await attemptFor(user.id, paper.testId);
-    if (!alreadyAttempted) {
-      const { limitReached } = await mockLimitStatusForUser(user.id);
-      if (limitReached) redirect('/dashboard?limitReached=1');
-    }
+    const alreadyAttempted = sittings.some((sitting) => sitting.testId === paper.testId);
+    if (!alreadyAttempted && limitStatus.limitReached) redirect('/dashboard?limitReached=1');
   }
 
   const fallbackAttempt: ExamAttempt = subject === 'excel' ? EXCEL_SEED_ATTEMPT : SEED_ATTEMPT;

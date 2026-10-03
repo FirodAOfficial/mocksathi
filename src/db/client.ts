@@ -28,9 +28,21 @@ function getDb(): Db {
     if (!connectionString) {
       throw new Error('DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
     }
-    globalThis.__mocksathiDb = drizzle(new Pool({ connectionString, ssl: sslFor(connectionString) }), {
-      schema,
-    });
+    globalThis.__mocksathiDb = drizzle(
+      new Pool({
+        connectionString,
+        ssl: sslFor(connectionString),
+        // `pg` closes a connection after 10 s idle by default, and reopening
+        // one to a hosted database is a TCP + TLS + auth handshake — several
+        // round trips, ~2 s measured for a dashboard page to a database in
+        // another region. Nearly every click after reading a page paid it.
+        // Five minutes keeps the pool warm between clicks; keepAlive stops
+        // NATs and the pooler from silently dropping the idle sockets.
+        idleTimeoutMillis: 5 * 60 * 1000,
+        keepAlive: true,
+      }),
+      { schema },
+    );
   }
   return globalThis.__mocksathiDb;
 }

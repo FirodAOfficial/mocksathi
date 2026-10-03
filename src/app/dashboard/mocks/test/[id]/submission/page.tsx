@@ -7,7 +7,7 @@ import emptyStyles from '@/components/dashboard/ComingSoonScreen.module.css';
 import { attemptFor } from '@/db/attempts';
 import { benchmarkViewForTest } from '@/db/benchmarks';
 import { withBenchmark } from '@/exam/benchmark';
-import { attemptFromTest, getTestById, loadPaper, questionsForTest } from '@/db/tests';
+import { attemptFromTest, getTestById, loadPaper } from '@/db/tests';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,10 +33,14 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
   const user = await requireUser();
   const { id } = await params;
 
-  const test = await getTestById(id);
+  // All three only need the id from the URL, so none waits for another.
+  const [test, attempt, benchmark] = await Promise.all([
+    getTestById(id),
+    attemptFor(user.id, id),
+    benchmarkViewForTest(id),
+  ]);
   if (!test) notFound();
 
-  const attempt = await attemptFor(user.id, test.id);
   if (!attempt) {
     return (
       <>
@@ -56,13 +60,10 @@ export default async function TestSubmissionPage({ params }: { params: Promise<{
     );
   }
 
-  const [questions, benchmark] = await Promise.all([questionsForTest(test.id), benchmarkViewForTest(test.id)]);
-  // A single-document paper has no `test_questions` rows; `loadPaper` builds it
-  // from its own tables, and falls back to null for an emptied paper.
-  const examAttempt =
-    questions.length === 0
-      ? ((await loadPaper(test, user.name))?.attempt ?? attemptFromTest(test, questions, user.name))
-      : attemptFromTest(test, questions, user.name);
+  // `loadPaper` reads the per-question rows and the single-document/workbook
+  // paper together; null only for a paper emptied since it was sat.
+  const loaded = await loadPaper(test, user.name);
+  const examAttempt = loaded?.attempt ?? attemptFromTest(test, [], user.name);
 
   return (
     <ResultView

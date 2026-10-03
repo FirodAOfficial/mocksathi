@@ -1,5 +1,5 @@
 import 'server-only';
-import { allAttemptsForUser, type StoredAttempt } from '@/db/attempts';
+import { allAttemptsForUser, type AttemptSummary } from '@/db/attempts';
 import type { Subject } from '@/exam/types';
 import type { PerformanceSnapshot, SubjectSnapshot } from './types';
 
@@ -36,7 +36,7 @@ function average(values: number[]): number {
  * "average marks out of X" stops meaning anything once X isn't the same
  * paper twice. A percentage still is.
  */
-export function performanceSnapshotFromAttempts(attempts: StoredAttempt[]): PerformanceSnapshot {
+export function performanceSnapshotFromAttempts(attempts: AttemptSummary[]): PerformanceSnapshot {
   if (attempts.length === 0) {
     return { averageScore: 0, maxScore: 100, accuracyPct: 0, attemptRatePct: 0, avgTimePerQuestionSeconds: 0 };
   }
@@ -60,8 +60,8 @@ export function performanceSnapshotFromAttempts(attempts: StoredAttempt[]): Perf
 }
 
 /** One row per subject this candidate has actually sat a paper in — 'word' and/or 'excel', never both fixed at once. */
-export function subjectSnapshotsFromAttempts(attempts: StoredAttempt[]): SubjectSnapshot[] {
-  const bySubject = new Map<Subject, StoredAttempt[]>();
+export function subjectSnapshotsFromAttempts(attempts: AttemptSummary[]): SubjectSnapshot[] {
+  const bySubject = new Map<Subject, AttemptSummary[]>();
   for (const attempt of attempts) {
     const group = bySubject.get(attempt.subject);
     if (group) group.push(attempt);
