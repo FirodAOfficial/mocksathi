@@ -5,7 +5,6 @@ import { NumberCombo } from '@/components/controls/NumberCombo';
 import { SelectMenu } from '@/components/controls/SelectMenu';
 import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { RibbonColumn, RibbonGroup, RibbonRow } from '@/components/ribbon/RibbonGroup';
-import { columnToLabel } from '@/spreadsheet/model/address';
 import { NUMBER_FORMATS } from '@/spreadsheet/model/format';
 import type { RangeAddress } from '@/spreadsheet/model/address';
 import {
@@ -499,14 +498,12 @@ export function SheetHomeTab() {
               label="AutoSum"
               size="wide"
               glyph="Σ"
+              disabled={readOnly}
+              disabledReason={protectedReason}
               onClick={() => {
-                const range = sumRangeAbove(store, active.row, active.col);
-                if (!range) {
-                  setNotice('AutoSum needs numbers directly above the cursor.');
-                  return;
+                if (!store.autoSum('SUM', 'home.editing.autosum')) {
+                  setNotice('AutoSum found no numbers to total above, to the left of, or in the selection.');
                 }
-                store.setCellInput(active.row, active.col, range, 'ribbon');
-                void store.ensureEngine();
               }}
             />
             <ToolbarButton
@@ -607,25 +604,4 @@ function autoFitWidth(store: ReturnType<typeof useWorkbookStore>, col: number): 
   // 7px per character is Calibri 11's rough average advance; the estimate is
   // only ever off by a character or two, and the column stays draggable.
   return Math.max(32, Math.min(400, longest * 7 + 10));
-}
-
-/**
- * The `=SUM(...)` AutoSum would insert, or null when there is nothing above.
- *
- * Excel looks upward for a contiguous run of numbers, which is what makes
- * AutoSum feel like it read your mind.
- */
-function sumRangeAbove(
-  store: ReturnType<typeof useWorkbookStore>,
-  row: number,
-  col: number,
-): string | null {
-  const sheet = store.activeSheet();
-
-  let top = row;
-  while (top > 0 && typeof sheet.getValue(top - 1, col) === 'number') top -= 1;
-  if (top === row) return null;
-
-  const label = columnToLabel(col);
-  return `=SUM(${label}${top + 1}:${label}${row})`;
 }

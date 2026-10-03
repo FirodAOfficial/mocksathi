@@ -7,8 +7,6 @@ import { ToolbarButton } from '@/components/controls/ToolbarButton';
 import { RibbonColumn, RibbonGroup, RibbonRow } from '@/components/ribbon/RibbonGroup';
 import { GRID_ELEMENT_ID } from '@/components/spreadsheet/grid/SpreadsheetGrid';
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
-import { formatAddress } from '@/spreadsheet/model/address';
-import { autoSumRange } from '@/spreadsheet/model/autoSumRange';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { SHEET_ZOOM_LEVELS, useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
 import styles from './SpreadsheetRibbon.module.css';
@@ -44,7 +42,6 @@ const SYMBOLS = [
 
 export function SheetFormulasTab() {
   const store = useWorkbookStore();
-  const selection = useSelection();
   useWorkbookVersion();
 
   const showFormulas = useSpreadsheetUiStore((state) => state.showFormulas);
@@ -52,7 +49,6 @@ export function SheetFormulasTab() {
   const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
   const readOnly = useSpreadsheetUiStore((state) => state.readOnly);
 
-  const active = selection.active;
   const locked = readOnly ? 'the sheet is protected' : undefined;
 
   /**
@@ -63,19 +59,9 @@ export function SheetFormulasTab() {
    * nothing to total, say so rather than writing anything.
    */
   const insertAggregate = (fn: 'SUM' | 'AVERAGE' | 'COUNT'): void => {
-    const target = autoSumRange(store.activeSheet(), active);
-    if (!target) {
-      setNotice(`${fn} found no numbers above or to the left of ${formatAddress(active)}.`);
-      return;
+    if (!store.autoSum(fn, `formulas.library.${fn.toLowerCase()}`)) {
+      setNotice(`${fn} found no numbers to total above, to the left of, or in the selection.`);
     }
-
-    store.setCellInput(
-      active.row,
-      active.col,
-      `=${fn}(${formatAddress(target.start)}:${formatAddress(target.end)})`,
-      'ribbon',
-    );
-    void store.ensureEngine();
   };
 
   return (

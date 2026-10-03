@@ -139,10 +139,23 @@ describe('SpreadsheetShell', () => {
     expect(screen.getByRole('tab', { name: 'Sheet2' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('refuses to delete the last sheet, and says why', () => {
+  it('offers no delete on the last sheet', () => {
     render(<SpreadsheetShell />);
 
-    expect(screen.getByRole('button', { name: 'Delete Sheet' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Delete Sheet1' })).not.toBeInTheDocument();
+  });
+
+  it('deletes the sheet whose × was clicked, not the active one', async () => {
+    render(<SpreadsheetShell />);
+    await userEvent.click(screen.getByRole('button', { name: 'Insert Worksheet' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Insert Worksheet' }));
+    expect(screen.getByRole('tab', { name: 'Sheet3' })).toHaveAttribute('aria-selected', 'true');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Sheet1' }));
+
+    expect(screen.queryByRole('tab', { name: 'Sheet1' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Sheet3' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Sheet2' })).toBeInTheDocument();
   });
 
   describe('honesty of the controls', () => {
@@ -467,5 +480,27 @@ describe('merged cells', () => {
     // Typing edits the merged cell, not a hidden cell behind it.
     await userEvent.keyboard('x');
     expect(screen.getByRole('textbox', { name: 'Edit A1' })).toHaveValue('x');
+  });
+});
+
+describe('AutoSum', () => {
+  it('totals a selected column below it instead of overwriting its last number', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('1{Enter}2{Enter}3{Enter}');
+
+    await userEvent.click(screen.getByLabelText('Name Box'));
+    await userEvent.keyboard('A1:A3{Enter}');
+    await userEvent.click(screen.getByRole('button', { name: /^AutoSum/ }));
+
+    expect(await screen.findByRole('gridcell', { name: '6' })).toHaveAttribute('id', 'cell-3-0');
+    expect(screen.getByRole('gridcell', { name: '3' })).toBeInTheDocument();
+  });
+
+  it('totals a row of numbers from the cell to their right', async () => {
+    render(<SpreadsheetShell />);
+    await typeIntoActiveCell('4{Tab}5{Tab}');
+    await userEvent.click(screen.getByRole('button', { name: /^AutoSum/ }));
+
+    expect(await screen.findByRole('gridcell', { name: '9' })).toHaveAttribute('id', 'cell-0-2');
   });
 });

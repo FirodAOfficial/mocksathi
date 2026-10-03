@@ -7,7 +7,8 @@ import type { Cell } from './model/Cell';
 import { formatCellValue, isDateTimeFormat } from './model/format';
 import { completeFormula, parseCellInput } from './model/parseInput';
 import { DEFAULT_STYLE_ID, type CellStyle, type StyleId } from './model/styles';
-import { isSingleCell, type CellAddress, type RangeAddress } from './model/address';
+import { formatAddress, isSingleCell, type CellAddress, type RangeAddress } from './model/address';
+import { autoSumTargets } from './model/autoSumRange';
 import { fillSeries } from './model/fillSeries';
 import { snapshotSheet } from './model/snapshot';
 import {
@@ -221,12 +222,7 @@ export class WorkbookStore {
     const isFormula = input.startsWith('=') && input.length > 1;
 
     const cell = isFormula
-      ? // A formula replaces whatever the apostrophe said about the old text.
-        {
-          value: null,
-          formula: completeFormula(input),
-          styleId: this.workbook.styles.derive(baseStyleId, { quotePrefix: undefined }),
-        }
+      ? this.buildFormulaCell(input, baseStyleId)
       : this.buildValueCell(input, baseStyleId);
 
     this.commit({ label: isFormula ? 'Enter Formula' : 'Type', source }, (mutator) => {
@@ -235,6 +231,40 @@ export class WorkbookStore {
 
     if (isFormula) void this.ensureEngine();
     else this.graph.clear(nodeId(sheet.id, row, col));
+  }
+
+  /** A formula replaces whatever the apostrophe said about the old text. */
+  private buildFormulaCell(input: string, baseStyleId: StyleId): Cell {
+    return {
+      value: null,
+      formula: completeFormula(input),
+      styleId: this.workbook.styles.derive(baseStyleId, { quotePrefix: undefined }),
+    };
+  }
+
+  /**
+   * AutoSum, and its Average and Count siblings: totals where Excel would put
+   * them for the current selection (see `autoSumTargets`), as one undoable
+   * step. Returns false, writing nothing, when there is nothing to total.
+   */
+  autoSum(fn: 'SUM' | 'AVERAGE' | 'COUNT' | 'MAX' | 'MIN', control: string): boolean {
+    const sheet = this.activeSheet();
+    const selected = this.selection.getRanges()[0];
+    if (!selected) return false;
+
+    const writes = autoSumTargets(sheet, selected, this.selection.getActive());
+    if (writes.length === 0) return false;
+
+    this.commit({ label: 'AutoSum', source: 'ribbon', control }, (mutator) => {
+      for (const { cell, range } of writes) {
+        const reference = `${formatAddress(range.start)}:${formatAddress(range.end)}`;
+        const baseStyleId = sheet.getCell(cell.row, cell.col)?.styleId ?? DEFAULT_STYLE_ID;
+        mutator.setCell(sheet.id, cell.row, cell.col, this.buildFormulaCell(`=${fn}(${reference})`, baseStyleId));
+      }
+    });
+
+    void this.ensureEngine();
+    return true;
   }
 
   /**
