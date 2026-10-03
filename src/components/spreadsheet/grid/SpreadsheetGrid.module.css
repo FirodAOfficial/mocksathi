@@ -115,6 +115,11 @@
   cursor: cell;
 }
 
+/* Format Painter is holding a brush: the next selection takes its formatting. */
+.scroller[data-painting='on'] {
+  cursor: copy;
+}
+
 .frame[data-headings='off'] .scroller {
   grid-column: 1;
   grid-row: 1;

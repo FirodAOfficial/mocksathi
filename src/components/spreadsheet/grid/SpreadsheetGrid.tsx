@@ -13,6 +13,8 @@ import {
 } from 'react';
 import {
   columnToLabel,
+  MAX_COLUMNS,
+  MAX_ROWS,
   formatAddress,
   type CellAddress,
   type RangeAddress,
@@ -28,6 +30,11 @@ import type { Worksheet } from '@/spreadsheet/model/Worksheet';
 import { GridGeometry } from '@/spreadsheet/grid/gridGeometry';
 import { useSelection, useWorkbookStore, useWorkbookVersion } from '@/spreadsheet/useWorkbook';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
+import { Popover } from '@/components/controls/Popover';
+import { describeCondition } from '@/spreadsheet/model/autoFilter';
+import { autoFitColumnWidth, autoFitRowHeight } from './autoFit';
+import { FilterMenu } from './FilterMenu';
+import filterStyles from './FilterMenu.module.css';
 import {
   CellEditor,
   type CellEditorHandle,
@@ -108,6 +115,7 @@ export function SpreadsheetGrid() {
   const zoom = useSpreadsheetUiStore((state) => state.zoom);
   const showFormulas = useSpreadsheetUiStore((state) => state.showFormulas);
   const readOnly = useSpreadsheetUiStore((state) => state.readOnly);
+  const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [scroll, setScroll] = useState({ left: 0, top: 0 });
@@ -231,6 +239,8 @@ export function SpreadsheetGrid() {
     }
 
     event.currentTarget.setPointerCapture(event.pointerId);
+    // Clicking another cell finishes the entry, as in Excel — it never discards it.
+    editorRef.current?.commit();
     setEditing(null);
 
     if (event.shiftKey) store.selection.extendTo(address);
@@ -313,6 +323,31 @@ export function SpreadsheetGrid() {
   };
 
   /* -- Header resizing ---------------------------------------------------- */
+
+  /**
+   * Double-clicking a heading's edge: AutoFit, as in Excel. When the line sits
+   * inside a selection of whole columns (or rows), every one of them is fitted.
+   */
+  const autoFit = (axis: 'row' | 'column', index: number): void => {
+    if (readOnly || index < 0) return;
+
+    const range = store.selection.getRanges()[0];
+    const whole =
+      range &&
+      (axis === 'column'
+        ? isColumnSelected([range], index) && range.start.row === 0 && range.end.row >= MAX_ROWS - 1
+        : isRowSelected([range], index) && range.start.col === 0 && range.end.col >= MAX_COLUMNS - 1);
+    const first = whole ? (axis === 'column' ? range.start.col : range.start.row) : index;
+    const last = whole ? (axis === 'column' ? range.end.col : range.end.row) : index;
+    const indices: number[] = [];
+    for (let at = first; at <= last; at += 1) indices.push(at);
+
+    if (axis === 'column') {
+      store.resize('column', indices, (col) => autoFitColumnWidth(store, col), 'AutoFit Column Width', 'grid.header.autoFit', 'grid');
+    } else {
+      store.resize('row', indices, (row) => autoFitRowHeight(store, row), 'AutoFit Row Height', 'grid.header.autoFit', 'grid');
+    }
+  };
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -404,8 +439,24 @@ export function SpreadsheetGrid() {
         if (!readOnly) store.clearContents();
         break;
       case 'Escape':
+        // Puts down a Format Painter brush that was picked up by mistake.
+        store.dropFormatBrush();
         return;
       default: {
+        // Ctrl+D and Ctrl+R are Excel's Fill Down and Fill Right.
+        if ((event.ctrlKey || event.metaKey) && !event.altKey && !readOnly) {
+          const key = event.key.toLowerCase();
+          if (key === 'd' || key === 'r') {
+            store.fill(key === 'd' ? 'down' : 'right');
+            break;
+          }
+          // Ctrl+1 is Excel's Format Cells.
+          if (key === '1') {
+            useSpreadsheetUiStore.getState().openFormatCells('number');
+            break;
+          }
+        }
+
         // Typing over a cell replaces it, as Excel does. Modifier chords are
         // left alone so Ctrl+C and friends still reach the browser.
         if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -500,7 +551,9 @@ export function SpreadsheetGrid() {
           ...cellCss(style),
         }}
       >
-        <span className={styles.cellText}>{text}</span>
+        <span className={styles.cellText} style={rotatedTextCss(style, alignmentOf(cell, style))}>
+          {text}
+        </span>
       </div>
     );
   };
@@ -561,7 +614,12 @@ export function SpreadsheetGrid() {
                         };
                         return;
                       }
+                      editorRef.current?.commit();
                       store.selection.selectColumn(col);
+                    }}
+                    onDoubleClick={(event) => {
+                      const edge = edgeUnder(event.currentTarget.getBoundingClientRect(), event.clientX, 'column');
+                      if (edge !== null) autoFit('column', col + edge);
                     }}
                   >
                     {columnToLabel(col)}
@@ -597,7 +655,12 @@ export function SpreadsheetGrid() {
                         };
                         return;
                       }
+                      editorRef.current?.commit();
                       store.selection.selectRow(row);
+                    }}
+                    onDoubleClick={(event) => {
+                      const edge = edgeUnder(event.currentTarget.getBoundingClientRect(), event.clientY, 'row');
+                      if (edge !== null) autoFit('row', row + edge);
                     }}
                   >
                     {row + 1}
@@ -612,6 +675,7 @@ export function SpreadsheetGrid() {
 
       <div
         className={styles.scroller}
+        data-painting={store.hasFormatBrush() ? 'on' : undefined}
         ref={scrollerRef}
         id={GRID_ELEMENT_ID}
         tabIndex={0}
@@ -631,7 +695,10 @@ export function SpreadsheetGrid() {
         onPointerMove={onCellPointerMove}
         onDoubleClick={onCellDoubleClick}
         onPointerUp={(event) => {
+          const pointing = pointAnchor.current !== null;
           pointAnchor.current = null;
+          // The selection just made is where a picked-up Format Painter paints.
+          if (!filling && !pointing && store.hasFormatBrush()) store.paintFormat();
           endFill(event);
         }}
       >
@@ -714,6 +781,75 @@ export function SpreadsheetGrid() {
               const cell = sheet.getCell(merge.start.row, merge.start.col);
               return cell ? renderCell(merge.start.row, merge.start.col, cell) : null;
             })}
+
+            {/*
+              AutoFilter's drop-down buttons, one per heading. Their own layer of
+              controls: a press on one must open its menu, not select the cell.
+            */}
+            {sheet.autoFilter &&
+            sheet.autoFilter.range.start.row >= window_.firstRow &&
+            sheet.autoFilter.range.start.row <= window_.lastRow
+              ? columns
+                  .filter(
+                    (col) => col >= sheet.autoFilter!.range.start.col && col <= sheet.autoFilter!.range.end.col,
+                  )
+                  .map((col) => {
+                    const headerRow = sheet.autoFilter!.range.start.row;
+                    const rect = geometry.rectOf({ start: { row: headerRow, col }, end: { row: headerRow, col } });
+                    if (rect.width < 18) return null;
+                    const condition = sheet.autoFilter!.columns[col];
+                    const heading =
+                      formatCellValue(sheet.getValue(headerRow, col), undefined) || `Column ${columnToLabel(col)}`;
+                    const title = condition ? `${heading}: ${describeCondition(condition)}` : `${heading} (Showing All)`;
+
+                    return (
+                      <div
+                        key={`filter-${col}`}
+                        className={filterStyles.button16}
+                        style={{ left: rect.left + rect.width - 18, top: rect.top + Math.max(0, rect.height - 18) }}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onDoubleClick={(event) => event.stopPropagation()}
+                      >
+                        <Popover
+                          trigger={({ open, toggle, id, controls }) => (
+                            <button
+                              id={id}
+                              type="button"
+                              data-popover-trigger
+                              className={`${filterStyles.filterButton} ${condition ? filterStyles.filterButtonActive : ''}`}
+                              aria-haspopup="menu"
+                              aria-expanded={open}
+                              aria-controls={open ? controls : undefined}
+                              aria-label={`Filter ${heading}`}
+                              title={title}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                editorRef.current?.commit();
+                                toggle();
+                              }}
+                            >
+                              <FilterGlyph filtered={Boolean(condition)} />
+                            </button>
+                          )}
+                        >
+                          {({ close }) => (
+                            <FilterMenu
+                              store={store}
+                              col={col}
+                              heading={heading}
+                              readOnly={readOnly}
+                              close={() => {
+                                close();
+                                focusSheetGrid();
+                              }}
+                              onNotice={setNotice}
+                            />
+                          )}
+                        </Popover>
+                      </div>
+                    );
+                  })
+              : null}
 
             {/*
               The fill handle: the small square at the bottom-right corner of the
@@ -874,8 +1010,45 @@ function cellCss(style: CellStyle): CSSProperties {
   return css;
 }
 
+/** A filter button's face: Excel's arrow, with a funnel once the column is filtered. */
+function FilterGlyph({ filtered }: { filtered: boolean }) {
+  return (
+    <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      {filtered ? (
+        <>
+          <path d="M1 1.5h7L5.4 5v3.5L3.6 9.6V5z" fill="currentColor" />
+          <path d="M7.5 8l2 2 2-2" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        </>
+      ) : (
+        <path d="M2.5 4.5l3.5 3.5 3.5-3.5z" fill="currentColor" />
+      )}
+    </svg>
+  );
+}
+
+/**
+ * Text turned by Home > Orientation.
+ *
+ * The span shrinks to its text so it turns about its own middle, and is pushed
+ * to the side the alignment asks for — `text-align` does nothing to a box that
+ * is exactly as wide as its content.
+ */
+function rotatedTextCss(style: CellStyle, alignment: string): CSSProperties | undefined {
+  if (!style.textRotation) return undefined;
+
+  return {
+    display: 'inline-block',
+    width: 'auto',
+    overflow: 'visible',
+    marginLeft: alignment === 'left' ? 0 : 'auto',
+    marginRight: alignment === 'right' ? 0 : 'auto',
+    transform: `rotate(${-style.textRotation}deg)`,
+  };
+}
+
 function borderWidth(style: string): string {
-  if (style === 'thick') return '3px';
+  // A double line needs room for two strokes and the gap between them.
+  if (style === 'thick' || style === 'double') return '3px';
   if (style === 'medium') return '2px';
   return '1px';
 }
@@ -883,6 +1056,19 @@ function borderWidth(style: string): string {
 function borderKind(style: string): string {
   if (style === 'dashed' || style === 'dotted' || style === 'double') return style;
   return 'solid';
+}
+
+/**
+ * Which heading boundary a double-click landed on: 0 for this heading's far
+ * edge, -1 for its near edge (the previous heading's far edge), or null when it
+ * was not on an edge at all.
+ */
+function edgeUnder(box: DOMRect, position: number, axis: 'row' | 'column'): 0 | -1 | null {
+  const near = axis === 'column' ? box.left : box.top;
+  const far = axis === 'column' ? box.right : box.bottom;
+  if (far - position <= RESIZE_GRIP) return 0;
+  if (position - near <= RESIZE_GRIP) return -1;
+  return null;
 }
 
 function isColumnSelected(ranges: readonly { start: CellAddress; end: CellAddress }[], col: number): boolean {

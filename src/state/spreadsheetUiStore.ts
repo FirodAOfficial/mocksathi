@@ -26,6 +26,9 @@ export type SheetRibbonTabId =
   | 'review'
   | 'view';
 
+/** The Format Cells dialog's tabs, in Excel's order. */
+export type FormatCellsTab = 'number' | 'alignment' | 'font' | 'border' | 'fill';
+
 export const SHEET_ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 export const MIN_SHEET_ZOOM = 0.5;
 export const MAX_SHEET_ZOOM = 2;
@@ -47,6 +50,8 @@ interface SpreadsheetUiState {
   readOnly: boolean;
   /** Transient status-bar message, e.g. a refused merge. */
   notice: string | null;
+  /** The Format Cells dialog's open tab, or null while it is closed. */
+  formatCells: FormatCellsTab | null;
 
   setActiveTab: (tab: SheetRibbonTabId) => void;
   setZoom: (zoom: number) => void;
@@ -55,6 +60,8 @@ interface SpreadsheetUiState {
   toggleShowFormulas: () => void;
   setReadOnly: (readOnly: boolean) => void;
   setNotice: (notice: string | null) => void;
+  openFormatCells: (tab: FormatCellsTab) => void;
+  closeFormatCells: () => void;
 }
 
 export const useSpreadsheetUiStore = create<SpreadsheetUiState>((set) => ({
@@ -64,6 +71,7 @@ export const useSpreadsheetUiStore = create<SpreadsheetUiState>((set) => ({
   showFormulas: false,
   readOnly: false,
   notice: null,
+  formatCells: null,
 
   setActiveTab: (activeTab) => set({ activeTab }),
   setZoom: (zoom) => set({ zoom: clamp(zoom, MIN_SHEET_ZOOM, MAX_SHEET_ZOOM) }),
@@ -77,6 +85,8 @@ export const useSpreadsheetUiStore = create<SpreadsheetUiState>((set) => ({
   toggleShowFormulas: () => set((state) => ({ showFormulas: !state.showFormulas })),
   setReadOnly: (readOnly) => set({ readOnly }),
   setNotice: (notice) => set({ notice }),
+  openFormatCells: (formatCells) => set({ formatCells }),
+  closeFormatCells: () => set({ formatCells: null }),
 }));
 
 function clamp(value: number, min: number, max: number): number {

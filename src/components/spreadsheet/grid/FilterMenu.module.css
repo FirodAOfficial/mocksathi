@@ -1,0 +1,175 @@
+/* A filter column's drop-down, drawn like Excel's. */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  padding: 4px;
+  font-family: var(--ui-font, 'Segoe UI', sans-serif);
+  font-size: 12px;
+  color: #17365d;
+  cursor: default;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 4px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.item:hover:not(:disabled) {
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.item:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.glyph {
+  display: inline-flex;
+  justify-content: center;
+  width: 22px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.more {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: #d5dde6;
+}
+
+.search {
+  margin: 6px 4px 4px;
+  padding: 4px 6px;
+  font: inherit;
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  height: 180px;
+  margin: 0 4px;
+  padding: 4px 6px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #9db3c8;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 6px 0;
+  color: #52667a;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 8px 4px 4px;
+}
+
+.button {
+  min-width: 64px;
+  height: 24px;
+  padding: 0 10px;
+  font: inherit;
+  color: #17365d;
+  background: linear-gradient(180deg, #fff, #e4ecf6);
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.button:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 4px;
+}
+
+.formTitle {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.opLabel {
+  flex: 0 0 110px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  padding: 0 5px;
+  font: inherit;
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+}
+
+.error {
+  margin: 0;
+  color: #c00000;
+}
+
+/* The drop-down button on a heading cell, at its bottom-right corner as in Excel. */
+.button16 {
+  position: absolute;
+  z-index: 2;
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: #404040;
+  background: linear-gradient(180deg, #fdfdfd, #e6e6e6);
+  border: 1px solid #a6a6a6;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  border-color: #217346;
+}
+
+.filterButtonActive {
+  color: #217346;
+  border-color: #217346;
+}

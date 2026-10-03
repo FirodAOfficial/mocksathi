@@ -7,6 +7,7 @@ import {
   type CellAddress,
   type RangeAddress,
 } from './address';
+import type { AutoFilter } from './autoFilter';
 import { isBlank, type Cell, type CellValue } from './Cell';
 import { DEFAULT_STYLE_ID, type StyleId } from './styles';
 
@@ -105,6 +106,9 @@ export class Worksheet {
    * remembers a value nobody can see.
    */
   printArea: RangeAddress | null = null;
+
+  /** Data > Filter's AutoFilter, or null when the sheet has none. See `autoFilter.ts`. */
+  autoFilter: AutoFilter | null = null;
 
   /**
    * The bounding box of everything written, grown on write.

@@ -160,7 +160,7 @@ For Excel it is the entire workbook the candidate ended with — `WorkbookSnapsh
 
 ```ts
 interface CellSnapshot { row; col; value: CellValue; formula?: string; style?: CellStyle }
-interface SheetSnapshot { name; cells; rows; columns; merges; frozen; view; printArea }
+interface SheetSnapshot { name; cells; rows; columns; merges; frozen; view; printArea; autoFilter? }
 interface WorkbookSnapshot { sheets: SheetSnapshot[] }
 ```
 
@@ -168,6 +168,13 @@ interface WorkbookSnapshot { sheets: SheetSnapshot[] }
   nothing to another workbook; `workbookFromSnapshot` re-interns on the far side.
 - **A formula cell carries both.** `formula` is the source text, `value` is its *last computed
   result*. This matters for marking — see §4.6.
+- **`autoFilter` is present only when the sheet has a filter** (`src/spreadsheet/model/autoFilter.ts`):
+  its range and per-column conditions. Absent rather than `null`, so a snapshot of a sheet without
+  one is byte-identical to one taken before filters existed — `snapshotsEqual` is how an untouched
+  question is recognised. **Marking never reads it.** A filter's effect is the rows it hides, which
+  are ordinary `rows` entries with `hidden: true`, exactly as Excel writes them; that is what the
+  `unchanged` sweep and the single-workbook flow's row steps compare. `isWorkbookSnapshot` checks its
+  shape (`isAutoFilter`) and caps a checklist at 1,000 values.
 - `MAX_SNAPSHOT_CELLS` is 20,000 across the whole workbook (`snapshotWorkbook` throws
   `SnapshotTooLargeError`), and the submit route caps the whole request body at 2 MiB.
 

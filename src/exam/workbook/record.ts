@@ -1,4 +1,5 @@
 import { cellKey, MAX_COLUMNS, MAX_ROWS, type RangeAddress } from '@/spreadsheet/model/address';
+import { isAutoFilter } from '@/spreadsheet/model/autoFilter';
 import { MAX_SNAPSHOT_CELLS, type WorkbookSnapshot } from '@/spreadsheet/model/snapshot';
 import { faithfulWorkbook, projectWorkbook } from './apply';
 import { describeCells } from './describe';
@@ -94,6 +95,7 @@ export function isWorkbookSnapshot(value: unknown): value is WorkbookSnapshot {
     if (!sheet.frozen || !isIndex(sheet.frozen.rows, MAX_ROWS) || !isIndex(sheet.frozen.columns, MAX_COLUMNS)) return false;
     if (!sheet.view || typeof sheet.view !== 'object') return false;
     if (sheet.printArea !== null && !isRange(sheet.printArea)) return false;
+    if (sheet.autoFilter !== undefined && !isAutoFilter(sheet.autoFilter, isRange)) return false;
 
     total += sheet.cells.length;
     if (total > MAX_SNAPSHOT_CELLS) return false;

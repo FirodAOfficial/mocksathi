@@ -1,4 +1,5 @@
 import type { RangeAddress } from './address';
+import { cloneFilter, type AutoFilter } from './autoFilter';
 import type { Cell, CellValue } from './Cell';
 import type { CellStyle } from './styles';
 import { DEFAULT_STYLE_ID } from './styles';
@@ -46,6 +47,12 @@ export interface SheetSnapshot {
   frozen: FrozenPanes;
   view: SheetView;
   printArea: RangeAddress | null;
+  /**
+   * Data > Filter. Absent rather than null when there is none, so a snapshot
+   * of a sheet without a filter is byte-identical to one taken before filters
+   * existed — `snapshotsEqual` is how an untouched question is recognised.
+   */
+  autoFilter?: AutoFilter;
 }
 
 export interface WorkbookSnapshot {
@@ -125,6 +132,7 @@ export function snapshotSheet(sheet: Worksheet, workbook: Workbook): SheetSnapsh
     printArea: sheet.printArea
       ? { start: { ...sheet.printArea.start }, end: { ...sheet.printArea.end } }
       : null,
+    ...(sheet.autoFilter ? { autoFilter: cloneFilter(sheet.autoFilter)! } : {}),
   };
 }
 
@@ -158,6 +166,7 @@ export function sheetFromSnapshot(id: string, snapshot: SheetSnapshot, workbook:
   sheet.printArea = snapshot.printArea
     ? { start: { ...snapshot.printArea.start }, end: { ...snapshot.printArea.end } }
     : null;
+  sheet.autoFilter = cloneFilter(snapshot.autoFilter ?? null);
 
   return sheet;
 }

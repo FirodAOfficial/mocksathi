@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useSpreadsheetUiStore } from '@/state/spreadsheetUiStore';
@@ -43,6 +43,7 @@ afterEach(() => {
     showFormulas: false,
     readOnly: false,
     notice: null,
+    formatCells: null,
   });
   cleanup();
 });
@@ -98,6 +99,17 @@ describe('SpreadsheetShell', () => {
     await userEvent.keyboard('{ArrowUp}');
 
     expect(screen.getByRole('textbox', { name: /^Formula bar/ })).toHaveValue('=SUM(A1:A2)');
+  });
+
+  it('keeps what was typed when another cell is clicked', async () => {
+    // jsdom has no pointer capture; the grid takes it on every press.
+    HTMLElement.prototype.setPointerCapture = () => {};
+    render(<SpreadsheetShell />);
+
+    await typeIntoActiveCell('Hello');
+    fireEvent.pointerDown(screen.getByRole('grid'), { clientX: 200, clientY: 50, pointerId: 1 });
+
+    expect(screen.getByRole('gridcell', { name: 'Hello' })).toBeInTheDocument();
   });
 
   it('moves the cursor with the arrow keys and says where it is', async () => {

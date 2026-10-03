@@ -1,7 +1,10 @@
 'use client';
 
-import { useRef, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useWorkbookStore } from '@/spreadsheet/useWorkbook';
 import { useSpreadsheetUiStore, type SheetRibbonTabId } from '@/state/spreadsheetUiStore';
+import { FormatCellsDialog } from '../FormatCellsDialog';
+import { COLLAPSE_ORDER, RibbonCollapseContext } from './CollapsibleGroup';
 import { SheetHomeTab } from './SheetHomeTab';
 import {
   SheetDataTab,
@@ -35,6 +38,52 @@ export function SpreadsheetRibbon() {
   const activeTab = useSpreadsheetUiStore((state) => state.activeTab);
   const setActiveTab = useSpreadsheetUiStore((state) => state.setActiveTab);
   const tablistRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const store = useWorkbookStore();
+  const formatCells = useSpreadsheetUiStore((state) => state.formatCells);
+  const closeFormatCells = useSpreadsheetUiStore((state) => state.closeFormatCells);
+  const setNotice = useSpreadsheetUiStore((state) => state.setNotice);
+
+  /*
+   * How many Home groups are folded into single buttons.
+   *
+   * Found by trying rather than by breakpoints: the ribbon's width depends on
+   * the exam panels around it as much as on the window, and the groups' widths
+   * on the fonts the browser picked. After each render, if the Home tab still
+   * overflows, one more group folds; a change of width starts again from none
+   * folded. Layout effects run before paint, so the steps are never seen.
+   */
+  const [collapse, setCollapse] = useState(0);
+  const [measure, setMeasure] = useState(0);
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || activeTab !== 'home') return;
+    if (panel.scrollWidth > panel.clientWidth + 1 && collapse < COLLAPSE_ORDER.length) setCollapse(collapse + 1);
+  }, [activeTab, collapse, measure]);
+
+  /*
+   * Re-measured when the ribbon's width changes, and when the tab's contents
+   * do — web fonts arriving after the first paint widen every caption, and a
+   * measurement taken before them would leave the ribbon overflowing.
+   */
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || typeof ResizeObserver === 'undefined') return;
+
+    let width = panel.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (panel.clientWidth !== width) {
+        width = panel.clientWidth;
+        setCollapse(0);
+      }
+      setMeasure((value) => value + 1);
+    });
+    observer.observe(panel);
+    if (panel.firstElementChild) observer.observe(panel.firstElementChild);
+    return () => observer.disconnect();
+  }, [activeTab]);
 
   const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     const offset = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
@@ -78,12 +127,17 @@ export function SpreadsheetRibbon() {
       </div>
 
       <div
+        ref={panelRef}
         className={styles.panel}
         role="tabpanel"
         id={`sheet-panel-${activeTab}`}
         aria-labelledby={`sheet-tab-${activeTab}`}
       >
-        {activeTab === 'home' ? <SheetHomeTab /> : null}
+        {activeTab === 'home' ? (
+          <RibbonCollapseContext.Provider value={collapse}>
+            <SheetHomeTab />
+          </RibbonCollapseContext.Provider>
+        ) : null}
         {activeTab === 'formulas' ? <SheetFormulasTab /> : null}
         {activeTab === 'view' ? <SheetViewTab /> : null}
         {activeTab === 'insert' ? <SheetInsertTab /> : null}
@@ -91,6 +145,16 @@ export function SpreadsheetRibbon() {
         {activeTab === 'data' ? <SheetDataTab /> : null}
         {activeTab === 'review' ? <SheetReviewTab /> : null}
       </div>
+
+      {/* Here rather than on the Home tab, so Ctrl+1 opens it from any tab. */}
+      {formatCells ? (
+        <FormatCellsDialog
+          store={store}
+          initialTab={formatCells}
+          onClose={closeFormatCells}
+          onNotice={setNotice}
+        />
+      ) : null}
     </div>
   );
 }

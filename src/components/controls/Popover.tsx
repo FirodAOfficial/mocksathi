@@ -1,6 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import styles from './Popover.module.css';
 
@@ -24,6 +35,19 @@ export interface PopoverProps {
   align?: 'start' | 'end';
   className?: string;
 }
+
+/**
+ * Menus opened from inside another menu — the Font list in a collapsed Font
+ * group. Each registers its panel with every menu above it, because the panels
+ * are portalled side by side: without this, a click in the inner menu lands
+ * "outside" the outer one, which closes and unmounts both before the click
+ * reaches the item that was clicked.
+ */
+interface PopoverNesting {
+  register: (panel: HTMLElement) => () => void;
+}
+
+const PopoverNestingContext = createContext<PopoverNesting | null>(null);
 
 /** Breathing room kept between a menu and the bottom of the viewport. */
 const VIEWPORT_MARGIN = 8;
@@ -57,6 +81,29 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
   const panelId = useId();
 
   const close = useCallback(() => setOpen(false), []);
+
+  const parent = useContext(PopoverNestingContext);
+  const nested = useRef(new Set<HTMLElement>());
+  const nesting = useMemo<PopoverNesting>(
+    () => ({
+      register: (panel) => {
+        nested.current.add(panel);
+        const unregister = parent?.register(panel);
+        return () => {
+          nested.current.delete(panel);
+          unregister?.();
+        };
+      },
+    }),
+    [parent],
+  );
+
+  // Tells the menus above this one that its panel is part of them.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!open || !position || !panel || !parent) return;
+    return parent.register(panel);
+  }, [open, position, parent]);
 
   const toggle = useCallback(() => {
     // Clearing the measured position here rather than in the effect keeps the
@@ -164,10 +211,12 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
       // have to be checked or clicking a menu item would dismiss the menu
       // before the item's own click handler ever ran.
       if (containerRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      for (const panel of nested.current) if (panel.contains(target)) return;
       setOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
+      // An open inner menu takes the Escape; this one closes on the next.
+      if (event.key === 'Escape' && nested.current.size === 0) {
         event.stopPropagation();
         setOpen(false);
       }
@@ -195,7 +244,7 @@ export function Popover({ trigger, children, align = 'start', className }: Popov
               className={styles.panel}
               style={position}
             >
-              {children({ close })}
+              <PopoverNestingContext.Provider value={nesting}>{children({ close })}</PopoverNestingContext.Provider>
             </div>,
             host ?? document.body,
           )

@@ -39,6 +39,14 @@ export interface CellEditorHandle {
   isPointing(): boolean;
   /** Puts `range` into the formula, replacing the reference last pointed at. */
   point(range: RangeAddress): void;
+  /**
+   * Commits what has been typed, leaving the cursor where it is.
+   *
+   * For a click elsewhere on the sheet: the grid closes the editor in the same
+   * pointerdown, and an editor removed from the page gets no blur to commit on
+   * — so without this, clicking another cell threw the entry away.
+   */
+  commit(): void;
 }
 
 export interface CellEditorProps {
@@ -192,6 +200,12 @@ export function CellEditor({
     onCommit(textRef.current, move);
   };
 
+  /** The latest `finish`, for the handle — which is built once and would hold a stale one. */
+  const finishRef = useRef(finish);
+  useEffect(() => {
+    finishRef.current = finish;
+  });
+
   const abandon = (): void => {
     if (settled.current) return;
     settled.current = true;
@@ -265,6 +279,7 @@ export function CellEditor({
     handleRef,
     () => ({
       isPointing,
+      commit: () => finishRef.current('none'),
       point: (range: RangeAddress) => {
         pointingBlur.current = true;
         setTimeout(() => {

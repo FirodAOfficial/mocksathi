@@ -46,6 +46,10 @@
   display: flex;
   align-items: stretch;
   gap: 0;
+  /* As wide as its groups, so the ribbon can see when they stop fitting
+     (`SpreadsheetRibbon` folds groups until they do). */
+  width: max-content;
+  min-width: 100%;
   min-height: 84px;
 }
 
@@ -81,6 +85,182 @@
 .menuCaption {
   font-size: 11px;
   line-height: 1.1;
+}
+
+/* A large button whose two-word caption needs more than the usual width. */
+.tab .largeWide {
+  width: 80px;
+}
+
+/* The `wide` and `arrow` forms of `RibbonMenu`'s trigger. */
+.menuWide,
+.menuArrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 5px;
+  font: inherit;
+  font-size: 13px;
+  color: #17365d;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.menuArrow {
+  padding: 0 2px;
+}
+
+.menuWide:hover:not(:disabled),
+.menuArrow:hover:not(:disabled) {
+  border-color: var(--control-hover-border, #e0b64f);
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.menuWide:disabled,
+.menuArrow:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.menuCaret {
+  font-size: 9px;
+  line-height: 1;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 6px;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: #17365d;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.menuItem:hover:not(:disabled) {
+  background: linear-gradient(to bottom, var(--control-hover-top, #fff6d6), var(--control-hover-bottom, #ffdf94));
+}
+
+.menuItem:disabled {
+  color: var(--control-disabled-text, #9aa5b1);
+  cursor: default;
+}
+
+.menuGlyph {
+  display: inline-flex;
+  justify-content: center;
+  width: 18px;
+  font-size: 13px;
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: 4px 2px;
+  background: #d5dde6;
+}
+
+.menuHeading {
+  padding: 6px 8px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #37506b;
+  background: #eef2f6;
+}
+
+/* A menu holding a small form: Row Height, Column Width, Find and Replace. */
+.menuForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  padding: 10px;
+  font-size: 12px;
+  color: #17365d;
+}
+
+.menuField {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.menuField input[type='text'],
+.menuField input[type='number'] {
+  min-width: 0;
+  padding: 3px 5px;
+  font: inherit;
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+}
+
+.menuCheck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menuActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.menuActions button {
+  padding: 3px 10px;
+  font: inherit;
+  color: #17365d;
+  background: linear-gradient(to bottom, #fdfdfd, #e9eef3);
+  border: 1px solid #9db3c8;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.menuStatus {
+  min-height: 1.2em;
+  margin: 0;
+  color: #37506b;
+}
+
+/* Cell Styles: each preset drawn in its own formatting, as Excel's gallery does. */
+.styleGallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(96px, 1fr));
+  gap: 4px;
+  padding: 0 6px 6px;
+}
+
+.styleSwatch {
+  padding: 4px 6px;
+  font-family: Calibri, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d5dde6;
+  cursor: pointer;
+}
+
+.styleSwatch:hover {
+  outline: 2px solid var(--control-hover-border, #e0b64f);
 }
 
 .symbolGrid {
@@ -191,4 +371,46 @@
     min-height: 0;
     max-height: 4.25rem;
   }
+}
+
+/* -- A Home group folded into one button on a narrow ribbon (`CollapsibleGroup`). -- */
+
+.foldedGroup {
+  display: flex;
+  align-items: flex-start;
+  padding: 3px 3px 0;
+  border-right: 1px solid var(--group-separator, #c5d3e2);
+}
+
+.foldedTrigger {
+  min-width: 60px;
+  min-height: 72px;
+  justify-content: flex-start;
+}
+
+.foldedGlyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* The dropped-down group: the ribbon's own background, so it reads as a piece of it. */
+.foldedPanel {
+  display: flex;
+  padding: 4px 2px 0;
+  background: linear-gradient(to bottom, var(--ribbon-top, #fcfdff), var(--ribbon-bottom, #e8f0f9));
+}
+
+.foldedPanel > section {
+  border-right: 0;
+}
+
+/* The folded Font group's "A", underlined as Excel draws it. */
+.fontGlyph {
+  font-family: 'Times New Roman', serif;
+  border-bottom: 4px solid currentColor;
+  line-height: 0.95;
 }
